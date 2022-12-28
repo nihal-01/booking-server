@@ -1,10 +1,10 @@
 const { isValidObjectId } = require("mongoose");
+
 const { sendErrorResponse } = require("../../helpers");
-const { HomeSettings } = require("../../model/");
+const { HomeSettings } = require("../../models");
 const {
     homeFooterSettingsSchema,
     homeHeroSettingsSchema,
-    homeHederSettingsSchema,
     homeCardSettingsSchema,
     homeMetaSettingsSchema,
     homeSectionsSettingsSchema,

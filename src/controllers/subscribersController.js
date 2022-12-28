@@ -1,5 +1,5 @@
 const { sendErrorResponse } = require("../helpers");
-const { Subscriber } = require("../model");
+const { Subscriber } = require("../models");
 const { subscriberSchema } = require("../validations/subscriber.schema");
 
 module.exports = {
@@ -12,17 +12,11 @@ module.exports = {
                 return sendErrorResponse(res, 400, error.details[0].message);
             }
 
-            const subscriber = await Subscriber.findOne({ email });
-            if (subscriber) {
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "You have already subscribed!"
-                );
-            }
-
-            const newSubscriber = new Subscriber({ email });
-            await newSubscriber.save();
+            await Subscriber.findOneAndUpdate(
+                { email },
+                { subscribed: true },
+                { upsert: true, runValidators: true }
+            );
 
             res.status(200).json({
                 message:
@@ -41,7 +35,10 @@ module.exports = {
             return sendErrorResponse(res, 400, error.details[0].message);
         }
 
-        const subscriber = await Subscriber.findOneAndDelete({ email });
+        const subscriber = await Subscriber.findOneAndUpdate(
+            { email },
+            { subscribed: false }
+        );
         if (!subscriber) {
             return sendErrorResponse(
                 res,

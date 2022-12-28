@@ -14,7 +14,7 @@ router.post("/add", superAdminAuth, addNewAdmin);
 router.post("/login", adminLogin);
 
 router.get("/all", superAdminAuth, getAllAdmins);
-router.get('/my-account', adminAuth, getAdmin)
+router.get("/my-account", adminAuth, getAdmin);
 
 router.delete("/delete/:id", superAdminAuth, deleteAdmin);
 

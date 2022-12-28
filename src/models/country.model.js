@@ -1,0 +1,37 @@
+const { Schema, model } = require("mongoose");
+
+const countrySchema = new Schema(
+    {
+        countryName: {
+            type: String,
+            required: true,
+        },
+        isocode: {
+            type: String,
+            uppercase: true,
+            required: true,
+            unique: true,
+        },
+        phonecode: {
+            type: Number,
+            required: true,
+        },
+        flag: {
+            type: String,
+            required: true,
+        },
+        currency: {
+            type: String,
+            required: true,
+        },
+        currencySymbol: {
+            type: String,
+            required: true,
+        },
+    },
+    { timestamps: true }
+);
+
+const Country = model("Country", countrySchema);
+
+module.exports = Country;

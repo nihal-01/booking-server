@@ -2,11 +2,11 @@ const Joi = require("joi");
 
 const homeMetaSettingsSchema = Joi.object({
     mobileNumber1: Joi.string().required(),
-    mobileNumber2: Joi.string(),
+    mobileNumber2: Joi.string().allow("", null),
     email: Joi.string().email().required(),
-    facebookUrl: Joi.string(),
-    instagramUrl: Joi.string(),
-    footerDescription: Joi.string(),
+    facebookUrl: Joi.string().allow("", null),
+    instagramUrl: Joi.string().allow("", null),
+    footerDescription: Joi.string().allow("", null),
 });
 
 const homeFooterSettingsSchema = Joi.object({
@@ -14,7 +14,7 @@ const homeFooterSettingsSchema = Joi.object({
     navLinks: Joi.array().items({
         name: Joi.string().required(),
         link: Joi.string().required(),
-        isRelativeUrl: Joi.boolean(),
+        isRelativeUrl: Joi.boolean().required(),
     }),
 });
 
@@ -43,7 +43,7 @@ const homeHeroSettingsSchema = Joi.object({
 const homeCardSettingsSchema = Joi.object({
     title: Joi.string().required(),
     description: Joi.string().required(),
-    tag: Joi.string(),
+    tag: Joi.string().allow("", null),
 });
 
 module.exports = {

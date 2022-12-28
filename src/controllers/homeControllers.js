@@ -1,5 +1,5 @@
 const { sendErrorResponse } = require("../helpers");
-const { HomeSettings } = require("../model");
+const { HomeSettings } = require("../models");
 
 module.exports = {
     getHomeData: async (req, res) => {

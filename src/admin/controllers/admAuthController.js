@@ -12,9 +12,14 @@ module.exports = {
     addNewAdmin: async (req, res) => {
         try {
             const { name, email, password } = req.body;
+
             const { _, error } = adminAddSchema.validate(req.body);
             if (error) {
-                return sendErrorResponse(res, 400, error.details[0].message);
+                return sendErrorResponse(
+                    res,
+                    400,
+                    error.details ? error.details[0].message : error.message
+                );
             }
 
             const admin = await Admin.findOne({ email });
@@ -77,10 +82,16 @@ module.exports = {
 
     getAllAdmins: async (req, res) => {
         try {
-            const admins = await Admin.find({ role: "admin" }).sort({
-                createdAt: -1,
-            });
-            res.status(200).json(admins);
+            const { skip = 0, limit = 10 } = req.query;
+
+            const admins = await Admin.find({ role: "admin" })
+                .sort({ createdAt: -1 })
+                .limit(limit)
+                .skip(limit * skip);
+
+            const totalAdmins = await Admin.find({}).count();
+
+            res.status(200).json({ admins, totalAdmins, skip, limit });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
