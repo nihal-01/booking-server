@@ -15,11 +15,11 @@ const {
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
+router.use("/attractions/tickets", admAttractionsTicketsRouter);
 
 router.use(adminAuth);
 
 router.use("/attractions/categories", admAttractionCategoriesRouter);
-router.use("/attractions/tickets", admAttractionsTicketsRouter);
 router.use("/attractions", admAttractionsRouter);
 router.use("/home", admHomeRouter);
 router.use("/blogs/categories", admBlogCategoriesRouter);

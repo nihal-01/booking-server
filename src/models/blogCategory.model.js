@@ -24,6 +24,13 @@ const blogCategorySchema = new Schema(
     { timestamps: true }
 );
 
+blogCategorySchema.virtual("totalBlogs", {
+    ref: "Blog",
+    localField: "_id",
+    foreignField: "category",
+    count: true,
+});
+
 const BlogCategory = model("BlogCategory", blogCategorySchema);
 
 module.exports = BlogCategory;

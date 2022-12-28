@@ -7,6 +7,12 @@ const attractionOrderSchema = new Schema(
             ref: "Attraction",
             required: true,
         },
+        bookingType: {
+            type: String,
+            required: true,
+            lowercase: true,
+            enum: ["booking", "ticket"],
+        },
         orders: {
             type: [
                 {
@@ -14,12 +20,6 @@ const attractionOrderSchema = new Schema(
                         type: Schema.Types.ObjectId,
                         ref: "AttractionActivity",
                         required: true,
-                    },
-                    bookingType: {
-                        type: String,
-                        required: true,
-                        lowercase: true,
-                        enum: ["booking", "ticket"],
                     },
                     date: {
                         type: Date,
@@ -46,6 +46,10 @@ const attractionOrderSchema = new Schema(
             ],
         },
         totalAmount: {
+            type: Number,
+            required: true,
+        },
+        offerAmount: {
             type: Number,
             required: true,
         },

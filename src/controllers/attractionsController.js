@@ -48,10 +48,23 @@ module.exports = {
                     return sendErrorResponse(res, 400, "Activity not found!");
                 }
 
-                const arrIndex = attr.offDays?.map((dt) => {
+                if (
+                    new Date(selectedActivities[i]?.date) <
+                        new Date(attr.startDate) ||
+                    new Date(selectedActivities[i]?.date) >
+                        new Date(attr.endDate)
+                ) {
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        "Please select a valid date. You are selected ann off day"
+                    );
+                }
+
+                const arrIndex = attr.offDays?.findIndex((dt) => {
                     return (
                         new Date(dt).toDateString() ===
-                        selectedActivities[i]?.toDateString()
+                        new Date(selectedActivities[i]?.date)?.toDateString()
                     );
                 });
 
@@ -59,7 +72,7 @@ module.exports = {
                     return sendErrorResponse(
                         res,
                         400,
-                        "Please select a valid date. You are selected ann off day"
+                        "Please select a valid date. You are selected an off day"
                     );
                 }
 
@@ -191,12 +204,25 @@ module.exports = {
                 }
             }
 
+            let offer = 0;
+            if (attr?.isOffer) {
+                if (attr.offerAmountType === "flat") {
+                    offer = attr.offerAmount;
+                    totalAmount -= attr.offerAmount;
+                } else {
+                    offer = (totalAmount / 100) * attr.offerAmount;
+                    totalAmount -= offer;
+                }
+            }
+
             const newAttractionOrder = new AttractionOrder({
                 attraction,
                 orders: selectedActivities,
                 totalAmount,
+                offerAmount: offer,
                 user: req.user?._id || undefined,
                 status: "pending",
+                bookingType: attr.bookingType,
             });
             await newAttractionOrder.save();
 
