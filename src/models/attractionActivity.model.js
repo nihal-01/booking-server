@@ -7,12 +7,6 @@ const attractionActivitySchema = new Schema(
             ref: "Attraction",
             required: true,
         },
-        bookingType: {
-            type: String,
-            required: true,
-            lowercase: true,
-            enum: ["booking", "ticket"],
-        },
         name: {
             type: String,
             required: true,

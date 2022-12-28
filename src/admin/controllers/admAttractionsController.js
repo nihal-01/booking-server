@@ -10,6 +10,17 @@ const {
     attractionSchema,
     attractionActivitySchema,
 } = require("../validations/attraction.schema");
+const { getDates } = require("../../utils");
+
+const weekday = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+];
 
 module.exports = {
     createNewAttraction: async (req, res) => {
@@ -26,17 +37,19 @@ module.exports = {
                 youtubeLink,
                 pickupAndDrop,
                 sections,
-                availability,
-                availableDays,
                 startDate,
                 endDate,
                 duration,
                 durationType,
+                offDays,
+                offDates,
+                bookingType,
             } = req.body;
 
             const { _, error } = attractionSchema.validate({
                 ...req.body,
-                availableDays: availableDays ? JSON.parse(availableDays) : [],
+                offDays: offDays ? JSON.parse(offDays) : [],
+                sections: sections ? JSON.parse(sections) : [],
             });
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
@@ -53,14 +66,42 @@ module.exports = {
                 return sendErrorResponse(res, 404, "Category not found!");
             }
 
+            let offDatesList = [];
+            offDates && offDatesList.push(offDates);
+
+            if (offDays) {
+                console.log(JSON.parse(offDays));
+                const offDaysFiltered = JSON.parse(offDays).map((day) => {
+                    return day?.toLowerCase();
+                });
+
+                if (offDaysFiltered.length > 0) {
+                    const dates = getDates(startDate, endDate);
+
+                    for (let i = 0; i < dates.length; i++) {
+                        const day = weekday[new Date(dates[i]).getDay()];
+
+                        if (offDays?.includes(day.toLowerCase())) {
+                            offDatesList.push(dates[i]);
+                        }
+                    }
+                }
+            }
+
             let images = [];
             for (let i = 0; i < req.files?.length; i++) {
                 const img = "/" + req.files[i]?.path?.replace(/\\/g, "/");
                 images.push(img);
             }
 
+            let parsedSections;
+            if (sections) {
+                parsedSections = JSON.parse(sections);
+            }
+
             const newAttraction = new Attraction({
                 title,
+                bookingType,
                 category,
                 isActive,
                 latitude,
@@ -71,11 +112,10 @@ module.exports = {
                 youtubeLink,
                 images,
                 pickupAndDrop,
-                sections,
-                availability,
-                availableDays,
+                sections: parsedSections,
                 startDate,
                 endDate,
+                offDays: offDatesList,
                 duration,
                 durationType,
             });
@@ -186,7 +226,6 @@ module.exports = {
         try {
             const {
                 attraction,
-                bookingType,
                 name,
                 facilities,
                 adultAgeLimit,
@@ -223,7 +262,6 @@ module.exports = {
 
             const newTicket = new AttractionActivity({
                 attraction,
-                bookingType,
                 name,
                 facilities,
                 adultAgeLimit,

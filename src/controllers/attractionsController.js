@@ -1,4 +1,5 @@
 const { isValidObjectId } = require("mongoose");
+const crypto = require("crypto");
 
 const { sendErrorResponse } = require("../helpers");
 const {
@@ -6,10 +7,12 @@ const {
     AttractionActivity,
     AttractionOrder,
     AttractionTicket,
+    User,
 } = require("../models/");
 const {
     attractionOrderSchema,
 } = require("../validations/attractionOrder.schema");
+const { hash } = require("bcryptjs");
 
 module.exports = {
     createAttractionOrder: async (req, res) => {
@@ -42,6 +45,21 @@ module.exports = {
 
                 if (!activity) {
                     return sendErrorResponse(res, 400, "Activity not found!");
+                }
+
+                const arrIndex = attr.offDays?.map((dt) => {
+                    return (
+                        new Date(dt).toDateString() ===
+                        selectedActivities[i]?.toDateString()
+                    );
+                });
+
+                if (arrIndex !== -1) {
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        "Please select a valid date. You are selected ann off day"
+                    );
                 }
 
                 if (activity.bookingType === "ticket") {
@@ -187,122 +205,173 @@ module.exports = {
         }
     },
 
-    // createPaymentOrder: async (req, res) => {
-    //     try {
-    //         const { attractionOrderId } = req.body;
+    createPaymentOrder: async (req, res) => {
+        try {
+            const { attractionOrderId, name, email, phoneNumber, country } =
+                req.body;
 
-    //         if (!isValidObjectId(attractionOrderId)) {
-    //             return sendErrorResponse(res, 400, "Invalid order id");
-    //         }
+            if (!isValidObjectId(attractionOrderId)) {
+                return sendErrorResponse(res, 400, "Invalid order id");
+            }
 
-    //         const attractionOrder = await AttractionOrder.findById(
-    //             attractionOrderId
-    //         );
-    //         if (!attractionOrder) {
-    //             return sendErrorResponse(res, 404, "Order not found");
-    //         }
+            const attractionOrder = await AttractionOrder.findById(
+                attractionOrderId
+            );
+            if (!attractionOrder) {
+                return sendErrorResponse(res, 404, "Order not found");
+            }
 
-    //         for (let i = 0; i < attractionOrder.orders?.length; i++) {
-    //             let order = attractionOrder.orders[i];
+            for (let i = 0; i < attractionOrder.orders?.length; i++) {
+                let order = attractionOrder.orders[i];
 
-    //             const adultTickets = await AttractionTicket.find({
-    //                 activity: order.activity,
-    //                 status: "ok",
-    //                 ticketFor: "adult",
-    //                 $or: [
-    //                     {
-    //                         validity: true,
-    //                         validTill: {
-    //                             $gte: new Date(order.date).toISOString(),
-    //                         },
-    //                     },
-    //                     { validity: false },
-    //                 ],
-    //             }).count();
-    //             const childrenTickets = await AttractionTicket.find({
-    //                 activity: order.activity,
-    //                 status: "ok",
-    //                 ticketFor: "child",
-    //                 $or: [
-    //                     {
-    //                         validity: true,
-    //                         validTill: {
-    //                             $gte: new Date(order.date).toISOString(),
-    //                         },
-    //                     },
-    //                     { validity: false },
-    //                 ],
-    //             }).count();
+                // add reserve ticket condition
+                if (order.bookingType === "ticket") {
+                    const adultTickets = await AttractionTicket.find({
+                        activity: order.activity,
+                        status: "ok",
+                        ticketFor: "adult",
+                        $or: [
+                            {
+                                validity: true,
+                                validTill: {
+                                    $gte: new Date(order.date).toISOString(),
+                                },
+                            },
+                            { validity: false },
+                        ],
+                    }).count();
+                    const childrenTickets = await AttractionTicket.find({
+                        activity: order.activity,
+                        status: "ok",
+                        ticketFor: "child",
+                        $or: [
+                            {
+                                validity: true,
+                                validTill: {
+                                    $gte: new Date(order.date).toISOString(),
+                                },
+                            },
+                            { validity: false },
+                        ],
+                    }).count();
 
-    //             if (order?.adultsCount > adultTickets) {
-    //                 return sendErrorResponse(
-    //                     res,
-    //                     400,
-    //                     "Sorry, Adult Tickets sold out"
-    //                 );
-    //             }
-    //             if (order?.childrenCount > childrenTickets) {
-    //                 return sendErrorResponse(
-    //                     res,
-    //                     400,
-    //                     "Sorry, Adult Tickets sold out"
-    //                 );
-    //             }
+                    if (order?.adultsCount > adultTickets) {
+                        return sendErrorResponse(
+                            res,
+                            400,
+                            "Sorry, Adult Tickets sold out"
+                        );
+                    }
+                    if (order?.childrenCount > childrenTickets) {
+                        return sendErrorResponse(
+                            res,
+                            400,
+                            "Sorry, Adult Tickets sold out"
+                        );
+                    }
+                }
+            }
 
-    //             if (order.adultsCount) {
-    //                 await AttractionTicket.find({
-    //                     activity: order.activity,
-    //                     status: "ok",
-    //                     ticketFor: "adult",
-    //                     $or: [
-    //                         {
-    //                             validity: true,
-    //                             validTill: {
-    //                                 $gte: new Date(order.date).toISOString(),
-    //                             },
-    //                         },
-    //                         { validity: false },
-    //                     ],
-    //                 })
-    //                     .limit(3)
-    //                     .updateMany({
-    //                         status: "used",
-    //                     });
-    //             }
-    //         }
+            if (!req.user) {
+                const user = await User.findOne({
+                    email,
+                });
+                if (user) {
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        "You have already an account with this email, please login."
+                    );
+                }
 
-    //         const PaypalClient = client();
-    //         const request = new paypal.orders.OrdersCreateRequest();
+                const password = crypto.randomBytes(6);
+                const hashedPassowrd = await hash(password, 8);
 
-    //         request.headers["prefer"] = "return=representation";
-    //         request.requestBody({
-    //             intent: "CAPTURE",
-    //             purchase_units: [
-    //                 {
-    //                     amount: {
-    //                         currency_code: "AED",
-    //                         value: 7,
-    //                     },
-    //                 },
-    //             ],
-    //         });
-    //         const response = await PaypalClient.execute(request);
-    //         if (response.statusCode !== 201) {
-    //             res.status(500);
-    //         }
+                const newUser = new User({
+                    name,
+                    email,
+                    phoneNumber,
+                    country,
+                    isGuestUser: true,
+                    password: hashedPassowrd,
+                });
+                await newUser.save();
+            }
 
-    //         //Once order is created store the data using Prisma
-    //         await prisma.payment.create({
-    //             data: {
-    //                 orderID: response.result.id,
-    //                 status: "PENDING",
-    //             },
-    //         });
-    //         res.json({ orderID: response.result.id });
-    //     } catch (err) {
-    //         sendErrorResponse(res, 500, err);
-    //     }
-    // },
+            let adultTickets = [];
+            let childTickets = [];
+            for (let i = 0; i < attractionOrder.orders?.length; i++) {
+                let order = attractionOrder.orders[i];
+
+                if (order.bookingType === "ticket") {
+                    for (let i = 0; i < order.adultsCount; i++) {
+                        const ticket = await AttractionTicket.findOneAndUpdate(
+                            {
+                                activity: order.activity,
+                                status: "ok",
+                                ticketFor: "adult",
+                                $or: [
+                                    {
+                                        validity: true,
+                                        validTill: {
+                                            $gte: new Date(
+                                                order.date
+                                            ).toISOString(),
+                                        },
+                                    },
+                                    { validity: false },
+                                ],
+                            },
+                            { status: "used" }
+                        );
+                        if (!ticket) {
+                            return sendErrorResponse(
+                                res,
+                                404,
+                                "Sorry, Tickets sold out"
+                            );
+                        }
+                        adultTickets.push(ticket._id);
+                    }
+
+                    for (let i = 0; i < order.childrenCount; i++) {
+                        const ticket = await AttractionTicket.findOneAndUpdate(
+                            {
+                                activity: order.activity,
+                                status: "ok",
+                                ticketFor: "child",
+                                $or: [
+                                    {
+                                        validity: true,
+                                        validTill: {
+                                            $gte: new Date(
+                                                order.date
+                                            ).toISOString(),
+                                        },
+                                    },
+                                    { validity: false },
+                                ],
+                            },
+                            { status: "used" }
+                        );
+                        if (!ticket) {
+                            return sendErrorResponse(
+                                res,
+                                404,
+                                "Sorry, Tickets sold out"
+                            );
+                        }
+                        childTickets.push(ticket._id);
+                    }
+                }
+                // attractionOrder.orders[i].status === "booked"
+            }
+
+            res.status(200).json({});
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 
     capturePayment: async (req, res) => {
         try {

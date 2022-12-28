@@ -44,6 +44,8 @@ const homeCardSettingsSchema = Joi.object({
     title: Joi.string().required(),
     description: Joi.string().required(),
     tag: Joi.string().allow("", null),
+    url: Joi.string().required(),
+    isRelativeUrl: Joi.boolean().required(),
 });
 
 module.exports = {

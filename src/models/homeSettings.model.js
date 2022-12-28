@@ -57,6 +57,14 @@ const homeSettingsSchema = new Schema(
                     icon: {
                         type: String,
                     },
+                    url: {
+                        type: String,
+                        required: true,
+                    },
+                    isRelativeUrl: {
+                        type: Boolean,
+                        required: true,
+                    },
                 },
             ],
         },

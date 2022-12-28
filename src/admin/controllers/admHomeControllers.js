@@ -101,12 +101,14 @@ module.exports = {
 
     addNewHomeCard: async (req, res) => {
         try {
-            const { title, description, tag } = req.body;
+            const { title, description, tag, url, isRelativeUrl } = req.body;
 
             const { _, error } = homeCardSettingsSchema.validate(req.body);
             if (error) {
                 return sendErrorResponse(res, 500, error.details[0].message);
             }
+
+            console.log("first")
 
             if (!req.files?.backgroundImage[0]?.path) {
                 return sendErrorResponse(
@@ -117,12 +119,14 @@ module.exports = {
             }
 
             const backgroundImage =
-                "/" + req.files?.backgroundImage[0]?.path.replace(/\\/g, "/");
+            "/" + req.files?.backgroundImage[0]?.path.replace(/\\/g, "/");
+
 
             let icon;
-            if (req.files?.icon[0]?.path) {
+            if (req.file?.icon && req.files?.icon[0]?.path) {
                 icon = "/" + req.files?.icon[0]?.path.replace(/\\/g, "/");
             }
+
 
             const homeSettings = await HomeSettings.findOneAndUpdate(
                 {
@@ -136,6 +140,8 @@ module.exports = {
                             description,
                             tag,
                             icon,
+                            url,
+                            isRelativeUrl,
                         },
                     },
                 },

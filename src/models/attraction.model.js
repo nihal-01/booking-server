@@ -11,40 +11,27 @@ const attractionSchema = new Schema(
             ref: "AttractionCategory",
             required: true,
         },
-        availability: {
+        bookingType: {
             type: String,
             required: true,
-            enum: ["daily", "monthly", "yearly", "custom"],
-        },
-        avaialbleDays: {
-            type: [
-                {
-                    type: String,
-                    required: true,
-                    lowercase: true,
-                    enum: [
-                        "sunday",
-                        "monday",
-                        "tuesday",
-                        "wednesday",
-                        "thursday",
-                        "friday",
-                        "saturday",
-                    ],
-                },
-            ],
+            lowercase: true,
+            enum: ["booking", "ticket"],
         },
         startDate: {
             type: Date,
-            required: function () {
-                return this.availability !== "daily";
-            },
+            required: true,
         },
         endDate: {
             type: Date,
-            required: function () {
-                return this.availability !== "daily";
-            },
+            required: true,
+        },
+        offDays: {
+            type: [
+                {
+                    type: Date,
+                    required: true,
+                },
+            ],
         },
         durationType: {
             type: String,

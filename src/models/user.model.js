@@ -18,6 +18,15 @@ const userSchema = new Schema(
             required: true,
             default: false,
         },
+        phoneNumber: {
+            type: String,
+            required: true,
+        },
+        country: {
+            type: Schema.Types.ObjectId,
+            ref: "Country",
+            required: true,
+        },
         isGuestUser: {
             type: Boolean,
             required: true,
@@ -25,14 +34,12 @@ const userSchema = new Schema(
         },
         password: {
             type: String,
-            required: function () {
-                return this.isGuestUser === true;
-            },
+            required: true,
         },
         jwtToken: {
             type: String,
             required: function () {
-                return this.isGuestUser === true;
+                return this.isGuestUser === false;
             },
         },
         avatar: {

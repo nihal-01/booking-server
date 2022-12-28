@@ -3,11 +3,19 @@ const Joi = require("joi");
 const attractionSchema = Joi.object({
     title: Joi.string().required(),
     category: Joi.string().required(),
-    isActive: Joi.boolean(),
-    availability: Joi.string()
-        .valid(...["daily", "monthly", "yearly", "custom"])
+    bookingType: Joi.string()
+        .allow(...["booking", "ticket"])
         .required(),
-    availableDays: Joi.array().items(
+    isActive: Joi.boolean(),
+    startDate: Joi.date().when("availability", {
+        is: Joi.string().valid("monthly", "yearly", "custom"),
+        then: Joi.date().required(),
+    }),
+    endDate: Joi.date().when("availability", {
+        is: Joi.string().valid("monthly", "yearly", "custom"),
+        then: Joi.date().required(),
+    }),
+    offDays: Joi.array().items(
         Joi.string().valid(
             "sunday",
             "monday",
@@ -18,14 +26,7 @@ const attractionSchema = Joi.object({
             "saturday"
         )
     ),
-    startDate: Joi.date().when("availability", {
-        is: Joi.string().valid("monthly", "yearly", "custom"),
-        then: Joi.date().required(),
-    }),
-    endDate: Joi.date().when("availability", {
-        is: Joi.string().valid("monthly", "yearly", "custom"),
-        then: Joi.date().required(),
-    }),
+    offDates: Joi.array().valid(Joi.date()),
     durationType: Joi.string().valid("hours", "days", "months").required(),
     duration: Joi.number().required(),
     latitude: Joi.string().allow("", null),
@@ -51,9 +52,6 @@ const attractionSchema = Joi.object({
 
 const attractionActivitySchema = Joi.object({
     attraction: Joi.string().required(),
-    bookingType: Joi.string()
-        .allow(...["booking", "ticket"])
-        .required(),
     name: Joi.string().required(),
     facilities: Joi.string().required(),
     adultAgeLimit: Joi.number().required(),

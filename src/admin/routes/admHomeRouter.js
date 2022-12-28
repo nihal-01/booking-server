@@ -2,7 +2,6 @@ const router = require("express").Router();
 const multer = require("multer");
 
 const {
-    updateHomeHeader,
     updateHomeHero,
     updateHomeFooter,
     deleteHomeCard,
@@ -49,7 +48,7 @@ const multipleUplaod = upload.fields([
     { name: "icon", maxCount: 1 },
 ]);
 
-router.patch("/update/header", upload.single("logo"), updateHomeLogo);
+router.patch("/update/logo", upload.single("logo"), updateHomeLogo);
 router.patch("/update/hero", upload.array("heroImages"), updateHomeHero);
 router.patch("/add/footer", updateHomeFooter);
 router.patch("/add/card", multipleUplaod, addNewHomeCard);

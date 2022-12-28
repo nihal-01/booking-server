@@ -15,6 +15,12 @@ const attractionOrderSchema = new Schema(
                         ref: "AttractionActivity",
                         required: true,
                     },
+                    bookingType: {
+                        type: String,
+                        required: true,
+                        lowercase: true,
+                        enum: ["booking", "ticket"],
+                    },
                     date: {
                         type: Date,
                         required: true,
