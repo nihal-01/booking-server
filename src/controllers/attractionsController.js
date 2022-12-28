@@ -379,4 +379,27 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+    getSingleAttraction: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid attraction id");
+            }
+
+            const attraction = await Attraction.findById(id)
+                .populate("category")
+                .populate("activities")
+                .lean();
+
+            if (!attraction) {
+                return sendErrorResponse(res, 404, "Attraction not found");
+            }
+
+            res.status(200).json(attraction);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };

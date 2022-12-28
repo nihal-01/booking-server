@@ -98,6 +98,12 @@ const attractionSchema = new Schema(
     { timestamps: true }
 );
 
+attractionSchema.virtual("activities", {
+    ref: "AttractionActivity",
+    localField: "_id",
+    foreignField: "attraction",
+});
+
 const Attraction = model("Attraction", attractionSchema);
 
 module.exports = Attraction;
