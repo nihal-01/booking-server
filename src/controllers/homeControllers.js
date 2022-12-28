@@ -4,7 +4,20 @@ const { HomeSettings } = require("../models");
 module.exports = {
     getHomeData: async (req, res) => {
         try {
-            const home = await HomeSettings.findOne({ settingsNumber: 1 });
+            const home = await HomeSettings.findOne({
+                settingsNumber: 1,
+            })
+                .populate({
+                    path: "bestSellingAttractions",
+                    populate: { path: "category", select: "categoryName" },
+                    select: "title images category",
+                })
+                .populate({
+                    path: "bestSellingAttractions",
+                    populate: { path: "category", select: "categoryName" },
+                    select: "title images category",
+                })
+                .lean();
 
             if (!home) {
                 return sendErrorResponse(
