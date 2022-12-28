@@ -2,6 +2,11 @@ const { Schema, model } = require("mongoose");
 
 const attractionSchema = new Schema(
     {
+        destination: {
+            type: Schema.Types.ObjectId,
+            ref: "Destination",
+            required: true,
+        },
         title: {
             type: String,
             required: true,
@@ -78,6 +83,10 @@ const attractionSchema = new Schema(
         },
         images: {
             type: [{ type: String, required: true }],
+            required: true,
+        },
+        highlights: {
+            type: String,
             required: true,
         },
         sections: {

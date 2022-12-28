@@ -390,6 +390,7 @@ module.exports = {
             }
 
             const attraction = await Attraction.findById(id)
+                .populate("destination")
                 .populate("category")
                 .populate("activities")
                 .lean();

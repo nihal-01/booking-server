@@ -11,6 +11,7 @@ const {
     attractionsRouter,
     subscribersRouter,
     attractionReviewsRouter,
+    countriesRouter,
 } = require("./routes");
 
 const app = express();
@@ -25,6 +26,7 @@ app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/attractions/reviews", attractionReviewsRouter);
 app.use("/api/v1/attractions", attractionsRouter);
 app.use("/api/v1/subscribers", subscribersRouter);
+app.use("/api/v1/countries", countriesRouter);
 
 // ADMIN ROUTE
 app.use("/api/v1/admin", adminRouter);

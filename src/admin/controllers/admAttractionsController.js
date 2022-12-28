@@ -5,6 +5,7 @@ const {
     Attraction,
     AttractionCategory,
     AttractionActivity,
+    Destination,
 } = require("../../models");
 const {
     attractionSchema,
@@ -44,6 +45,8 @@ module.exports = {
                 offDays,
                 offDates,
                 bookingType,
+                destination,
+                highlights,
             } = req.body;
 
             const { _, error } = attractionSchema.validate({
@@ -64,6 +67,15 @@ module.exports = {
             );
             if (!attractionCategory) {
                 return sendErrorResponse(res, 404, "Category not found!");
+            }
+
+            if (!isValidObjectId(destination)) {
+                return sendErrorResponse(res, 400, "Invalid destination id");
+            }
+
+            const destinationDetails = await Destination.findById(destination);
+            if (!destinationDetails) {
+                return sendErrorResponse(res, 404, "Destination not found");
             }
 
             let offDatesList = [];
@@ -118,6 +130,8 @@ module.exports = {
                 offDays: offDatesList,
                 duration,
                 durationType,
+                destination,
+                highlights,
             });
             await newAttraction.save();
 

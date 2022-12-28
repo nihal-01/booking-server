@@ -6,6 +6,7 @@ const attractionSchema = Joi.object({
     bookingType: Joi.string()
         .allow(...["booking", "ticket"])
         .required(),
+    destination: Joi.string().required(),
     isActive: Joi.boolean(),
     startDate: Joi.date().when("availability", {
         is: Joi.string().valid("monthly", "yearly", "custom"),
@@ -44,6 +45,7 @@ const attractionSchema = Joi.object({
     }),
     youtubeLink: Joi.string().required(),
     pickupAndDrop: Joi.string().valid(...["yes", "no"]),
+    highlights: Joi.string().required(),
     sections: Joi.array().items({
         title: Joi.string().required(),
         body: Joi.string().required(),
