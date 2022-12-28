@@ -13,7 +13,7 @@ const countrySchema = new Schema(
             unique: true,
         },
         phonecode: {
-            type: Number,
+            type: String,
             required: true,
         },
         flag: {
@@ -22,10 +22,10 @@ const countrySchema = new Schema(
         },
         currency: {
             type: String,
-            required: true,
         },
         currencySymbol: {
             type: String,
+            uppercase: true,
             required: true,
         },
     },

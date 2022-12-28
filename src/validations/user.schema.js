@@ -10,6 +10,8 @@ const userSignupSchema = Joi.object({
     name: Joi.string().required(),
     email: Joi.string().email().required(),
     password: Joi.string().regex(passwordRegx).error(passswordError).required(),
+    country: Joi.string().required(),
+    phoneNumber: Joi.string().required(),
 });
 
 const userLoginSchema = Joi.object({

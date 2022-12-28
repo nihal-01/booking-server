@@ -1,5 +1,6 @@
-const { isValidObjectId } = require("mongoose");
+const { isValidObjectId, Types } = require("mongoose");
 const crypto = require("crypto");
+const { hash } = require("bcryptjs");
 
 const { sendErrorResponse } = require("../helpers");
 const {
@@ -8,11 +9,11 @@ const {
     AttractionOrder,
     AttractionTicket,
     User,
+    AttractionReview,
 } = require("../models/");
 const {
     attractionOrderSchema,
 } = require("../validations/attractionOrder.schema");
-const { hash } = require("bcryptjs");
 
 module.exports = {
     createAttractionOrder: async (req, res) => {
@@ -396,6 +397,28 @@ module.exports = {
             if (!attraction) {
                 return sendErrorResponse(res, 404, "Attraction not found");
             }
+
+            const reviews = await AttractionReview.aggregate([
+                { $match: { attraction: attraction._id } },
+                {
+                    $group: {
+                        _id: "$attraction",
+                        totalReviews: { $sum: 1 },
+                        totalRating: { $sum: "$rating" },
+                    },
+                },
+                {
+                    $project: {
+                        totalReviews: 1,
+                        averageRating: {
+                            $divide: ["$totalRating", "$totalReviews"],
+                        },
+                    },
+                },
+            ]);
+
+            attraction.totalReviews = reviews[0]?.totalReviews || 0;
+            attraction.averageRating = reviews[0]?.averageRating || 0;
 
             res.status(200).json(attraction);
         } catch (err) {

@@ -1,6 +1,6 @@
 const { Schema, model } = require("mongoose");
 
-const tourReviewSchema = new Schema(
+const attractionReviewSchema = new Schema(
     {
         title: {
             type: String,
@@ -20,15 +20,20 @@ const tourReviewSchema = new Schema(
                 message: () => "Rating should be between 5 and 1",
             },
         },
-        tourId: {
+        attraction: {
             type: Schema.Types.ObjectId,
-            ref: "Tour",
+            ref: "Attraction",
+            required: true,
+        },
+        user: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
             required: true,
         },
     },
     { timestamps: true }
 );
 
-const TourReview = model("TourReview", tourReviewSchema);
+const AttractionReview = model("AttractionReview", attractionReviewSchema);
 
-module.exports = TourReview;
+module.exports = AttractionReview;

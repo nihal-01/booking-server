@@ -1,4 +1,3 @@
-const TourReview = require("./tourReview.model");
 const HomeSettings = require("./homeSettings.model");
 const Subscriber = require("./subscriber.model");
 const AttractionCategory = require("./attractionCategory.model");
@@ -16,9 +15,9 @@ const Destination = require("./destination.model");
 const AttractionOrder = require("./attractionOrder.model");
 const VisaApplication = require("./visaApplication.model");
 const VisaDocument = require("./visaDocument.model");
+const AttractionReview = require("./attractionReview.model");
 
 module.exports = {
-    TourReview,
     HomeSettings,
     Subscriber,
     AttractionCategory,
@@ -36,4 +35,5 @@ module.exports = {
     AttractionOrder,
     VisaApplication,
     VisaDocument,
+    AttractionReview,
 };

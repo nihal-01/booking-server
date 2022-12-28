@@ -1,16 +1,17 @@
 const { compare, hash } = require("bcryptjs");
 
 const { sendErrorResponse } = require("../helpers");
-const { User } = require("../models");
+const { User, Country } = require("../models");
 const {
     userLoginSchema,
     userSignupSchema,
 } = require("../validations/user.schema");
+const { isValidObjectId } = require("mongoose");
 
 module.exports = {
     doSignup: async (req, res) => {
         try {
-            const { name, email, password } = req.body;
+            const { name, email, password, country, phoneNumber } = req.body;
 
             const { _, error } = userSignupSchema.validate(req.body);
 
@@ -27,12 +28,23 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Email already exists");
             }
 
+            if (!isValidObjectId(country)) {
+                return sendErrorResponse(res, 400, "Country not found");
+            }
+
+            const countryDetails = await Country.findById(country);
+            if (!countryDetails) {
+                return sendErrorResponse(res, 404, "Country not found");
+            }
+
             const hashedPassowrd = await hash(password, 8);
 
             const newUser = new User({
                 name,
                 email,
                 password: hashedPassowrd,
+                country,
+                phoneNumber,
             });
 
             const jwtToken = await newUser.generateAuthToken();

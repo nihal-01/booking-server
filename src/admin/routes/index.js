@@ -6,6 +6,7 @@ const admSubscribersRouter = require("./admSubscribersRouter");
 const admAttractionsRouter = require("./admAttractionsRouter");
 const admAttractionCategoriesRouter = require("./admAttractionCategoriesRouter");
 const admAttractionsTicketsRouter = require("./admAttractionsTicketsRouter");
+const admCountriesRouter = require("./admCountriesRouter");
 
 module.exports = {
     admAuthRouter,
@@ -16,4 +17,5 @@ module.exports = {
     admAttractionsRouter,
     admAttractionCategoriesRouter,
     admAttractionsTicketsRouter,
+    admCountriesRouter,
 };

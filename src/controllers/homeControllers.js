@@ -1,4 +1,3 @@
-const { Types } = require("mongoose");
 const { sendErrorResponse } = require("../helpers");
 const { HomeSettings, Attraction } = require("../models");
 
