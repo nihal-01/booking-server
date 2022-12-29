@@ -16,6 +16,7 @@ const AttractionOrder = require("./attractionOrder.model");
 const VisaApplication = require("./visaApplication.model");
 const VisaDocument = require("./visaDocument.model");
 const AttractionReview = require("./attractionReview.model");
+const Payment = require("./payment.model");
 
 module.exports = {
     HomeSettings,
@@ -36,4 +37,5 @@ module.exports = {
     VisaApplication,
     VisaDocument,
     AttractionReview,
+    Payment,
 };

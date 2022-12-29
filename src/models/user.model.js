@@ -10,7 +10,7 @@ const userSchema = new Schema(
         email: {
             type: String,
             lowercase: true,
-            unique: true,
+            // unique: true,
             required: true,
         },
         isEmailVerified: {
@@ -34,7 +34,9 @@ const userSchema = new Schema(
         },
         password: {
             type: String,
-            required: true,
+            required: function () {
+                return this.isGuestUser === false;
+            },
         },
         jwtToken: {
             type: String,

@@ -2,16 +2,31 @@ const fs = require("fs");
 const { parse } = require("csv-parse");
 
 const { sendErrorResponse } = require("../../helpers");
-const { AttractionTicket } = require("../../models");
+const { AttractionTicket, AttractionActivity } = require("../../models");
 const { isValidObjectId } = require("mongoose");
+const {
+    attractionTicketUploadSchema,
+} = require("../validations/attraction.schema");
 
 module.exports = {
     uploadTicket: async (req, res) => {
         try {
             const { activity } = req.body;
 
+            const { _, error } = attractionTicketUploadSchema.validate(
+                req.body
+            );
+            if (error) {
+                return sendErrorResponse(res, 400, error.details[0].message);
+            }
+
             if (!isValidObjectId(activity)) {
                 return sendErrorResponse(res, 400, "Invalid activity id");
+            }
+
+            const activityDetails = await AttractionActivity.findById(activity);
+            if (!activityDetails) {
+                return sendErrorResponse(res, 400, "Activity not found");
             }
 
             if (!req.file) {

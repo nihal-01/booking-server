@@ -42,6 +42,8 @@ const attractionOrderSchema = new Schema(
                         lowercase: true,
                         enum: ["private", "shared"],
                     },
+                    adultTickets: { type: [] },
+                    childTickets: { type: [] },
                 },
             ],
         },
@@ -61,6 +63,12 @@ const attractionOrderSchema = new Schema(
             type: String,
             required: true,
             enum: ["pending", "booked", "confirmed", "cancelled"],
+        },
+        paymentStatus: {
+            type: String,
+        },
+        orderId: {
+            type: String,
         },
     },
     { timestamps: true }

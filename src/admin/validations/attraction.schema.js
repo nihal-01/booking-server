@@ -78,4 +78,12 @@ const attractionActivitySchema = Joi.object({
     note: Joi.string().allow("", null),
 });
 
-module.exports = { attractionSchema, attractionActivitySchema };
+const attractionTicketUploadSchema = Joi.object({
+    activity: Joi.string().required(),
+});
+
+module.exports = {
+    attractionSchema,
+    attractionActivitySchema,
+    attractionTicketUploadSchema,
+};
