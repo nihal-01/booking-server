@@ -24,43 +24,82 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid activity id");
             }
 
-            const activityDetails = await AttractionActivity.findById(activity);
+            const activityDetails = await AttractionActivity.findById(
+                activity
+            ).populate("attraction");
             if (!activityDetails) {
                 return sendErrorResponse(res, 400, "Activity not found");
+            }
+
+            if (!activityDetails?.attraction) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "Attraction not found or disabled"
+                );
+            }
+
+            if (activityDetails?.attraction?.bookingType !== "ticket") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "You can't upload ticket to type 'booking'"
+                );
             }
 
             if (!req.file) {
                 return sendErrorResponse(res, 500, "CSV file is required");
             }
 
-            var csvData = [];
-            let rowNo = 0;
+            let ticketsList = [];
+            let csvRow = 0;
 
-            // console.log(req.file);
             fs.createReadStream(req.file?.path)
                 .pipe(parse({ delimiter: "," }))
-                .on("data", function (csvrow) {
-                    if (rowNo !== 0) {
-                        const data = {
+                .on("data", async function (csvrow) {
+                    if (csvRow !== 0) {
+                        ticketsList.push({
                             ticketNo: csvrow[0],
                             lotNo: csvrow[1],
-                            activity: "csvrow[0]",
+                            activity,
                             validity: csvrow[2]?.toLowerCase() === "y",
                             validTill: csvrow[3],
                             details: csvrow[4],
                             ticketFor: csvrow[5],
-                        };
-                        csvData.push(csvrow);
+                        });
                     }
-                    rowNo += 1;
-                    //do something with csvrow
+                    csvRow += 1;
                 })
-                .on("end", function () {
-                    //do something with csvData
-                    // console.log(csvData);
-                });
+                .on("end", async function () {
+                    for (let i = 0; i < ticketsList.length; i++) {
+                        await AttractionTicket.findOneAndUpdate(
+                            {
+                                ticketNo:
+                                    ticketsList[i]?.ticketNo?.toUpperCase(),
+                            },
+                            {
+                                lotNo: ticketsList[i]?.lotNo,
+                                activity: ticketsList[i]?.activity,
+                                validity: ticketsList[i]?.validity,
+                                validTill: ticketsList[i]?.validTill,
+                                details: ticketsList[i]?.details,
+                                ticketFor: ticketsList[i]?.ticketFor,
+                            },
+                            { upsert: true, runValidators: true }
+                        );
+                    }
 
-            // sendErrorResponse(res, 500, err);
+                    res.status(200).json({
+                        message: "Tickets successfully uploaded",
+                    });
+                })
+                .on("error", function (err) {
+                    sendErrorResponse(
+                        res,
+                        400,
+                        "Something went wrong, Wile parsing CSV"
+                    );
+                });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

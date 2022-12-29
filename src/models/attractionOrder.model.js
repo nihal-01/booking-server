@@ -40,7 +40,7 @@ const attractionOrderSchema = new Schema(
                     transferType: {
                         type: String,
                         lowercase: true,
-                        enum: ["private", "shared"],
+                        enum: ["without", "private", "shared"],
                     },
                     adultTickets: { type: [] },
                     childTickets: { type: [] },

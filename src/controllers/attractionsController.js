@@ -1,4 +1,4 @@
-const { isValidObjectId } = require("mongoose");
+const { isValidObjectId, Types } = require("mongoose");
 
 const { sendErrorResponse } = require("../helpers");
 const {
@@ -79,7 +79,7 @@ module.exports = {
                     );
                 }
 
-                if (activity.bookingType === "ticket") {
+                if (attr.bookingType === "ticket") {
                     const adultTickets = await AttractionTicket.find({
                         activity: activity._id,
                         status: "ok",
@@ -576,6 +576,28 @@ module.exports = {
             attraction.averageRating = reviews[0]?.averageRating || 0;
 
             res.status(200).json(attraction);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSingleAttractionOrder: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid attraction id");
+            }
+
+            const attractionOrder = await AttractionOrder.findById(id)
+                .populate("orders.activity")
+                .populate("attraction", "title isOffer offerAmount offerAmountType")
+                .lean();
+            if (!attractionOrder) {
+                return sendErrorResponse(res, 400, "Attraction not found");
+            }
+
+            res.status(200).json(attractionOrder);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

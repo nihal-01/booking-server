@@ -5,6 +5,7 @@ const attractionTicketSchema = new Schema(
         ticketNo: {
             type: String,
             required: true,
+            uppercase: true,
         },
         lotNo: {
             type: String,
