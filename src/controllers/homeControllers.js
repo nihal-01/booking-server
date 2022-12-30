@@ -1,5 +1,5 @@
 const { sendErrorResponse } = require("../helpers");
-const { HomeSettings, Attraction } = require("../models");
+const { HomeSettings, Attraction, Country } = require("../models");
 
 module.exports = {
     getHomeData: async (req, res) => {
@@ -161,6 +161,16 @@ module.exports = {
                 bestSellingAttractions,
                 topAttractions,
             });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getInitialData: async (req, res) => {
+        try {
+            const countries = await Country.find({});
+
+            res.status(200).json({ countries });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

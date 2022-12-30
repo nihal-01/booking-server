@@ -4,6 +4,8 @@ const multer = require("multer");
 const {
     createNewAttraction,
     addAttractionActivity,
+    getAllAttractions,
+    getInitialData,
 } = require("../controllers/admAttractionsController");
 
 const storage = multer.diskStorage({
@@ -39,5 +41,8 @@ const upload = multer({
 
 router.post("/create", upload.array("images"), createNewAttraction);
 router.post("/activities/add", addAttractionActivity);
+
+router.get("/all", getAllAttractions);
+router.get("/initial-data", getInitialData);
 
 module.exports = router;

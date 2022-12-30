@@ -15,10 +15,10 @@ const {
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
-router.use("/attractions/tickets", admAttractionsTicketsRouter);
 
 router.use(adminAuth);
 
+router.use("/attractions/tickets", admAttractionsTicketsRouter);
 router.use("/attractions/categories", admAttractionCategoriesRouter);
 router.use("/attractions", admAttractionsRouter);
 router.use("/home", admHomeRouter);

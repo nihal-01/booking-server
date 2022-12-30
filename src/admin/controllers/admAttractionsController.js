@@ -228,14 +228,6 @@ module.exports = {
         }
     },
 
-    // deleteImage: async (req, res) => {
-    //     try {
-
-    //     } catch (err) {
-    //         sendErrorResponse(res, 500, err)
-    //     }
-    // },
-
     addAttractionActivity: async (req, res) => {
         try {
             const {
@@ -305,6 +297,41 @@ module.exports = {
 
     uploadTickets: async (req, res) => {
         try {
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getAllAttractions: async (req, res) => {
+        try {
+            const { skip = 0, limit = 10 } = req.query;
+
+            const attractions = await Attraction.find({})
+                .populate("destination")
+                .sort({ createdAt: -1 })
+                .limit(limit)
+                .skip(limit * skip)
+                .lean();
+
+            const totalAttractions = await Attraction.find({}).count();
+
+            res.status(200).json({
+                attractions,
+                totalAttractions,
+                skip: Number(skip),
+                limit: Number(limit),
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getInitialData: async (req, res) => {
+        try {
+            const destinations = await Destination.find({});
+            const categories = await AttractionCategory.find({});
+
+            res.status(200).json({ destinations, categories });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
