@@ -45,7 +45,7 @@ const attractionSchema = new Schema(
             enum: ["hours", "days", "months"],
         },
         duration: {
-            type: String,
+            type: Number,
             required: true,
         },
         isActive: {

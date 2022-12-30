@@ -4,30 +4,18 @@ const { Destination, Country } = require("../../models");
 const { destinationSchema } = require("../validations/destination.schema");
 
 module.exports = {
-    getAllDestinationsByCountry: async (req, res) => {
+    getAllDestinations: async (req, res) => {
         try {
-            const { countryId } = req.params;
             const { skip = 0, limit = 10 } = req.query;
 
-            if (!isValidObjectId(countryId)) {
-                return sendErrorResponse(res, 400, "Invalid countryId");
-            }
-
-            const country = await Country.findById(countryId);
-            if (!country) {
-                return sendErrorResponse(res, 404, "Country not found!");
-            }
-
-            const destinations = await Destination.find({
-                country: countryId,
-            })
+            const destinations = await Destination.find({})
+                .populate("country")
                 .sort({ _id: -1 })
                 .limit(limit)
-                .skip(limit * skip);
+                .skip(limit * skip)
+                .lean();
 
-            const totalDestinations = await Destination.find({
-                country: countryId,
-            }).count();
+            const totalDestinations = await Destination.find({}).count();
 
             res.status(200).json({
                 destinations,
@@ -64,7 +52,10 @@ module.exports = {
             });
             await newDestination.save();
 
-            res.status(200).json(newDestination);
+            const destinationObj = await Object(newDestination);
+            destinationObj.country = countryDetails;
+
+            res.status(200).json(destinationObj);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

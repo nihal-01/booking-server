@@ -4,7 +4,7 @@ const destinationSchema = new Schema(
     {
         country: {
             type: Schema.Types.ObjectId,
-            reef: "CCountry",
+            ref: "Country",
             required: true,
         },
         name: {

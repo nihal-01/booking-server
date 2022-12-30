@@ -12,6 +12,7 @@ const {
     admAttractionsTicketsRouter,
     admCountriesRouter,
     admDestinationsRouter,
+    admGeneralRouter,
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
@@ -27,5 +28,6 @@ router.use("/blogs", admBlogsRouter);
 router.use("/subscribers", admSubscribersRouter);
 router.use("/countries", admCountriesRouter);
 router.use("/destinations", admDestinationsRouter);
+router.use("/general", admGeneralRouter);
 
 module.exports = router;
