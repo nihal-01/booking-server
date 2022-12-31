@@ -1,4 +1,5 @@
 const router = require("express").Router();
+const path = require("path");
 
 const {
     createNewCountryVisa,
@@ -27,8 +28,9 @@ const upload = multer({
         fileSize: 2000000,
     },
     fileFilter: (req, file, cb) => {
-        const allowed = ["jpg", "jpeg", "png", "webp"];
-        if (!allowed.includes(file.originalname.split(".")[1])) {
+        const allowed = [".jpg", ".jpeg", ".png", ".webp"];
+        const ext = path.extname(file.originalname);
+        if (!allowed.includes(ext)) {
             return cb(new Error("Please upload jpg, jpeg, webp, or png"));
         }
         cb(undefined, true);

@@ -1,5 +1,6 @@
 const router = require("express").Router();
 const multer = require("multer");
+const path = require("path");
 
 const {
     updateHomeHero,
@@ -10,6 +11,9 @@ const {
     updateHomeLogo,
     updateMetaDetails,
     updateHomeSections,
+    getLogo,
+    getAllCards,
+    getMetaDetails,
 } = require("../controllers/admHomeControllers");
 
 const storage = multer.diskStorage({
@@ -34,8 +38,9 @@ const upload = multer({
         fileSize: 2000000,
     },
     fileFilter: (req, file, cb) => {
-        const allowed = ["jpg", "jpeg", "png", "webp"];
-        if (!allowed.includes(file.originalname.split(".")[1])) {
+        const allowed = [".jpg", ".jpeg", ".png", ".webp"];
+        const ext = path.extname(file.originalname);
+        if (!allowed.includes(ext)) {
             return cb(new Error("Please upload jpg, jpeg, webp, or png"));
         }
         cb(undefined, true);
@@ -58,5 +63,9 @@ router.patch("/update/sections", updateHomeSections);
 router.delete("/delete/footer/:id", deleteHomeFooter);
 router.delete("/delete/card/:id", deleteHomeCard);
 router.delete("/delete/hero-image/:url", deleteHomeCard);
+
+router.get("/logo", getLogo);
+router.get("/cards", getAllCards);
+router.get("/meta-details", getMetaDetails);
 
 module.exports = router;

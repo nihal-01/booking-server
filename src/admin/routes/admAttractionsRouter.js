@@ -1,11 +1,13 @@
 const router = require("express").Router();
 const multer = require("multer");
+const path = require("path");
 
 const {
     createNewAttraction,
     addAttractionActivity,
     getAllAttractions,
     getInitialData,
+    getSingleAttraction,
 } = require("../controllers/admAttractionsController");
 
 const storage = multer.diskStorage({
@@ -30,8 +32,9 @@ const upload = multer({
         fileSize: 20000000,
     },
     fileFilter: (req, file, cb) => {
-        const allowed = ["jpg", "jpeg", "png", "webp"];
-        if (!allowed.includes(file.originalname.split(".")[1])) {
+        const allowed = [".jpg", ".jpeg", ".png", ".webp"];
+        const ext = path.extname(file.originalname);
+        if (!allowed.includes(ext)) {
             return cb(new Error("Please upload jpg, jpeg, webp, or png"));
         }
         cb(undefined, true);
@@ -44,5 +47,6 @@ router.post("/activities/add", addAttractionActivity);
 
 router.get("/all", getAllAttractions);
 router.get("/initial-data", getInitialData);
+router.get("/single/:id", getSingleAttraction);
 
 module.exports = router;
