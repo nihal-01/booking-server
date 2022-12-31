@@ -27,8 +27,9 @@ const upload = multer({
         fileSize: 2000000,
     },
     fileFilter: (req, file, cb) => {
-        const allowed = ["csv"];
-        if (!allowed.includes(file.originalname.split(".")[1])) {
+        const allowed = [".csv"];
+        const ext = path.extname(file.originalname);
+        if (!allowed.includes(ext)) {
             return cb(new Error("Please upload csv file"));
         }
         cb(undefined, true);

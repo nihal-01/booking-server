@@ -10,6 +10,7 @@ const {
     AttractionReview,
     Country,
     Payment,
+    Destination,
 } = require("../models/");
 const {
     attractionOrderSchema,
@@ -591,13 +592,125 @@ module.exports = {
 
             const attractionOrder = await AttractionOrder.findById(id)
                 .populate("orders.activity")
-                .populate("attraction", "title isOffer offerAmount offerAmountType")
+                .populate(
+                    "attraction",
+                    "title isOffer offerAmount offerAmountType"
+                )
                 .lean();
             if (!attractionOrder) {
                 return sendErrorResponse(res, 400, "Attraction not found");
             }
 
             res.status(200).json(attractionOrder);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getAllAttractions: async (req, res) => {
+        try {
+            const {
+                skip = 0,
+                limit = 10,
+                category,
+                destination,
+                priceFrom,
+                priceTo,
+                rating,
+            } = req.query;
+
+            const filters1 = {};
+            const filters2 = {};
+
+            if (category && category !== "") {
+                if (!isValidObjectId(category)) {
+                    return sendErrorResponse(res, 400, "Invalid category id");
+                }
+
+                filters1.category = category;
+            }
+
+            if (destination && destination !== "") {
+                const dest = await Destination.findOne({
+                    name: destination?.toLowerCase(),
+                });
+
+                if (dest) {
+                    filters1.destination = dest?._id;
+                } else {
+                    return res.status(200).json({
+                        destinations: [],
+                        skip: Number(skip),
+                        limit: Number(limit),
+                    });
+                }
+            }
+
+            if (priceFrom && priceFrom !== "") {
+                filters2.activity.adultPrice = { $gte: priceFrom };
+            }
+
+            if (priceTo && priceTo !== "") {
+                filters2.activity.adultPrice = { $lte: priceTo };
+            }
+
+            const attractions = await Attraction.aggregate([
+                { $match: filters1 },
+                {
+                    $lookup: {
+                        from: "attractionactivities",
+                        let: {
+                            attraction: "$_id",
+                        },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $eq: ["$attraction", "$$attraction"],
+                                    },
+                                },
+                            },
+                            {
+                                $sort: { createdAt: -1 },
+                            },
+                            {
+                                $limit: 1,
+                            },
+                        ],
+                        as: "activities",
+                    },
+                },
+                {
+                    $set: {
+                        activity: { $arrayElemAt: ["$activities", 0] },
+                    },
+                },
+                {
+                    $match: filters2,
+                },
+                {
+                    $project: {
+                        title: 1,
+                        category: {
+                            categoryName: 1,
+                            slug: 1,
+                        },
+                        images: 1,
+                        bookingType: 1,
+                        activity: {
+                            adultPrice: 1,
+                        },
+                    },
+                },
+                {
+                    $limit: limit,
+                },
+                {
+                    $skip: limit * skip,
+                },
+            ]);
+
+            res.status(200).json(attractions);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
