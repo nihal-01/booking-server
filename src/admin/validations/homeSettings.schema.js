@@ -1,8 +1,8 @@
 const Joi = require("joi");
 
 const homeMetaSettingsSchema = Joi.object({
-    mobileNumber1: Joi.string().allow("", null),
-    mobileNumber2: Joi.string().allow("", null),
+    phoneNumber1: Joi.string().allow("", null),
+    phoneNumber2: Joi.string().allow("", null),
     email: Joi.string().email().allow("", null),
     facebookUrl: Joi.string().allow("", null),
     instagramUrl: Joi.string().allow("", null),

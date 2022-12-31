@@ -257,8 +257,8 @@ module.exports = {
         try {
             const {
                 email,
-                mobileNumber1,
-                mobileNumber2,
+                phoneNumber1,
+                phoneNumber2,
                 facebookUrl,
                 instagramUrl,
                 footerDescription,
@@ -273,8 +273,8 @@ module.exports = {
                 { settingsNumber: 1 },
                 {
                     email,
-                    mobileNumber1,
-                    mobileNumber2,
+                    phoneNumber1,
+                    phoneNumber2,
                     facebookUrl,
                     instagramUrl,
                     footerDescription,
@@ -336,7 +336,7 @@ module.exports = {
 
             res.status(200).json({
                 phoneNumber1: home?.phoneNumber1,
-                phoneNumber1: home?.phoneNumber1,
+                phoneNumber2: home?.phoneNumber2,
                 email: home?.email,
                 facebookUrl: home?.facebookUrl,
                 instagramUrl: home?.instagramUrl,
