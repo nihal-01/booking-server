@@ -11,6 +11,20 @@ const {
 } = require("../validations/homeSettings.schema");
 
 module.exports = {
+    getLogo: async (req, res) => {
+        try {
+            const home = await HomeSettings.findOne({ settingsNumber: 1 });
+
+            if (!home) {
+                return sendErrorResponse(res, 404, "Home not found");
+            }
+
+            res.status(200).json({ logo: home?.logo });
+        } catch (err) {
+            console.log(err);
+        }
+    },
+
     updateHomeLogo: async (req, res) => {
         try {
             if (!req.file?.path) {
@@ -99,6 +113,20 @@ module.exports = {
         }
     },
 
+    getAllCards: async (req, res) => {
+        try {
+            const home = await HomeSettings.findOne({ settingsNumber: 1 });
+
+            if (!home) {
+                return sendErrorResponse(res, 404, "Home not found");
+            }
+
+            res.status(200).json({ cards: home?.cards });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
     addNewHomeCard: async (req, res) => {
         try {
             const { title, description, tag, url, isRelativeUrl } = req.body;
@@ -108,7 +136,7 @@ module.exports = {
                 return sendErrorResponse(res, 500, error.details[0].message);
             }
 
-            console.log("first")
+            console.log("first");
 
             if (!req.files?.backgroundImage[0]?.path) {
                 return sendErrorResponse(
@@ -119,14 +147,12 @@ module.exports = {
             }
 
             const backgroundImage =
-            "/" + req.files?.backgroundImage[0]?.path.replace(/\\/g, "/");
-
+                "/" + req.files?.backgroundImage[0]?.path.replace(/\\/g, "/");
 
             let icon;
             if (req.file?.icon && req.files?.icon[0]?.path) {
                 icon = "/" + req.files?.icon[0]?.path.replace(/\\/g, "/");
             }
-
 
             const homeSettings = await HomeSettings.findOneAndUpdate(
                 {
@@ -293,6 +319,28 @@ module.exports = {
 
             res.status(200).json({
                 message: "Sections successfully updated",
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getMetaDetails: async (req, res) => {
+        try {
+            const home = await HomeSettings.findOne({
+                settingsNumber: 1,
+            });
+            if (!home) {
+                return sendErrorResponse(res, 404, "Home not found");
+            }
+
+            res.status(200).json({
+                phoneNumber1: home?.phoneNumber1,
+                phoneNumber1: home?.phoneNumber1,
+                email: home?.email,
+                facebookUrl: home?.facebookUrl,
+                instagramUrl: home?.instagramUrl,
+                footerDescription: home?.footerDescription,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);

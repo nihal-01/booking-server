@@ -1,9 +1,9 @@
 const Joi = require("joi");
 
 const homeMetaSettingsSchema = Joi.object({
-    mobileNumber1: Joi.string().required(),
+    mobileNumber1: Joi.string().allow("", null),
     mobileNumber2: Joi.string().allow("", null),
-    email: Joi.string().email().required(),
+    email: Joi.string().email().allow("", null),
     facebookUrl: Joi.string().allow("", null),
     instagramUrl: Joi.string().allow("", null),
     footerDescription: Joi.string().allow("", null),
@@ -46,6 +46,8 @@ const homeCardSettingsSchema = Joi.object({
     tag: Joi.string().allow("", null),
     url: Joi.string().required(),
     isRelativeUrl: Joi.boolean().required(),
+    icon: Joi.any(),
+    backgroundImage: Joi.any(),
 });
 
 module.exports = {
