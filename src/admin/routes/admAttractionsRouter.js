@@ -1,11 +1,13 @@
 const router = require("express").Router();
 const multer = require("multer");
+const path = require("path");
 
 const {
     createNewAttraction,
     addAttractionActivity,
     getAllAttractions,
     getInitialData,
+    getSingleAttraction,
 } = require("../controllers/admAttractionsController");
 
 const storage = multer.diskStorage({
@@ -45,5 +47,6 @@ router.post("/activities/add", addAttractionActivity);
 
 router.get("/all", getAllAttractions);
 router.get("/initial-data", getInitialData);
+router.get("/single/:id", getSingleAttraction);
 
 module.exports = router;

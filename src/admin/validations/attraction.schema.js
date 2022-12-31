@@ -39,10 +39,12 @@ const attractionSchema = Joi.object({
             .valid(...["flat", "percentage"])
             .required(),
     }),
-    offerAmount: Joi.number().when("isOffer", {
-        is: Joi.boolean().valid(true),
-        then: Joi.number().required(),
-    }),
+    offerAmount: Joi.number()
+        .allow("")
+        .when("isOffer", {
+            is: Joi.boolean().valid(true),
+            then: Joi.number().required(),
+        }),
     youtubeLink: Joi.string().required(),
     pickupAndDrop: Joi.string().valid(...["yes", "no"]),
     highlights: Joi.string().required(),
