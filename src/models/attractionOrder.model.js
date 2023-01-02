@@ -45,6 +45,11 @@ const attractionOrderSchema = new Schema(
                     adultTickets: { type: [] },
                     childTickets: { type: [] },
                     price: { type: Number, required: true },
+                    status: {
+                        type: String,
+                        lowercase: true,
+                        enum: ["booked", "confirmed", "cancelled", "refunded"],
+                    },
                 },
             ],
         },
@@ -60,10 +65,10 @@ const attractionOrderSchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: "User",
         },
-        status: {
+        orderStatus: {
             type: String,
             required: true,
-            enum: ["pending", "booked", "confirmed", "cancelled"],
+            enum: ["initiated", "created", "completed"],
         },
         paymentStatus: {
             type: String,

@@ -65,7 +65,7 @@ module.exports = {
                 return sendErrorResponse(res, 404, "Attraction not found");
             }
 
-            const attractionReviews = await AttractionReview.find({
+            const reviews = await AttractionReview.find({
                 attraction: id,
             })
                 .populate("user", "name avatar email")
@@ -74,13 +74,13 @@ module.exports = {
                 .skip(limit * skip)
                 .lean();
 
-            const totalAttractionReviews = await AttractionReview.find({
+            const totalReviews = await AttractionReview.find({
                 attraction: id,
             }).count();
 
             res.status(200).json({
-                attractionReviews,
-                totalAttractionReviews,
+                reviews,
+                totalReviews,
                 skip: Number(skip),
                 limit: Number(limit),
             });

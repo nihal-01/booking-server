@@ -7,6 +7,7 @@ const {
     AttractionActivity,
     Destination,
     AttractionOrder,
+    AttractionReview,
 } = require("../../models");
 const {
     attractionSchema,
@@ -341,12 +342,66 @@ module.exports = {
         try {
             const { skip = 0, limit = 10 } = req.query;
 
-            const attractions = await Attraction.find({ isDeleted: false })
-                .populate("destination")
-                .sort({ createdAt: -1 })
-                .limit(limit)
-                .skip(limit * skip)
-                .lean();
+            // const attractions = await Attraction.find({ isDeleted: false })
+            //     .populate("destination")
+            //     .sort({ createdAt: -1 })
+            //     .limit(limit)
+            //     .skip(limit * skip)
+            //     .lean();
+
+            const attractions = await Attraction.aggregate([
+                { $match: { isDeleted: false } },
+                {
+                    $lookup: {
+                        from: "destinations",
+                        localField: "destination",
+                        foreignField: "_id",
+                        as: "destination",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "attractionreviews",
+                        localField: "_id",
+                        foreignField: "attraction",
+                        as: "reviews",
+                    },
+                },
+                {
+                    $set: {
+                        totalRating: {
+                            $sum: {
+                                $map: {
+                                    input: "$reviews",
+                                    in: "$$this.rating",
+                                },
+                            },
+                        },
+                        totalReviews: {
+                            $size: "$reviews",
+                        },
+                        destination: { $arrayElemAt: ["$destination", 0] },
+                    },
+                },
+                {
+                    $project: {
+                        title: 1,
+                        bookingType: 1,
+                        isOffer: 1,
+                        offerAmountType: 1,
+                        offerAmount: 1,
+                        destination: 1,
+                        totalReviews: 1,
+                        averageRating: {
+                            $cond: [
+                                { $eq: ["$totalReviews", 0] },
+                                0,
+                                { $divide: ["$totalRating", "$totalReviews"] },
+                            ],
+                        },
+                    },
+                },
+            ]);
 
             const totalAttractions = await Attraction.find({
                 isDeleted: false,
@@ -427,19 +482,80 @@ module.exports = {
             const { skip = 0, limit = 10 } = req.query;
 
             const orders = await AttractionOrder.aggregate([
-                { $match: { $ne: "pending" } },
-                { $unwind: "$orders" },
+                { $match: { status: { $ne: "pending" } } },
+                {
+                    $lookup: {
+                        from: "attractions",
+                        localField: "attraction",
+                        foreignField: "_id",
+                        as: "attraction",
+                    },
+                },
+                {
+                    $set: {
+                        attraction: { $arrayElemAt: ["$attraction", 0] },
+                    },
+                },
                 {
                     $lookup: {
                         from: "users",
                         localField: "user",
                         foreignField: "_id",
-                        as: "users",
+                        as: "user",
                     },
                 },
                 {
                     $set: {
                         user: { $arrayElemAt: ["$user", 0] },
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "countries",
+                        localField: "user.country",
+                        foreignField: "_id",
+                        as: "country",
+                    },
+                },
+                {
+                    $set: {
+                        "user.country": { $arrayElemAt: ["$country", 0] },
+                    },
+                },
+                { $unwind: "$activities" },
+                {
+                    $lookup: {
+                        from: "attractionactivities",
+                        localField: "activities.activity",
+                        foreignField: "_id",
+                        as: "activity",
+                    },
+                },
+                {
+                    $set: {
+                        activity: {
+                            $arrayElemAt: ["$activity", 0],
+                        },
+                    },
+                },
+                {
+                    $project: {
+                        activity: {
+                            name: 1,
+                        },
+                        attraction: {
+                            title: 1,
+                            images: 1,
+                        },
+                        activities: 1,
+                        bookingType: 1,
+                        user: {
+                            name: 1,
+                            email: 1,
+                            country: 1,
+                            phoneNumber: 1,
+                        },
+                        orderId: 1,
                     },
                 },
                 {
@@ -452,6 +568,45 @@ module.exports = {
             res.status(200).json({
                 orders,
                 totalOrders,
+                skip: Number(skip),
+                limit: Number(limit),
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSingleAttractionReviews: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { skip = 0, limit = 10 } = req.query;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid attraction id");
+            }
+
+            const attraction = await Attraction.findById(id).select("title");
+            if (!attraction) {
+                return sendErrorResponse(res, 404, "Attraction not found");
+            }
+
+            const attractionReviews = await AttractionReview.find({
+                attraction: id,
+            })
+                .populate("user", "name avatar email")
+                .sort({ createdAt: -1 })
+                .limit(limit)
+                .skip(limit * skip)
+                .lean();
+
+            const totalAttractionReviews = await AttractionReview.find({
+                attraction: id,
+            }).count();
+
+            res.status(200).json({
+                attractionReviews,
+                attraction,
+                totalAttractionReviews,
                 skip: Number(skip),
                 limit: Number(limit),
             });
