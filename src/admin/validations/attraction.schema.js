@@ -49,9 +49,11 @@ const attractionSchema = Joi.object({
     pickupAndDrop: Joi.string().valid(...["yes", "no"]),
     highlights: Joi.string().required(),
     sections: Joi.array().items({
+        _id: Joi.string(),
         title: Joi.string().required(),
         body: Joi.string().required(),
     }),
+    oldImages: Joi.array(),
 });
 
 const attractionActivitySchema = Joi.object({

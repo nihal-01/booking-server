@@ -8,6 +8,7 @@ const {
     getAllAttractions,
     getInitialData,
     getSingleAttraction,
+    updateAttraction,
 } = require("../controllers/admAttractionsController");
 
 const storage = multer.diskStorage({
@@ -44,6 +45,8 @@ const upload = multer({
 
 router.post("/create", upload.array("images"), createNewAttraction);
 router.post("/activities/add", addAttractionActivity);
+
+router.patch("/update/:id", upload.array("images"), updateAttraction);
 
 router.get("/all", getAllAttractions);
 router.get("/initial-data", getInitialData);

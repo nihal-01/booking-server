@@ -156,17 +156,23 @@ module.exports = {
                 youtubeLink,
                 pickupAndDrop,
                 sections,
-                availability,
-                availableDays,
                 startDate,
                 endDate,
                 duration,
                 durationType,
+                offDays,
+                offDates,
+                bookingType,
+                destination,
+                highlights,
+                oldImages,
             } = req.body;
 
             const { _, error } = attractionSchema.validate({
                 ...req.body,
-                availableDays: availableDays ? JSON.parse(availableDays) : [],
+                offDays: offDays ? JSON.parse(offDays) : [],
+                sections: sections ? JSON.parse(sections) : [],
+                oldImages: oldImages ? JSON.parse(oldImages) : [],
             });
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
@@ -176,7 +182,7 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid attraction id");
             }
 
-            if (!isValidObjectId(category)) {
+            if (category && !isValidObjectId(category)) {
                 return sendErrorResponse(res, 400, "Invalid category Id");
             }
 
@@ -187,10 +193,20 @@ module.exports = {
                 return sendErrorResponse(res, 404, "Category not found!");
             }
 
-            let newImages = [];
+            let parsedOldImages = [];
+            if (oldImages) {
+                parsedOldImages = JSON.parse(oldImages);
+            }
+
+            let newImages = [...parsedOldImages];
             for (let i = 0; i < req.files?.length; i++) {
                 const img = "/" + req.files[i]?.path?.replace(/\\/g, "/");
                 newImages.push(img);
+            }
+
+            let parsedSections;
+            if (sections) {
+                parsedSections = JSON.parse(sections);
             }
 
             const attraction = await Attraction.findByIdAndUpdate(
@@ -205,15 +221,17 @@ module.exports = {
                     offerAmountType,
                     offerAmount,
                     youtubeLink,
-                    $push: { images: newImages },
+                    images: newImages,
                     pickupAndDrop,
-                    sections,
-                    availability,
-                    availableDays,
+                    sections: parsedSections,
                     startDate,
                     endDate,
                     duration,
                     durationType,
+                    offDates,
+                    bookingType,
+                    destination,
+                    highlights,
                 },
                 { runValidators: true, new: true }
             );

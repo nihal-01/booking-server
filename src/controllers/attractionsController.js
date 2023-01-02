@@ -703,10 +703,10 @@ module.exports = {
                     },
                 },
                 {
-                    $limit: limit,
+                    $limit: Number(limit),
                 },
                 {
-                    $skip: limit * skip,
+                    $skip: Number(limit) * Number(skip),
                 },
             ]);
 
