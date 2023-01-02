@@ -54,6 +54,11 @@ const attractionSchema = Joi.object({
         body: Joi.string().required(),
     }),
     oldImages: Joi.array(),
+    faqs: Joi.array().items({
+        _id: Joi.string(),
+        question: Joi.string().required(),
+        answer: Joi.string().required(),
+    }),
 });
 
 const attractionActivitySchema = Joi.object({

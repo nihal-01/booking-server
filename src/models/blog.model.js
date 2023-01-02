@@ -22,6 +22,11 @@ const blogSchema = new Schema(
         tags: {
             type: [{ type: String, required: true, lowercase: true }],
         },
+        isDeleted: {
+            type: Boolean,
+            required: false,
+            default: false,
+        },
     },
     { timestamps: true }
 );

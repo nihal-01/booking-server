@@ -47,12 +47,14 @@ module.exports = {
                 bookingType,
                 destination,
                 highlights,
+                faqs,
             } = req.body;
 
             const { _, error } = attractionSchema.validate({
                 ...req.body,
                 offDays: offDays ? JSON.parse(offDays) : [],
                 sections: sections ? JSON.parse(sections) : [],
+                faqs: faqs ? JSON.parse(faqs) : [],
             });
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
@@ -111,6 +113,11 @@ module.exports = {
                 parsedSections = JSON.parse(sections);
             }
 
+            let parsedFaqs;
+            if (faqs) {
+                parsedFaqs = JSON.parse(faqs);
+            }
+
             const newAttraction = new Attraction({
                 title,
                 bookingType,
@@ -132,6 +139,7 @@ module.exports = {
                 durationType,
                 destination,
                 highlights,
+                faqs: parsedFaqs,
             });
             await newAttraction.save();
 
@@ -166,6 +174,7 @@ module.exports = {
                 destination,
                 highlights,
                 oldImages,
+                faqs,
             } = req.body;
 
             const { _, error } = attractionSchema.validate({
@@ -173,6 +182,7 @@ module.exports = {
                 offDays: offDays ? JSON.parse(offDays) : [],
                 sections: sections ? JSON.parse(sections) : [],
                 oldImages: oldImages ? JSON.parse(oldImages) : [],
+                faqs: faqs ? JSON.parse(faqs) : [],
             });
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
@@ -209,8 +219,13 @@ module.exports = {
                 parsedSections = JSON.parse(sections);
             }
 
-            const attraction = await Attraction.findByIdAndUpdate(
-                id,
+            let parsedFaqs;
+            if (faqs) {
+                parsedFaqs = JSON.parse(faqs);
+            }
+
+            const attraction = await Attraction.findOneAndUpdate(
+                { _id: id, isDeleted: false },
                 {
                     title,
                     category,
@@ -232,6 +247,7 @@ module.exports = {
                     bookingType,
                     destination,
                     highlights,
+                    faqs: parsedFaqs,
                 },
                 { runValidators: true, new: true }
             );
@@ -324,14 +340,16 @@ module.exports = {
         try {
             const { skip = 0, limit = 10 } = req.query;
 
-            const attractions = await Attraction.find({})
+            const attractions = await Attraction.find({ isDeleted: false })
                 .populate("destination")
                 .sort({ createdAt: -1 })
                 .limit(limit)
                 .skip(limit * skip)
                 .lean();
 
-            const totalAttractions = await Attraction.find({}).count();
+            const totalAttractions = await Attraction.find({
+                isDeleted: false,
+            }).count();
 
             res.status(200).json({
                 attractions,
@@ -346,10 +364,9 @@ module.exports = {
 
     getInitialData: async (req, res) => {
         try {
-            const destinations = await Destination.find({});
             const categories = await AttractionCategory.find({});
 
-            res.status(200).json({ destinations, categories });
+            res.status(200).json({ categories });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
@@ -363,7 +380,10 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid attraction id");
             }
 
-            const attraction = await Attraction.findById(id)
+            const attraction = await Attraction.findOne({
+                _id: id,
+                isDeleted: false,
+            })
                 .populate("activities")
                 .lean();
 
@@ -372,6 +392,30 @@ module.exports = {
             }
 
             res.status(200).json(attraction);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    deleteAttraction: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid attraction id");
+            }
+
+            const attraction = await Attraction.findByIdAndUpdate(id, {
+                isDeleted: true,
+            });
+            if (!attraction) {
+                return sendErrorResponse(res, 400, "Attraction not found");
+            }
+
+            res.status(200).json({
+                message: "Attraction successfully deleted",
+                _id: id,
+            });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

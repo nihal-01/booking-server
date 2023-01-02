@@ -5,6 +5,7 @@ const countrySchema = new Schema(
         countryName: {
             type: String,
             required: true,
+            lowercase: true,
         },
         isocode: {
             type: String,

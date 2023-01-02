@@ -33,7 +33,10 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid Attraction Id");
             }
 
-            const attr = await Attraction.findById(attraction);
+            const attr = await Attraction.findOne({
+                _id: attraction,
+                isDeleted: false,
+            });
             if (!attr) {
                 return sendErrorResponse(res, 500, "Attraction not found!");
             }
@@ -544,7 +547,10 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid attraction id");
             }
 
-            const attraction = await Attraction.findById(id)
+            const attraction = await Attraction.findOne({
+                _id: id,
+                isDeleted: false,
+            })
                 .populate("destination")
                 .populate("category")
                 .populate("activities")
@@ -619,7 +625,7 @@ module.exports = {
                 rating,
             } = req.query;
 
-            const filters1 = {};
+            const filters1 = { isDeleted: false };
             const filters2 = {};
 
             if (category && category !== "") {

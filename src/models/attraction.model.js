@@ -103,6 +103,30 @@ const attractionSchema = new Schema(
                 },
             ],
         },
+        isFaqVisible: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
+        faqs: {
+            type: [
+                {
+                    question: {
+                        type: String,
+                        required: true,
+                    },
+                    answer: {
+                        type: String,
+                        required: true,
+                    },
+                },
+            ],
+        },
+        isDeleted: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
     },
     { timestamps: true }
 );
