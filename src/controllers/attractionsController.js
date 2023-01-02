@@ -140,8 +140,10 @@ module.exports = {
                     }
                 }
 
+                let price = 0;
+
                 if (selectedActivities[i]?.adultsCount && activity.adultPrice) {
-                    totalAmount +=
+                    price +=
                         Number(selectedActivities[i]?.adultsCount) *
                         activity.adultPrice;
                 }
@@ -149,7 +151,7 @@ module.exports = {
                     selectedActivities[i]?.childrenCount &&
                     activity?.childPrice
                 ) {
-                    totalAmount +=
+                    price +=
                         Number(selectedActivities[i]?.childrenCount) *
                         activity?.childPrice;
                 }
@@ -157,7 +159,7 @@ module.exports = {
                     selectedActivities[i]?.infantCount &&
                     activity?.infantPrice
                 ) {
-                    totalAmount +=
+                    price +=
                         Number(selectedActivities[i]?.infantCount) *
                         activity?.infantPrice;
                 }
@@ -168,12 +170,12 @@ module.exports = {
                         activity.privateTransferPrice
                     ) {
                         if (selectedActivities[i]?.adultsCount) {
-                            totalAmount +=
+                            price +=
                                 Number(selectedActivities[i]?.adultsCount) *
                                 activity.privateTransferPrice;
                         }
                         if (selectedActivities[i]?.childrenCount) {
-                            totalAmount +=
+                            price +=
                                 Number(selectedActivities[i]?.childrenCount) *
                                 activity.privateTransferPrice;
                         }
@@ -192,12 +194,12 @@ module.exports = {
                         activity.sharedTransferPrice
                     ) {
                         if (selectedActivities[i]?.adultsCount) {
-                            totalAmount +=
+                            price +=
                                 Number(selectedActivities[i]?.adultsCount) *
                                 activity.sharedTransferPrice;
                         }
                         if (selectedActivities[i]?.childrenCount) {
-                            totalAmount +=
+                            price +=
                                 Number(selectedActivities[i]?.childrenCount) *
                                 activity.sharedTransferPrice;
                         }
@@ -209,6 +211,9 @@ module.exports = {
                         );
                     }
                 }
+
+                selectedActivities[i].price = price;
+                totalAmount += price;
             }
 
             let offer = 0;
@@ -224,7 +229,7 @@ module.exports = {
 
             const newAttractionOrder = new AttractionOrder({
                 attraction,
-                orders: selectedActivities,
+                activities: selectedActivities,
                 totalAmount,
                 offerAmount: offer,
                 user: req.user?._id || undefined,
@@ -519,9 +524,9 @@ module.exports = {
                     }
 
                     if (attractionOrder.bookingType === "ticket") {
-                        attractionOrder.status === "confirmed";
+                        attractionOrder.status = "confirmed";
                     } else {
-                        attractionOrder.status === "booked";
+                        attractionOrder.status = "booked";
                     }
                     await attractionOrder.save();
 

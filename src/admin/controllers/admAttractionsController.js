@@ -426,9 +426,26 @@ module.exports = {
         try {
             const { skip = 0, limit = 10 } = req.query;
 
-            const orders = await AttractionOrder.find({}).sort({
-                createdAt: -1,
-            });
+            const orders = await AttractionOrder.aggregate([
+                { $match: { $ne: "pending" } },
+                { $unwind: "$orders" },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "user",
+                        foreignField: "_id",
+                        as: "users",
+                    },
+                },
+                {
+                    $set: {
+                        user: { $arrayElemAt: ["$user", 0] },
+                    },
+                },
+                {
+                    $sort: { createdAt: -1 },
+                },
+            ]);
 
             const totalOrders = await AttractionOrder.find({}).count();
 

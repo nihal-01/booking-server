@@ -53,7 +53,7 @@ router.patch("/update/:id", upload.array("images"), updateAttraction);
 router.get("/all", getAllAttractions);
 router.get("/initial-data", getInitialData);
 router.get("/single/:id", getSingleAttraction);
-router.get("/attractions/orders/all", getAllOrders);
+router.get("/orders/all", getAllOrders);
 
 router.delete("/delete/:id", deleteAttraction);
 

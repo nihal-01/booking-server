@@ -13,7 +13,7 @@ const attractionOrderSchema = new Schema(
             lowercase: true,
             enum: ["booking", "ticket"],
         },
-        orders: {
+        activities: {
             type: [
                 {
                     activity: {
@@ -44,6 +44,7 @@ const attractionOrderSchema = new Schema(
                     },
                     adultTickets: { type: [] },
                     childTickets: { type: [] },
+                    price: { type: Number, required: true },
                 },
             ],
         },
