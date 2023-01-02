@@ -11,7 +11,7 @@ const attractionOrderSchema = Joi.object({
             adultsCount: Joi.number().required(),
             childrenCount: Joi.number().required(),
             infantCount: Joi.number().required(),
-            transferType: Joi.string().valid(...["", "shared", "private"]),
+            transferType: Joi.string().valid(...["without", "shared", "private"]),
         }),
 });
 

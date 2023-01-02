@@ -6,6 +6,7 @@ const {
     AttractionCategory,
     AttractionActivity,
     Destination,
+    AttractionOrder,
 } = require("../../models");
 const {
     attractionSchema,
@@ -415,6 +416,27 @@ module.exports = {
             res.status(200).json({
                 message: "Attraction successfully deleted",
                 _id: id,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getAllOrders: async (req, res) => {
+        try {
+            const { skip = 0, limit = 10 } = req.query;
+
+            const orders = await AttractionOrder.find({}).sort({
+                createdAt: -1,
+            });
+
+            const totalOrders = await AttractionOrder.find({}).count();
+
+            res.status(200).json({
+                orders,
+                totalOrders,
+                skip: Number(skip),
+                limit: Number(limit),
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
