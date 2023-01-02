@@ -63,18 +63,20 @@ const attractionActivitySchema = Joi.object({
     childAgeLimit: Joi.number().required(),
     childPrice: Joi.number().required(),
     infantAgeLimit: Joi.number().required(),
-    infantPrice: Joi.number().allow(""),
+    infantPrice: Joi.number().allow("", null),
     isVat: Joi.boolean().required(),
-    vat: Joi.number().when("isVat", {
-        is: Joi.boolean().valid(true),
-        then: Joi.number().required(),
-    }),
+    vat: Joi.number()
+        .allow("", null)
+        .when("isVat", {
+            is: Joi.boolean().valid(true),
+            then: Joi.number().required(),
+        }),
     base: Joi.string()
         .valid(...["person", "private", "hourly"])
         .required(),
     isTransferAvailable: Joi.boolean().required(),
-    privateTransferPrice: Joi.number(),
-    sharedTransferPrice: Joi.number(),
+    privateTransferPrice: Joi.number().allow("", null),
+    sharedTransferPrice: Joi.number().allow("", null),
     isActive: Joi.boolean(),
     peakTime: Joi.date().allow("", null),
     note: Joi.string().allow("", null),

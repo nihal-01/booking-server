@@ -37,8 +37,6 @@ const attractionActivitySchema = new Schema(
         },
         infantPrice: {
             type: Number,
-            required: true,
-            default: 0,
         },
         isVat: {
             type: Boolean,
