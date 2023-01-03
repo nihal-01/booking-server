@@ -342,13 +342,6 @@ module.exports = {
         try {
             const { skip = 0, limit = 10 } = req.query;
 
-            // const attractions = await Attraction.find({ isDeleted: false })
-            //     .populate("destination")
-            //     .sort({ createdAt: -1 })
-            //     .limit(limit)
-            //     .skip(limit * skip)
-            //     .lean();
-
             const attractions = await Attraction.aggregate([
                 { $match: { isDeleted: false } },
                 {
@@ -399,7 +392,11 @@ module.exports = {
                                 { $divide: ["$totalRating", "$totalReviews"] },
                             ],
                         },
+                        createdAt: 1,
                     },
+                },
+                {
+                    $sort: { createdAt: -1 },
                 },
             ]);
 

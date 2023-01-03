@@ -346,4 +346,21 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+    getFooter: async (req, res) => {
+        try {
+            const home = await HomeSettings.findOne({
+                settingsNumber: 1,
+            });
+            if (!home) {
+                return sendErrorResponse(res, 404, "Home not found");
+            }
+
+            res.status(200).json({
+                footer: home?.footer,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };

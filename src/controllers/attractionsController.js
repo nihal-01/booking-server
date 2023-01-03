@@ -213,6 +213,7 @@ module.exports = {
                 }
 
                 selectedActivities[i].price = price;
+                selectedActivities[i].status = "pending";
                 totalAmount += price;
             }
 
@@ -233,7 +234,7 @@ module.exports = {
                 totalAmount,
                 offerAmount: offer,
                 user: req.user?._id || undefined,
-                status: "pending",
+                orderStatus: "initiated",
                 bookingType: attr.bookingType,
             });
             await newAttractionOrder.save();
@@ -361,6 +362,7 @@ module.exports = {
 
             attractionOrder.orderId = response.result.id;
             attractionOrder.paymentStatus = "CREATED";
+            attractionOrder.orderStatus = "created";
             attractionOrder.user = req.user ? req.user._id : user.id;
 
             await attractionOrder.save();
@@ -521,13 +523,14 @@ module.exports = {
 
                         attractionOrder.orders[i].adultTickets = adultTickets;
                         attractionOrder.orders[i].childTickets = childTickets;
+                        if (attractionOrder.bookingType === "ticket") {
+                            attractionOrder.orders[i].status = "confirmed";
+                        } else {
+                            attractionOrder.orders[i].status = "booked";
+                        }
                     }
 
-                    if (attractionOrder.bookingType === "ticket") {
-                        attractionOrder.status = "confirmed";
-                    } else {
-                        attractionOrder.status = "booked";
-                    }
+                    attractionOrder.orderStatus = "completed";
                     await attractionOrder.save();
 
                     return res.status(200).json({

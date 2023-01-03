@@ -48,7 +48,13 @@ const attractionOrderSchema = new Schema(
                     status: {
                         type: String,
                         lowercase: true,
-                        enum: ["booked", "confirmed", "cancelled", "refunded"],
+                        enum: [
+                            "pending",
+                            "booked",
+                            "confirmed",
+                            "cancelled",
+                            "refunded",
+                        ],
                     },
                 },
             ],
@@ -68,6 +74,7 @@ const attractionOrderSchema = new Schema(
         orderStatus: {
             type: String,
             required: true,
+            lowercase: true,
             enum: ["initiated", "created", "completed"],
         },
         paymentStatus: {

@@ -14,6 +14,7 @@ const {
     getLogo,
     getAllCards,
     getMetaDetails,
+    getFooter,
 } = require("../controllers/admHomeControllers");
 
 const storage = multer.diskStorage({
@@ -67,5 +68,6 @@ router.delete("/delete/hero-image/:url", deleteHomeCard);
 router.get("/logo", getLogo);
 router.get("/cards", getAllCards);
 router.get("/meta-details", getMetaDetails);
+router.get("/footer", getFooter);
 
 module.exports = router;

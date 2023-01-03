@@ -15,10 +15,9 @@ const {
     blogsRouter,
     attractionsCategoriesRouter,
 } = require("./routes");
-const { Attraction, Blog } = require("./models");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8089;
 
 app.use(express.json());
 app.use(cors());
@@ -32,11 +31,6 @@ app.use("/api/v1/attractions", attractionsRouter);
 app.use("/api/v1/subscribers", subscribersRouter);
 app.use("/api/v1/countries", countriesRouter);
 app.use("/api/v1/blogs", blogsRouter);
-
-// app.get("/", async (req, res) => {
-
-//     res.status(200).json({ msg: "Hi" });
-// });
 
 // ADMIN ROUTE
 app.use("/api/v1/admin", adminRouter);
