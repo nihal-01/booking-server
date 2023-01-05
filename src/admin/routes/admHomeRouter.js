@@ -3,7 +3,7 @@ const multer = require("multer");
 const path = require("path");
 
 const {
-    updateHomeHero,
+    addHomeHero,
     updateHomeFooter,
     deleteHomeCard,
     addNewHomeCard,
@@ -54,12 +54,13 @@ const multipleUplaod = upload.fields([
     { name: "icon", maxCount: 1 },
 ]);
 
+router.post("/add/hero", upload.single("image"), addHomeHero);
+router.post("/add/card", multipleUplaod, addNewHomeCard);
+
 router.patch("/update/logo", upload.single("logo"), updateHomeLogo);
-router.patch("/update/hero", upload.array("heroImages"), updateHomeHero);
-router.patch("/add/footer", updateHomeFooter);
-router.patch("/add/card", multipleUplaod, addNewHomeCard);
 router.patch("/update/meta", updateMetaDetails);
 router.patch("/update/sections", updateHomeSections);
+router.patch("/update/footer", updateHomeFooter);
 
 router.delete("/delete/footer/:id", deleteHomeFooter);
 router.delete("/delete/card/:id", deleteHomeCard);

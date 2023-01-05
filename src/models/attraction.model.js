@@ -22,19 +22,60 @@ const attractionSchema = new Schema(
             lowercase: true,
             enum: ["booking", "ticket"],
         },
+        isCustomDate: {
+            type: Boolean,
+            required: true,
+        },
         startDate: {
             type: Date,
-            required: true,
+            required: function () {
+                return this.isCustomDate === true;
+            },
         },
         endDate: {
             type: Date,
-            required: true,
+            required: function () {
+                return this.isCustomDate === true;
+            },
         },
-        offDays: {
+        availability: {
             type: [
                 {
-                    type: Date,
-                    required: true,
+                    isEnabled: {
+                        type: Boolean,
+                        required: true,
+                    },
+                    day: {
+                        type: String,
+                        lowercase: true,
+                        required: true,
+                    },
+                    open: {
+                        type: String,
+                        required: function () {
+                            return this.isEnabled === true;
+                        },
+                    },
+                    close: {
+                        type: String,
+                        required: function () {
+                            return this.isEnabled === true;
+                        },
+                    },
+                },
+            ],
+        },
+        offDates: {
+            type: [
+                {
+                    from: {
+                        type: Date,
+                        required: true,
+                    },
+                    to: {
+                        type: Date,
+                        required: true,
+                    },
                 },
             ],
         },
@@ -53,10 +94,7 @@ const attractionSchema = new Schema(
             required: true,
             default: true,
         },
-        latitude: {
-            type: String,
-        },
-        longitude: {
+        mapLink: {
             type: String,
         },
         isOffer: {
@@ -103,11 +141,6 @@ const attractionSchema = new Schema(
                 },
             ],
         },
-        isFaqVisible: {
-            type: Boolean,
-            required: true,
-            default: false,
-        },
         faqs: {
             type: [
                 {
@@ -122,10 +155,44 @@ const attractionSchema = new Schema(
                 },
             ],
         },
+        isApiConnected: {
+            type: Boolean,
+            required: true,
+        },
+        connectedApi: {
+            type: Schema.Types.ObjectId,
+            required: function () {
+                return this.isApiConnected === true;
+            },
+        },
+        cancellationType: {
+            type: String,
+            required: true,
+            enum: ["nonRefundable", "freeCancellation", "cancelWithFee"],
+        },
+        cancelBeforeTime: {
+            type: Number,
+            required: function () {
+                return (
+                    this.cancellationType === "freeCancellation" ||
+                    this.cancellationType === "cancelWithFee"
+                );
+            },
+        },
+        cancellationFee: {
+            type: Number,
+            required: function () {
+                return this.cancellationType === "cancelWithFee";
+            },
+        },
         isDeleted: {
             type: Boolean,
             required: true,
             default: false,
+        },
+        isCombo: {
+            type: Boolean,
+            required: true,
         },
     },
     { timestamps: true }

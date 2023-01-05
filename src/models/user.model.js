@@ -10,7 +10,7 @@ const userSchema = new Schema(
         email: {
             type: String,
             lowercase: true,
-            // unique: true,
+            unique: true,
             required: true,
         },
         isEmailVerified: {
@@ -27,22 +27,17 @@ const userSchema = new Schema(
             ref: "Country",
             required: true,
         },
-        isGuestUser: {
-            type: Boolean,
-            required: true,
-            default: false,
-        },
         password: {
             type: String,
-            required: function () {
-                return this.isGuestUser === false;
-            },
+            required: true,
+        },
+        balance: {
+            type: Number,
+            required: true,
+            default: 0,
         },
         jwtToken: {
             type: String,
-            required: function () {
-                return this.isGuestUser === false;
-            },
         },
         avatar: {
             type: String,

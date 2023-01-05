@@ -50,40 +50,48 @@ module.exports = {
         }
     },
 
-    updateHomeHero: async (req, res) => {
+    addHomeHero: async (req, res) => {
         try {
-            const { heroTitle, heroDescription } = req.body;
+            const { title, description } = req.body;
 
             const { _, error } = homeHeroSettingsSchema.validate(req.body);
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
             }
 
-            let heroImages = [];
+            if (req.file) {
+                return sendErrorResponse(res, 400, "Image is required");
+            }
+
+            let image;
             for (let i = 0; i < req.files?.length; i++) {
-                const img = "/" + req.files[i]?.path?.replace(/\\/g, "/");
-                heroImages.push(img);
+                image = "/" + req.files[i]?.path?.replace(/\\/g, "/");
             }
 
             await HomeSettings.findOneAndUpdate(
                 { settingsNumber: 1 },
                 {
-                    heroTitle,
-                    heroDescription,
-                    $push: { heroImages: [...heroImages] },
+                    $push: { hero: { title, description, image } },
                 },
                 { upsert: true, new: true, runValidators: true }
             );
 
             res.status(200).json({
-                heroTitle,
-                heroDescription,
-                heroImages,
+                title,
+                description,
+                image,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
     },
+
+    // updateHomeHero: async (req, res) => {
+    //     try {
+    //     } catch (err) {
+    //         sendErrorResponse(res, 500, err);
+    //     }
+    // },
 
     deleteHomeHeroImage: async (req, res) => {
         try {

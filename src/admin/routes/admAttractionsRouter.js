@@ -12,6 +12,9 @@ const {
     deleteAttraction,
     getAllOrders,
     getSingleAttractionReviews,
+    getSingleActivity,
+    updateActivity,
+    deleteActivity,
 } = require("../controllers/admAttractionsController");
 
 const storage = multer.diskStorage({
@@ -50,13 +53,16 @@ router.post("/create", upload.array("images"), createNewAttraction);
 router.post("/activities/add", addAttractionActivity);
 
 router.patch("/update/:id", upload.array("images"), updateAttraction);
+router.patch("/activities/update/:activityId", updateActivity);
 
 router.get("/all", getAllAttractions);
 router.get("/initial-data", getInitialData);
 router.get("/single/:id", getSingleAttraction);
 router.get("/orders/all", getAllOrders);
 router.get("/:id/reviews", getSingleAttractionReviews);
+router.get("/activities/:activityId", getSingleActivity);
 
 router.delete("/delete/:id", deleteAttraction);
+router.delete("/activities/delete/:activityId", deleteActivity);
 
 module.exports = router;

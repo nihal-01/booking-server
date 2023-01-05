@@ -2,17 +2,6 @@ const { Schema, model } = require("mongoose");
 
 const attractionOrderSchema = new Schema(
     {
-        attraction: {
-            type: Schema.Types.ObjectId,
-            ref: "Attraction",
-            required: true,
-        },
-        bookingType: {
-            type: String,
-            required: true,
-            lowercase: true,
-            enum: ["booking", "ticket"],
-        },
         activities: {
             type: [
                 {
@@ -42,28 +31,28 @@ const attractionOrderSchema = new Schema(
                         lowercase: true,
                         enum: ["without", "private", "shared"],
                     },
+                    offerAmount: { type: Number, required: true },
+                    amount: { type: Number, required: true },
                     adultTickets: { type: [] },
                     childTickets: { type: [] },
-                    price: { type: Number, required: true },
                     status: {
                         type: String,
                         lowercase: true,
-                        enum: [
-                            "pending",
-                            "booked",
-                            "confirmed",
-                            "cancelled",
-                            "refunded",
-                        ],
+                        enum: ["pending", "booked", "confirmed", "cancelled"],
+                    },
+                    isRefunded: {
+                        type: Boolean,
+                        required: true,
+                        default: false,
                     },
                 },
             ],
         },
-        totalAmount: {
+        totalOffer: {
             type: Number,
             required: true,
         },
-        offerAmount: {
+        totalAmount: {
             type: Number,
             required: true,
         },
@@ -75,13 +64,16 @@ const attractionOrderSchema = new Schema(
             type: String,
             required: true,
             lowercase: true,
-            enum: ["initiated", "created", "completed"],
+            enum: ["created", "completed"],
         },
         paymentStatus: {
             type: String,
         },
-        orderId: {
+        paymentOrderId: {
             type: String,
+        },
+        referenceNo: {
+            type: Number,
         },
     },
     { timestamps: true }

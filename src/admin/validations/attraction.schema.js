@@ -8,30 +8,36 @@ const attractionSchema = Joi.object({
         .required(),
     destination: Joi.string().required(),
     isActive: Joi.boolean(),
-    startDate: Joi.date().when("availability", {
-        is: Joi.string().valid("monthly", "yearly", "custom"),
+    isCustomDate: Joi.boolean().required(),
+    startDate: Joi.date().when("isCustomDate", {
+        is: Joi.boolean().valid(true),
         then: Joi.date().required(),
     }),
-    endDate: Joi.date().when("availability", {
-        is: Joi.string().valid("monthly", "yearly", "custom"),
+    endDate: Joi.date().when("isCustomDate", {
+        is: Joi.boolean().valid(true),
         then: Joi.date().required(),
     }),
-    offDays: Joi.array().items(
-        Joi.string().valid(
-            "sunday",
-            "monday",
-            "tuesday",
-            "wednesday",
-            "thursday",
-            "friday",
-            "saturday"
-        )
-    ),
-    offDates: Joi.array().valid(Joi.date()),
+    availability: Joi.array().items({
+        _id: Joi.string(),
+        isEnabled: Joi.boolean().required(),
+        day: Joi.string().required(),
+        open: Joi.string().when("isEnabled", {
+            is: Joi.boolean().valid(true),
+            then: Joi.string().required(),
+        }),
+        close: Joi.string().when("isEnabled", {
+            is: Joi.boolean().valid(true),
+            then: Joi.string().required(),
+        }),
+    }),
+    offDates: Joi.array().items({
+        _id: Joi.string(),
+        from: Joi.date().required(),
+        to: Joi.date().required(),
+    }),
     durationType: Joi.string().valid("hours", "days", "months").required(),
     duration: Joi.number().required(),
-    latitude: Joi.string().allow("", null),
-    longitude: Joi.string().allow("", null),
+    mapLink: Joi.string().allow("", null),
     isOffer: Joi.boolean().required(),
     offerAmountType: Joi.string().when("isOffer", {
         is: Joi.boolean().valid(true),
@@ -46,7 +52,6 @@ const attractionSchema = Joi.object({
             then: Joi.number().required(),
         }),
     youtubeLink: Joi.string().required(),
-    pickupAndDrop: Joi.string().valid(...["yes", "no"]),
     highlights: Joi.string().required(),
     sections: Joi.array().items({
         _id: Joi.string(),
@@ -59,6 +64,29 @@ const attractionSchema = Joi.object({
         question: Joi.string().required(),
         answer: Joi.string().required(),
     }),
+    isApiConnected: Joi.boolean().required(),
+    connectedApi: Joi.string()
+        .allow("", null)
+        .when("isApiConnected", {
+            is: Joi.boolean().valid(true),
+            then: Joi.string().required(),
+        }),
+    cancellationType: Joi.string()
+        .valid("nonRefundable", "freeCancellation", "cancelWithFee")
+        .required(),
+    cancelBeforeTime: Joi.number()
+        .allow("", null)
+        .when("cancellationType", {
+            is: Joi.string().valid("cancel-with-fee", "free-cancellation"),
+            then: Joi.number().required(),
+        }),
+    cancellationFee: Joi.number()
+        .allow("", null)
+        .when("cancellationType", {
+            is: Joi.string().valid("cancel-with-fee"),
+            then: Joi.number().required(),
+        }),
+        isCombo: Joi.boolean().required(),
 });
 
 const attractionActivitySchema = Joi.object({

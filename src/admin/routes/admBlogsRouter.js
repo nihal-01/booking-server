@@ -7,6 +7,7 @@ const {
     deleteBlog,
     getAllBlogs,
     updateBlog,
+    getSingleBlog,
 } = require("../controllers/admBlogsController");
 
 const storage = multer.diskStorage({
@@ -43,7 +44,10 @@ const upload = multer({
 
 router.post("/add", upload.single("thumbnail"), addBlog);
 router.patch("/update/:id", upload.single("thumbnail"), updateBlog);
+
 router.get("/all", getAllBlogs);
+router.get("/single/:id", getSingleBlog);
+
 router.delete("/delete/:id", deleteBlog);
 
 module.exports = router;

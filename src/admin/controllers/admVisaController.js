@@ -27,7 +27,10 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid country id");
             }
 
-            const countryDetails = await Country.findById(country);
+            const countryDetails = await Country.findOne({
+                _id: country,
+                isDeleted: false,
+            });
             if (!countryDetails) {
                 return sendErrorResponse(res, 400, "Country not found");
             }

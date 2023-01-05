@@ -5,6 +5,7 @@ const blogSchema = Joi.object({
     body: Joi.string().required(),
     category: Joi.string().required(),
     tags: Joi.string(),
+    thumbnail: Joi.string().allow("", null),
 });
 
 module.exports = { blogSchema };

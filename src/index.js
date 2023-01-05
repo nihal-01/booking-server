@@ -15,6 +15,7 @@ const {
     blogsRouter,
     attractionsCategoriesRouter,
 } = require("./routes");
+const { AttractionActivity, Destination, Country } = require("./models");
 
 const app = express();
 const PORT = process.env.PORT || 8089;

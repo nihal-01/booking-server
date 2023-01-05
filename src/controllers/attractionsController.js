@@ -1,4 +1,5 @@
 const { isValidObjectId, Types } = require("mongoose");
+const crypto = require("crypto");
 
 const { sendErrorResponse } = require("../helpers");
 const {
@@ -19,71 +20,113 @@ const {
 } = require("../validations/attractionOrder.schema");
 const { createOrder, fetchOrder, fetchPayment } = require("../utils/paypal");
 
+const dayNames = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+];
+
 module.exports = {
     createAttractionOrder: async (req, res) => {
         try {
-            const { attraction, selectedActivities } = req.body;
+            const { selectedActivities, name, email, phoneNumber, country } =
+                req.body;
 
             const { _, error } = attractionOrderSchema.validate(req.body);
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
             }
 
-            if (!isValidObjectId(attraction)) {
-                return sendErrorResponse(res, 400, "Invalid Attraction Id");
-            }
-
-            const attr = await Attraction.findOne({
-                _id: attraction,
-                isDeleted: false,
-            });
-            if (!attr) {
-                return sendErrorResponse(res, 500, "Attraction not found!");
-            }
-
             let totalAmount = 0;
+            let totalOffer = 0;
             for (let i = 0; i < selectedActivities?.length; i++) {
                 if (!isValidObjectId(selectedActivities[i]?.activity)) {
                     return sendErrorResponse(res, 400, "Invalid activity id");
                 }
 
-                const activity = await AttractionActivity.findById(
-                    selectedActivities[i]?.activity
-                );
+                const activity = await AttractionActivity.findOne({
+                    _id: selectedActivities[i]?.activity,
+                    isDeleted: false,
+                });
 
                 if (!activity) {
                     return sendErrorResponse(res, 400, "Activity not found!");
                 }
 
+                const attraction = await Attraction.findOne({
+                    _id: activity.attraction,
+                    isDeleted: false,
+                });
+                if (!attraction) {
+                    return sendErrorResponse(res, 500, "Attraction not found!");
+                }
+
                 if (
-                    new Date(selectedActivities[i]?.date) <
-                        new Date(attr.startDate) ||
-                    new Date(selectedActivities[i]?.date) >
-                        new Date(attr.endDate)
+                    attraction.isCustomDate === true &&
+                    (new Date(selectedActivities[i]?.date) <
+                        new Date(attraction?.startDate) ||
+                        new Date(selectedActivities[i]?.date) >
+                            new Date(attraction?.endDate))
                 ) {
                     return sendErrorResponse(
                         res,
                         400,
-                        "Please select a valid date. You are selected ann off day"
+                        `${
+                            activity?.name
+                        } is not avaialble on your date. Please select a date between ${new Date(
+                            attraction?.startDate
+                        )?.toDateString()} and ${new Date(
+                            attraction?.endDate
+                        )?.toDateString()} `
                     );
                 }
 
-                const arrIndex = attr.offDays?.findIndex((dt) => {
+                const selectedDay =
+                    dayNames[new Date(selectedActivities[i]?.date).getDay()];
+
+                const objIndex = attraction.availability?.findIndex((item) => {
                     return (
-                        new Date(dt).toDateString() ===
-                        new Date(selectedActivities[i]?.date)?.toDateString()
+                        item?.day?.toLowerCase() === selectedDay?.toLowerCase()
                     );
                 });
 
-                if (arrIndex !== -1) {
+                if (
+                    objIndex === -1 ||
+                    attraction.availability[objIndex]?.isEnabled === false
+                ) {
                     return sendErrorResponse(
                         res,
                         400,
-                        "Please select a valid date. You are selected an off day"
+                        `Sorry, ${activity?.name} is off on ${selectedDay}`
                     );
                 }
 
-                if (attr.bookingType === "ticket") {
+                for (let j = 0; j < attraction.offDates?.length; j++) {
+                    const { from, to } = attraction.offDates[j];
+                    if (
+                        new Date(selectedActivities[i]?.date) >=
+                            new Date(from) &&
+                        new Date(to) <= new Date(to)
+                    ) {
+                        return sendErrorResponse(
+                            res,
+                            400,
+                            `${activity?.name} is off between ${new Date(
+                                from
+                            )?.toDateString()} and ${new Date(
+                                to
+                            )?.toDateString()} `
+                        );
+                    }
+                }
+
+                if (attraction.bookingType === "ticket") {
+                    let adultTicketError = false;
+                    let childTicketError = false;
                     const adultTickets = await AttractionTicket.find({
                         activity: activity._id,
                         status: "ok",
@@ -121,27 +164,28 @@ module.exports = {
                         adultTickets <
                         Number(selectedActivities[i]?.adultsCount)
                     ) {
-                        return sendErrorResponse(
-                            res,
-                            400,
-                            "Sorry, Adult Ticket sold out"
-                        );
+                        adultTicketError = true;
                     }
 
                     if (
                         childrenTickets <
                         Number(selectedActivities[i]?.childrenCount)
                     ) {
+                        childTicketError = true;
+                    }
+
+                    if (adultTicketError || childTicketError) {
                         return sendErrorResponse(
                             res,
-                            400,
-                            "Sorry, Children Ticket sold out"
+                            500,
+                            `${adultTicketError && "Adult Tickets"} ${
+                                adultTicketError && childTicketError && "and"
+                            } ${childTicketError && "Child Tickets"} Sold Out`
                         );
                     }
                 }
 
                 let price = 0;
-
                 if (selectedActivities[i]?.adultsCount && activity.adultPrice) {
                     price +=
                         Number(selectedActivities[i]?.adultsCount) *
@@ -183,7 +227,7 @@ module.exports = {
                         return sendErrorResponse(
                             res,
                             400,
-                            "Private transfer not available for an activity"
+                            `Private transfer not available for ${activity?.name}`
                         );
                     }
                 }
@@ -207,116 +251,29 @@ module.exports = {
                         return sendErrorResponse(
                             res,
                             400,
-                            "Shared Transfer not available for an activity"
+                            `Shared Transfer not available for ${activity?.name}`
                         );
                     }
                 }
 
-                selectedActivities[i].price = price;
+                let offer = 0;
+                if (attraction?.isOffer) {
+                    if (attraction.offerAmountType === "flat") {
+                        offer = attraction.offerAmount;
+                    } else {
+                        offer = (price / 100) * attraction.offerAmount;
+                    }
+                }
+
+                price -= offer;
+                if (price < 0) {
+                    price = 0;
+                }
+                selectedActivities[i].amount = price;
+                selectedActivities[i].offerAmount = offer;
                 selectedActivities[i].status = "pending";
                 totalAmount += price;
-            }
-
-            let offer = 0;
-            if (attr?.isOffer) {
-                if (attr.offerAmountType === "flat") {
-                    offer = attr.offerAmount;
-                    totalAmount -= attr.offerAmount;
-                } else {
-                    offer = (totalAmount / 100) * attr.offerAmount;
-                    totalAmount -= offer;
-                }
-            }
-
-            const newAttractionOrder = new AttractionOrder({
-                attraction,
-                activities: selectedActivities,
-                totalAmount,
-                offerAmount: offer,
-                user: req.user?._id || undefined,
-                orderStatus: "initiated",
-                bookingType: attr.bookingType,
-            });
-            await newAttractionOrder.save();
-
-            res.status(200).json(newAttractionOrder);
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
-
-    createPaymentOrder: async (req, res) => {
-        try {
-            const { attractionOrderId, name, email, phoneNumber, country } =
-                req.body;
-
-            const { _, error } = attractionOrderPaymentSchema.validate(
-                req.body
-            );
-            if (error) {
-                return sendErrorResponse(res, 400, error.details[0].message);
-            }
-
-            if (!isValidObjectId(attractionOrderId)) {
-                return sendErrorResponse(res, 400, "Invalid order id");
-            }
-
-            const attractionOrder = await AttractionOrder.findById(
-                attractionOrderId
-            );
-            if (!attractionOrder) {
-                return sendErrorResponse(res, 404, "Order not found");
-            }
-
-            for (let i = 0; i < attractionOrder.orders?.length; i++) {
-                let order = attractionOrder.orders[i];
-
-                // add reserve ticket condition
-                if (order.bookingType === "ticket") {
-                    const adultTickets = await AttractionTicket.find({
-                        activity: order.activity,
-                        status: "ok",
-                        ticketFor: "adult",
-                        $or: [
-                            {
-                                validity: true,
-                                validTill: {
-                                    $gte: new Date(order.date).toISOString(),
-                                },
-                            },
-                            { validity: false },
-                        ],
-                    }).count();
-                    const childrenTickets = await AttractionTicket.find({
-                        activity: order.activity,
-                        status: "ok",
-                        ticketFor: "child",
-                        $or: [
-                            {
-                                validity: true,
-                                validTill: {
-                                    $gte: new Date(order.date).toISOString(),
-                                },
-                            },
-                            { validity: false },
-                        ],
-                    }).count();
-
-                    if (order?.adultsCount > adultTickets) {
-                        return sendErrorResponse(
-                            res,
-                            400,
-                            "Sorry, Adult Tickets sold out"
-                        );
-                    }
-                    if (order?.childrenCount > childrenTickets) {
-                        return sendErrorResponse(
-                            res,
-                            400,
-                            "Sorry, Adult Tickets sold out"
-                        );
-                    }
-                }
+                totalOffer += offer;
             }
 
             let user;
@@ -333,41 +290,39 @@ module.exports = {
                     return sendErrorResponse(res, 400, "Invalid country id");
                 }
 
-                const countryDetails = await Country.findById(country);
+                const countryDetails = await Country.findOne({
+                    _id: country,
+                    isDeleted: false,
+                });
                 if (!countryDetails) {
                     return sendErrorResponse(res, 400, "Country not found");
                 }
 
-                user = new User({
-                    name,
-                    email,
-                    phoneNumber,
-                    country,
-                    isGuestUser: true,
-                });
-                await user.save();
+                user = await User.findOne({ email });
+                if (!user) {
+                    const password = crypto.randomBytes(6);
+                    console.log(password);
+                    user = new User({
+                        name,
+                        email,
+                        phoneNumber,
+                        country,
+                        password,
+                    });
+                    await user.save();
+                }
             }
 
-            const amount = attractionOrder.totalAmount;
-            const currency = "USD";
-            const response = await createOrder(amount, currency);
+            const newAttractionOrder = new AttractionOrder({
+                activities: selectedActivities,
+                totalAmount,
+                totalOffer,
+                user: req.user?._id || user?._id,
+                orderStatus: "created",
+            });
+            await newAttractionOrder.save();
 
-            if (response?.statusCode !== 201) {
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "Order creation failed at Paypal"
-                );
-            }
-
-            attractionOrder.orderId = response.result.id;
-            attractionOrder.paymentStatus = "CREATED";
-            attractionOrder.orderStatus = "created";
-            attractionOrder.user = req.user ? req.user._id : user.id;
-
-            await attractionOrder.save();
-
-            return res.status(200).json(response.result);
+            res.status(200).json(newAttractionOrder);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
@@ -717,10 +672,10 @@ module.exports = {
                     },
                 },
                 {
-                    $limit: Number(limit),
+                    $skip: Number(limit) * Number(skip),
                 },
                 {
-                    $skip: Number(limit) * Number(skip),
+                    $limit: Number(limit),
                 },
             ]);
 

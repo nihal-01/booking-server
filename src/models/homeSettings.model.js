@@ -27,14 +27,23 @@ const homeSettingsSchema = new Schema(
         instagramUrl: {
             type: String,
         },
-        heroImages: {
-            type: [{ type: String, required: true }],
-        },
-        heroTitle: {
-            type: String,
-        },
-        heroDescription: {
-            type: String,
+        hero: {
+            type: [
+                {
+                    title: {
+                        type: String,
+                        required: true,
+                    },
+                    description: {
+                        type: String,
+                        required: true,
+                    },
+                    image: {
+                        type: String,
+                        required: true,
+                    },
+                },
+            ],
         },
         cards: {
             type: [

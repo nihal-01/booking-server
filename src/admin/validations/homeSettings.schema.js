@@ -36,8 +36,9 @@ const homeSectionsSettingsSchema = Joi.object({
 });
 
 const homeHeroSettingsSchema = Joi.object({
-    heroTitle: Joi.string().required(),
-    heroDescription: Joi.string().required(),
+    title: Joi.string().required(),
+    description: Joi.string().required(),
+    image: Joi.string(),
 });
 
 const homeCardSettingsSchema = Joi.object({

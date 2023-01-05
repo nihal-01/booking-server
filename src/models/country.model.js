@@ -11,7 +11,6 @@ const countrySchema = new Schema(
             type: String,
             uppercase: true,
             required: true,
-            unique: true,
         },
         phonecode: {
             type: String,
@@ -28,6 +27,11 @@ const countrySchema = new Schema(
             type: String,
             uppercase: true,
             required: true,
+        },
+        isDeleted: {
+            type: Boolean,
+            required: true,
+            default: false,
         },
     },
     { timestamps: true }

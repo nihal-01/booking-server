@@ -1,4 +1,4 @@
-const { isValidObjectId } = require("mongoose");
+const { isValidObjectId, Types } = require("mongoose");
 
 const { sendErrorResponse } = require("../../helpers");
 const {
@@ -32,31 +32,36 @@ module.exports = {
                 title,
                 category,
                 isActive,
-                latitude,
-                longitude,
+                mapLink,
                 isOffer,
                 offerAmountType,
                 offerAmount,
                 youtubeLink,
-                pickupAndDrop,
                 sections,
+                isCustomDate,
                 startDate,
                 endDate,
                 duration,
                 durationType,
-                offDays,
+                availability,
                 offDates,
                 bookingType,
                 destination,
                 highlights,
                 faqs,
+                cancellationType,
+                cancelBeforeTime,
+                cancellationFee,
+                isApiConnected,
+                isCombo,
             } = req.body;
 
             const { _, error } = attractionSchema.validate({
                 ...req.body,
-                offDays: offDays ? JSON.parse(offDays) : [],
                 sections: sections ? JSON.parse(sections) : [],
                 faqs: faqs ? JSON.parse(faqs) : [],
+                offDates: offDates ? JSON.parse(offDates) : [],
+                availability: availability ? JSON.parse(availability) : [],
             });
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
@@ -77,31 +82,12 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid destination id");
             }
 
-            const destinationDetails = await Destination.findById(destination);
+            const destinationDetails = await Destination.findOne({
+                _id: destination,
+                isDeleted: false,
+            });
             if (!destinationDetails) {
                 return sendErrorResponse(res, 404, "Destination not found");
-            }
-
-            let offDatesList = [];
-            offDates && offDatesList.push(offDates);
-
-            if (offDays) {
-                console.log(JSON.parse(offDays));
-                const offDaysFiltered = JSON.parse(offDays).map((day) => {
-                    return day?.toLowerCase();
-                });
-
-                if (offDaysFiltered.length > 0) {
-                    const dates = getDates(startDate, endDate);
-
-                    for (let i = 0; i < dates.length; i++) {
-                        const day = weekday[new Date(dates[i]).getDay()];
-
-                        if (offDays?.includes(day.toLowerCase())) {
-                            offDatesList.push(dates[i]);
-                        }
-                    }
-                }
             }
 
             let images = [];
@@ -120,28 +106,43 @@ module.exports = {
                 parsedFaqs = JSON.parse(faqs);
             }
 
+            let parsedOffDates;
+            if (offDates) {
+                parsedOffDates = JSON.parse(offDates);
+            }
+
+            let parsedAvailability;
+            if (availability) {
+                parsedAvailability = JSON.parse(availability);
+            }
+
             const newAttraction = new Attraction({
                 title,
                 bookingType,
                 category,
+                mapLink,
                 isActive,
-                latitude,
-                longitude,
                 isOffer,
                 offerAmountType,
                 offerAmount,
                 youtubeLink,
                 images,
-                pickupAndDrop,
                 sections: parsedSections,
                 startDate,
+                isCustomDate,
                 endDate,
-                offDays: offDatesList,
+                offDates: parsedOffDates,
+                availability: parsedAvailability,
                 duration,
                 durationType,
                 destination,
                 highlights,
                 faqs: parsedFaqs,
+                cancellationType,
+                cancelBeforeTime,
+                cancellationFee,
+                isApiConnected,
+                isCombo,
             });
             await newAttraction.save();
 
@@ -158,33 +159,38 @@ module.exports = {
                 title,
                 category,
                 isActive,
-                latitude,
-                longitude,
+                mapLink,
                 isOffer,
                 offerAmountType,
                 offerAmount,
                 youtubeLink,
-                pickupAndDrop,
                 sections,
+                isCustomDate,
                 startDate,
                 endDate,
                 duration,
                 durationType,
-                offDays,
+                availability,
                 offDates,
                 bookingType,
                 destination,
                 highlights,
-                oldImages,
                 faqs,
+                cancellationType,
+                cancelBeforeTime,
+                cancellationFee,
+                isApiConnected,
+                isCombo,
+                oldImages,
             } = req.body;
 
             const { _, error } = attractionSchema.validate({
                 ...req.body,
-                offDays: offDays ? JSON.parse(offDays) : [],
                 sections: sections ? JSON.parse(sections) : [],
-                oldImages: oldImages ? JSON.parse(oldImages) : [],
                 faqs: faqs ? JSON.parse(faqs) : [],
+                offDates: offDates ? JSON.parse(offDates) : [],
+                availability: availability ? JSON.parse(availability) : [],
+                oldImages: oldImages ? JSON.parse(oldImages) : [],
             });
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
@@ -226,30 +232,45 @@ module.exports = {
                 parsedFaqs = JSON.parse(faqs);
             }
 
+            let parsedOffDates;
+            if (offDates) {
+                parsedOffDates = JSON.parse(offDates);
+            }
+
+            let parsedAvailability;
+            if (availability) {
+                parsedAvailability = JSON.parse(availability);
+            }
+
             const attraction = await Attraction.findOneAndUpdate(
                 { _id: id, isDeleted: false },
                 {
                     title,
+                    bookingType,
                     category,
+                    mapLink,
                     isActive,
-                    latitude,
-                    longitude,
                     isOffer,
                     offerAmountType,
                     offerAmount,
                     youtubeLink,
                     images: newImages,
-                    pickupAndDrop,
                     sections: parsedSections,
                     startDate,
+                    isCustomDate,
                     endDate,
+                    offDates: parsedOffDates,
+                    availability: parsedAvailability,
                     duration,
                     durationType,
-                    offDates,
-                    bookingType,
                     destination,
                     highlights,
                     faqs: parsedFaqs,
+                    cancellationType,
+                    cancelBeforeTime,
+                    cancellationFee,
+                    isApiConnected,
+                    isCombo,
                 },
                 { runValidators: true, new: true }
             );
@@ -314,11 +335,12 @@ module.exports = {
                 infantPrice,
                 isCancelable,
                 isVat,
-                vat,
+                vat: isVat && vat,
                 base,
                 isTransferAvailable,
-                privateTransferPrice,
-                sharedTransferPrice,
+                privateTransferPrice:
+                    isTransferAvailable && privateTransferPrice,
+                sharedTransferPrice: isTransferAvailable && sharedTransferPrice,
                 isActive,
                 peakTime,
                 note,
@@ -398,6 +420,12 @@ module.exports = {
                 {
                     $sort: { createdAt: -1 },
                 },
+                {
+                    $skip: Number(limit) * Number(skip),
+                },
+                {
+                    $limit: Number(limit),
+                },
             ]);
 
             const totalAttractions = await Attraction.find({
@@ -433,18 +461,41 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid attraction id");
             }
 
-            const attraction = await Attraction.findOne({
-                _id: id,
-                isDeleted: false,
-            })
-                .populate("activities")
-                .lean();
+            // const attraction = await Attraction.findOne({
+            //     _id: id,
+            //     isDeleted: false,
+            // })
+            //     .populate("activities")
+            //     .lean();
 
-            if (!attraction) {
+            const attraction = await Attraction.aggregate([
+                { $match: { _id: Types.ObjectId(id), isDeleted: false } },
+                {
+                    $lookup: {
+                        from: "attractionactivities",
+                        foreignField: "attraction",
+                        localField: "_id",
+                        as: "activities",
+                    },
+                },
+                {
+                    $addFields: {
+                        activities: {
+                            $filter: {
+                                input: "$activities",
+                                as: "item",
+                                cond: { $eq: ["$$item.isDeleted", false] },
+                            },
+                        },
+                    },
+                },
+            ]);
+
+            if (!attraction || attraction?.length < 1) {
                 return sendErrorResponse(res, 404, "Attraction not found");
             }
 
-            res.status(200).json(attraction);
+            res.status(200).json(attraction[0]);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
@@ -606,6 +657,136 @@ module.exports = {
                 totalAttractionReviews,
                 skip: Number(skip),
                 limit: Number(limit),
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSingleActivity: async (req, res) => {
+        try {
+            const { activityId } = req.params;
+
+            if (!isValidObjectId(activityId)) {
+                return sendErrorResponse(res, 400, "Invalid activity id");
+            }
+
+            const activity = await AttractionActivity.findOne({
+                isDeleted: false,
+                _id: activityId,
+            });
+
+            if (!activity) {
+                return sendErrorResponse(res, 404, "Activity not found");
+            }
+
+            res.status(200).json(activity);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    updateActivity: async (req, res) => {
+        try {
+            const { activityId } = req.params;
+            const {
+                attraction,
+                name,
+                facilities,
+                adultAgeLimit,
+                adultPrice,
+                childAgeLimit,
+                childPrice,
+                infantAgeLimit,
+                infantPrice,
+                isCancelable,
+                isVat,
+                vat,
+                base,
+                isTransferAvailable,
+                privateTransferPrice,
+                sharedTransferPrice,
+                isActive,
+                peakTime,
+                note,
+            } = req.body;
+
+            const { _, error } = attractionActivitySchema.validate(req.body);
+            if (error) {
+                return sendErrorResponse(res, 400, error.details[0].message);
+            }
+
+            if (!isValidObjectId(activityId)) {
+                return sendErrorResponse(res, 400, "Invalid activity id");
+            }
+
+            const activity = await AttractionActivity.findOneAndUpdate(
+                {
+                    isDeleted: false,
+                    _id: activityId,
+                },
+                {
+                    attraction,
+                    name,
+                    facilities,
+                    adultAgeLimit,
+                    adultPrice,
+                    childAgeLimit,
+                    childPrice,
+                    infantAgeLimit,
+                    infantPrice,
+                    isCancelable,
+                    isVat,
+                    vat: isVat && vat,
+                    base,
+                    isTransferAvailable,
+                    privateTransferPrice:
+                        isTransferAvailable && privateTransferPrice,
+                    sharedTransferPrice:
+                        isTransferAvailable && sharedTransferPrice,
+                    isActive,
+                    peakTime,
+                    note,
+                },
+                { runValidators: true }
+            );
+
+            if (!activity) {
+                return sendErrorResponse(res, 404, "Activity not found");
+            }
+
+            res.status(200).json({
+                message: "Activity successfully updated",
+                _id: activityId,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    deleteActivity: async (req, res) => {
+        try {
+            const { activityId } = req.params;
+
+            if (!isValidObjectId(activityId)) {
+                return sendErrorResponse(res, 400, "Invalid activity id");
+            }
+
+            const activity = await AttractionActivity.findOneAndUpdate(
+                {
+                    isDeleted: false,
+                    _id: activityId,
+                },
+                { isDeleted: true }
+            );
+
+            if (!activity) {
+                return sendErrorResponse(res, 404, "Activity not found");
+            }
+
+            res.status(200).json({
+                message: "Activity successfully deleted",
+                _id: activityId,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);

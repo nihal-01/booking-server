@@ -47,6 +47,10 @@ const attractionTicketSchema = new Schema(
             required: true,
             default: false,
         },
+        costInUsd: {
+            type: Number,
+            required: true,
+        },
     },
     { timestamps: true }
 );

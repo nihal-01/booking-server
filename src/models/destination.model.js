@@ -13,6 +13,11 @@ const destinationSchema = new Schema(
             trim: true,
             required: true,
         },
+        isDeleted: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
     },
     { timestamps: true }
 );

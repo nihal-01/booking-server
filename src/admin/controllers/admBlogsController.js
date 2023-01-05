@@ -166,4 +166,23 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+    getSingleBlog: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid blog id");
+            }
+
+            const blog = await Blog.findById(id);
+            if (!blog) {
+                return sendErrorResponse(res, 400, "Blog not found");
+            }
+
+            res.status(200).json(blog);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };

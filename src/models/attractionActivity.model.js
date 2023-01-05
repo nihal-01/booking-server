@@ -75,6 +75,11 @@ const attractionActivitySchema = new Schema(
         note: {
             type: String,
         },
+        isDeleted: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
     },
     { timestamps: true }
 );

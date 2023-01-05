@@ -168,8 +168,8 @@ module.exports = {
 
     getInitialData: async (req, res) => {
         try {
-            const countries = await Country.find({});
-            const destinations = await Destination.find({});
+            const countries = await Country.find({ isDeleted: false });
+            const destinations = await Destination.find({ isDeleted: false });
 
             res.status(200).json({ countries, destinations });
         } catch (err) {

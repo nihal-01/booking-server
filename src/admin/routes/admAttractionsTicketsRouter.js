@@ -4,6 +4,7 @@ const path = require("path");
 
 const {
     uploadTicket,
+    getSingleActivitiesTicket,
 } = require("../controllers/admAttractionTicketsController");
 
 const storage = multer.diskStorage({
@@ -39,5 +40,6 @@ const upload = multer({
 });
 
 router.post("/upload", upload.single("tickets"), uploadTicket);
+router.get("/:activityId", getSingleActivitiesTicket);
 
 module.exports = router;
