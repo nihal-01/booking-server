@@ -1,7 +1,7 @@
 const { isValidObjectId } = require("mongoose");
 
 const { sendErrorResponse } = require("../../helpers");
-const { HomeSettings } = require("../../models");
+const { HomeSettings, Attraction } = require("../../models");
 const {
     homeFooterSettingsSchema,
     homeHeroSettingsSchema,
@@ -183,7 +183,10 @@ module.exports = {
                 return sendErrorResponse(res, 500, error.details[0].message);
             }
 
-            if (!req.files?.backgroundImage || !req.files?.backgroundImage[0]?.path) {
+            if (
+                !req.files?.backgroundImage ||
+                !req.files?.backgroundImage[0]?.path
+            ) {
                 return sendErrorResponse(
                     res,
                     400,
@@ -242,7 +245,10 @@ module.exports = {
             }
 
             let backgroundImage;
-            if (req.files?.backgroundImage && req.files?.backgroundImage[0]?.path) {
+            if (
+                req.files?.backgroundImage &&
+                req.files?.backgroundImage[0]?.path
+            ) {
                 backgroundImage =
                     "/" +
                     req.files?.backgroundImage[0]?.path.replace(/\\/g, "/");
@@ -500,6 +506,68 @@ module.exports = {
             });
 
             res.status(200).json(filteredCards[0]);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSections: async (req, res) => {
+        try {
+            const home = await HomeSettings.findOne({
+                settingsNumber: 1,
+            });
+
+            const attractions = await Attraction.find({ isDeleted: false });
+
+            if (!home) {
+                return res.status(200).json({
+                    isBestSellingAttractionsSectionEnabled: false,
+                    bestSellingAttractions: [],
+                    isTopAttractionsSectionEnabled: false,
+                    topAttractions: [],
+                    isBlogsEnabled: false,
+                    attractions,
+                });
+            }
+
+            const bestSellingAttractions = await Attraction.aggregate([
+                {
+                    $match: {
+                        _id: { $in: home.bestSellingAttractions },
+                    },
+                },
+                {
+                    $project: {
+                        title: 1,
+                        images: 1,
+                    },
+                },
+            ]);
+
+            const topAttractions = await Attraction.aggregate([
+                {
+                    $match: {
+                        _id: { $in: home.topAttractions },
+                    },
+                },
+                {
+                    $project: {
+                        title: 1,
+                        images: 1,
+                    },
+                },
+            ]);
+
+            res.status(200).json({
+                isBestSellingAttractionsSectionEnabled:
+                    home.isBestSellingAttractionsSectionEnabled,
+                bestSellingAttractions,
+                isTopAttractionsSectionEnabled:
+                    home.isTopAttractionsSectionEnabled,
+                topAttractions,
+                isBlogsEnabled: home.isBlogsEnabled,
+                attractions,
+            });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

@@ -19,6 +19,7 @@ const {
     deleteHomeHero,
     updateHomeCard,
     getSingleCard,
+    getSections,
 } = require("../controllers/admHomeControllers");
 
 const storage = multer.diskStorage({
@@ -77,5 +78,6 @@ router.get("/meta-details", getMetaDetails);
 router.get("/footer", getFooter);
 router.get("/heros", getHeros);
 router.get("/cards/:cardId", getSingleCard);
+router.get("/sections", getSections);
 
 module.exports = router;
