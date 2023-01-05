@@ -27,7 +27,7 @@ const homeSettingsSchema = new Schema(
         instagramUrl: {
             type: String,
         },
-        hero: {
+        heros: {
             type: [
                 {
                     title: {
@@ -39,6 +39,10 @@ const homeSettingsSchema = new Schema(
                         required: true,
                     },
                     image: {
+                        type: String,
+                        required: true,
+                    },
+                    place: {
                         type: String,
                         required: true,
                     },

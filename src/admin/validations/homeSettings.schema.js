@@ -10,11 +10,13 @@ const homeMetaSettingsSchema = Joi.object({
 });
 
 const homeFooterSettingsSchema = Joi.object({
-    title: Joi.string().required(),
-    navLinks: Joi.array().items({
-        name: Joi.string().required(),
-        link: Joi.string().required(),
-        isRelativeUrl: Joi.boolean().required(),
+    footer: Joi.array().items({
+        title: Joi.string().required(),
+        navLinks: Joi.array().items({
+            name: Joi.string().required(),
+            link: Joi.string().required(),
+            isRelativeUrl: Joi.boolean().required(),
+        }),
     }),
 });
 
@@ -38,7 +40,8 @@ const homeSectionsSettingsSchema = Joi.object({
 const homeHeroSettingsSchema = Joi.object({
     title: Joi.string().required(),
     description: Joi.string().required(),
-    image: Joi.string(),
+    place: Joi.string().required(),
+    image: Joi.string().allow("", null),
 });
 
 const homeCardSettingsSchema = Joi.object({

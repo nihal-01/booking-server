@@ -3,11 +3,10 @@ const multer = require("multer");
 const path = require("path");
 
 const {
-    addHomeHero,
+    addHomeHeros,
     updateHomeFooter,
     deleteHomeCard,
-    addNewHomeCard,
-    deleteHomeFooter,
+    addHomeCard,
     updateHomeLogo,
     updateMetaDetails,
     updateHomeSections,
@@ -15,6 +14,11 @@ const {
     getAllCards,
     getMetaDetails,
     getFooter,
+    getHeros,
+    updateHomeHero,
+    deleteHomeHero,
+    updateHomeCard,
+    getSingleCard,
 } = require("../controllers/admHomeControllers");
 
 const storage = multer.diskStorage({
@@ -54,21 +58,24 @@ const multipleUplaod = upload.fields([
     { name: "icon", maxCount: 1 },
 ]);
 
-router.post("/add/hero", upload.single("image"), addHomeHero);
-router.post("/add/card", multipleUplaod, addNewHomeCard);
+router.post("/heros/add", upload.single("image"), addHomeHeros);
+router.post("/cards/add", multipleUplaod, addHomeCard);
 
-router.patch("/update/logo", upload.single("logo"), updateHomeLogo);
-router.patch("/update/meta", updateMetaDetails);
-router.patch("/update/sections", updateHomeSections);
-router.patch("/update/footer", updateHomeFooter);
+router.patch("/logo/update", upload.single("logo"), updateHomeLogo);
+router.patch("/meta/update", updateMetaDetails);
+router.patch("/sections/update", updateHomeSections);
+router.patch("/footer/update", updateHomeFooter);
+router.patch("/heros/update/:heroId", upload.single("image"), updateHomeHero);
+router.patch("/cards/update/:cardId", multipleUplaod, updateHomeCard);
 
-router.delete("/delete/footer/:id", deleteHomeFooter);
-router.delete("/delete/card/:id", deleteHomeCard);
-router.delete("/delete/hero-image/:url", deleteHomeCard);
+router.delete("/cards/delete/:cardId", deleteHomeCard);
+router.delete("/heros/delete/:heroId", deleteHomeHero);
 
 router.get("/logo", getLogo);
 router.get("/cards", getAllCards);
 router.get("/meta-details", getMetaDetails);
 router.get("/footer", getFooter);
+router.get("/heros", getHeros);
+router.get("/cards/:cardId", getSingleCard);
 
 module.exports = router;

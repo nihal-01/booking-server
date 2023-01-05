@@ -50,71 +50,110 @@ module.exports = {
         }
     },
 
-    addHomeHero: async (req, res) => {
+    addHomeHeros: async (req, res) => {
         try {
-            const { title, description } = req.body;
+            const { title, description, place } = req.body;
 
             const { _, error } = homeHeroSettingsSchema.validate(req.body);
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
             }
 
-            if (req.file) {
+            if (!req.file) {
                 return sendErrorResponse(res, 400, "Image is required");
             }
 
             let image;
-            for (let i = 0; i < req.files?.length; i++) {
-                image = "/" + req.files[i]?.path?.replace(/\\/g, "/");
+            if (req.file?.path) {
+                image = "/" + req.file.path.replace(/\\/g, "/");
             }
 
-            await HomeSettings.findOneAndUpdate(
+            const home = await HomeSettings.findOneAndUpdate(
                 { settingsNumber: 1 },
                 {
-                    $push: { hero: { title, description, image } },
+                    $push: { heros: { title, description, image, place } },
                 },
                 { upsert: true, new: true, runValidators: true }
             );
 
-            res.status(200).json({
-                title,
-                description,
-                image,
-            });
+            res.status(200).json(home.heros[home.heros?.length - 1]);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
     },
 
-    // updateHomeHero: async (req, res) => {
-    //     try {
-    //     } catch (err) {
-    //         sendErrorResponse(res, 500, err);
-    //     }
-    // },
-
-    deleteHomeHeroImage: async (req, res) => {
+    updateHomeHero: async (req, res) => {
         try {
-            const { url } = req.params;
+            const { heroId } = req.params;
+            const { title, description, place } = req.body;
 
-            if (isNaN(index)) {
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "Please provide a valid index"
-                );
+            const { _, error } = homeHeroSettingsSchema.validate(req.body);
+            if (error) {
+                return sendErrorResponse(res, 400, error.details[0].message);
             }
 
-            await HomeSettings.findOneAndUpdate(
-                { settingsNumber: 1 },
+            if (!isValidObjectId(heroId)) {
+                return sendErrorResponse(res, 400, "Invalid hero Id");
+            }
+
+            let image;
+            if (req.file?.path) {
+                image = "/" + req.file.path.replace(/\\/g, "/");
+            }
+
+            const home = await HomeSettings.findOneAndUpdate(
                 {
-                    $pull: { heroImages: url },
+                    settingsNumber: 1,
+                    "heros._id": heroId,
+                },
+                {
+                    "heros.$.title": title,
+                    "heros.$.description": description,
+                    "heros.$.place": place,
+                    "heros.$.image": image,
+                },
+                { new: true, runValidators: true }
+            );
+
+            if (!home) {
+                return sendErrorResponse(res, 400, "Hero not found");
+            }
+
+            const objIndex = home.heros?.findIndex((hero) => {
+                return hero?._id?.toString() === heroId?.toString();
+            });
+
+            res.status(200).json(home.heros[objIndex]);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    deleteHomeHero: async (req, res) => {
+        try {
+            const { heroId } = req.params;
+
+            if (!isValidObjectId(heroId)) {
+                return sendErrorResponse(res, 400, "Invalid Hero Id");
+            }
+
+            const home = await HomeSettings.findOneAndUpdate(
+                { settingsNumber: 1, "heros._id": heroId },
+                {
+                    $pull: { heros: { _id: heroId } },
+                },
+                {
+                    new: true,
                 }
             );
 
+            if (!home) {
+                return sendErrorResponse(res, 404, "Hero not found");
+            }
+
             res.status(200).json({
-                message: "Hero Image successfully removed",
-                url,
+                message: "Hero successfully deleted",
+                _id: heroId,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
@@ -135,7 +174,7 @@ module.exports = {
         }
     },
 
-    addNewHomeCard: async (req, res) => {
+    addHomeCard: async (req, res) => {
         try {
             const { title, description, tag, url, isRelativeUrl } = req.body;
 
@@ -144,9 +183,7 @@ module.exports = {
                 return sendErrorResponse(res, 500, error.details[0].message);
             }
 
-            console.log("first");
-
-            if (!req.files?.backgroundImage[0]?.path) {
+            if (!req.files?.backgroundImage || !req.files?.backgroundImage[0]?.path) {
                 return sendErrorResponse(
                     res,
                     400,
@@ -158,7 +195,7 @@ module.exports = {
                 "/" + req.files?.backgroundImage[0]?.path.replace(/\\/g, "/");
 
             let icon;
-            if (req.file?.icon && req.files?.icon[0]?.path) {
+            if (req.files?.icon && req.files?.icon[0]?.path) {
                 icon = "/" + req.files?.icon[0]?.path.replace(/\\/g, "/");
             }
 
@@ -190,24 +227,77 @@ module.exports = {
         }
     },
 
+    updateHomeCard: async (req, res) => {
+        try {
+            const { cardId } = req.params;
+            const { title, description, tag, url, isRelativeUrl } = req.body;
+
+            const { _, error } = homeCardSettingsSchema.validate(req.body);
+            if (error) {
+                return sendErrorResponse(res, 500, error.details[0].message);
+            }
+
+            if (!isValidObjectId(cardId)) {
+                return sendErrorResponse(res, 400, "Invalid card id");
+            }
+
+            let backgroundImage;
+            if (req.files?.backgroundImage && req.files?.backgroundImage[0]?.path) {
+                backgroundImage =
+                    "/" +
+                    req.files?.backgroundImage[0]?.path.replace(/\\/g, "/");
+            }
+
+            let icon;
+            if (req.files?.icon && req.files?.icon[0]?.path) {
+                icon = "/" + req.files?.icon[0]?.path.replace(/\\/g, "/");
+            }
+
+            const homeSettings = await HomeSettings.findOneAndUpdate(
+                {
+                    settingsNumber: 1,
+                    "cards._id": cardId,
+                },
+                {
+                    "cards.$.title": title,
+                    "cards.$.description": description,
+                    "cards.$.backgroundImage": backgroundImage,
+                    "cards.$.tag": tag,
+                    "cards.$.icon": icon,
+                    "cards.$.url": url,
+                    "cards.$.isRelativeUrl": isRelativeUrl,
+                },
+                { runValidators: true, new: true }
+            );
+
+            if (!homeSettings) {
+                return sendErrorResponse(res, 404, "Home Settings not found");
+            }
+
+            res.status(200).json({ message: "Card successfully updated" });
+        } catch (err) {
+            sendErrorResponse(res, 400, err);
+        }
+    },
+
     deleteHomeCard: async (req, res) => {
         try {
-            const { id } = req.params;
+            const { cardId } = req.params;
 
-            if (!isValidObjectId(id)) {
+            if (!isValidObjectId(cardId)) {
                 return sendErrorResponse(res, 400, "Invalid card id");
             }
 
             await HomeSettings.findOneAndUpdate(
                 { settingsNumber: 1 },
                 {
-                    $pull: { cards: { _id: id } },
+                    $pull: { cards: { _id: cardId } },
                 }
             );
 
             res.status(200).json({
                 message: "Card successfully removed",
-                _id: id,
+                _id: cardId,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
@@ -216,7 +306,7 @@ module.exports = {
 
     updateHomeFooter: async (req, res) => {
         try {
-            const { title, navLinks } = req.body;
+            const { footer } = req.body;
 
             const { _, error } = homeFooterSettingsSchema.validate(req.body);
             if (error) {
@@ -225,7 +315,7 @@ module.exports = {
 
             const homeSettings = await HomeSettings.findOneAndUpdate(
                 { settingsNumber: 1 },
-                { $push: { footer: { title, navLinks } } },
+                { footer },
                 { runValidators: true, new: true, upsert: true }
             ).lean();
 
@@ -237,29 +327,29 @@ module.exports = {
         }
     },
 
-    deleteHomeFooter: async (req, res) => {
-        try {
-            const { id } = req.params;
+    // deleteHomeFooter: async (req, res) => {
+    //     try {
+    //         const { id } = req.params;
 
-            if (!isValidObjectId(id)) {
-                return sendErrorResponse(res, 400, "Invalid footer id");
-            }
+    //         if (!isValidObjectId(id)) {
+    //             return sendErrorResponse(res, 400, "Invalid footer id");
+    //         }
 
-            await HomeSettings.findOneAndUpdate(
-                { settingsNumber: 1 },
-                {
-                    $pull: { footer: { _id: id } },
-                }
-            );
+    //         await HomeSettings.findOneAndUpdate(
+    //             { settingsNumber: 1 },
+    //             {
+    //                 $pull: { footer: { _id: id } },
+    //             }
+    //         );
 
-            res.status(200).json({
-                message: "Footer successfully removed",
-                _id: id,
-            });
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+    //         res.status(200).json({
+    //             message: "Footer successfully removed",
+    //             _id: id,
+    //         });
+    //     } catch (err) {
+    //         sendErrorResponse(res, 500, err);
+    //     }
+    // },
 
     updateMetaDetails: async (req, res) => {
         try {
@@ -367,6 +457,49 @@ module.exports = {
             res.status(200).json({
                 footer: home?.footer,
             });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getHeros: async (req, res) => {
+        try {
+            const home = await HomeSettings.findOne({
+                settingsNumber: 1,
+            });
+            if (!home) {
+                return sendErrorResponse(res, 404, "Home not found");
+            }
+
+            res.status(200).json({
+                heros: home?.heros,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSingleCard: async (req, res) => {
+        try {
+            const { cardId } = req.params;
+
+            if (!isValidObjectId(cardId)) {
+                return sendErrorResponse(res, 400, "Invalid card Id");
+            }
+
+            const homeSettings = await HomeSettings.findOne({
+                settingsNumber: 1,
+                "cards._id": cardId,
+            });
+            if (!homeSettings) {
+                return sendErrorResponse(res, 404, "Card not found");
+            }
+
+            const filteredCards = homeSettings.cards.filter((item) => {
+                return item?._id?.toString() === cardId?.toString();
+            });
+
+            res.status(200).json(filteredCards[0]);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
