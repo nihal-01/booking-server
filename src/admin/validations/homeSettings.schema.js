@@ -11,11 +11,13 @@ const homeMetaSettingsSchema = Joi.object({
 
 const homeFooterSettingsSchema = Joi.object({
     footer: Joi.array().items({
+        _id: Joi.string(),
         title: Joi.string().required(),
         navLinks: Joi.array().items({
             name: Joi.string().required(),
             link: Joi.string().required(),
             isRelativeUrl: Joi.boolean().required(),
+            _id: Joi.string(),
         }),
     }),
 });
