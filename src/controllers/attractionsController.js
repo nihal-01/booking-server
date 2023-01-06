@@ -510,42 +510,98 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid attraction id");
             }
 
-            const attraction = await Attraction.findOne({
-                _id: id,
-                isDeleted: false,
-            })
-                .populate("destination")
-                .populate("category")
-                .populate("activities")
-                .lean();
-
-            if (!attraction) {
-                return sendErrorResponse(res, 404, "Attraction not found");
-            }
-
-            const reviews = await AttractionReview.aggregate([
-                { $match: { attraction: attraction._id } },
+            const attraction = await Attraction.aggregate([
                 {
-                    $group: {
-                        _id: "$attraction",
-                        totalReviews: { $sum: 1 },
-                        totalRating: { $sum: "$rating" },
+                    $match: {
+                        _id: Types.ObjectId(id),
+                        isDeleted: false,
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "destinations",
+                        localField: "destination",
+                        foreignField: "_id",
+                        as: "destination",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "attractioncategories",
+                        localField: "category",
+                        foreignField: "_id",
+                        as: "category",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "attractionreviews",
+                        localField: "_id",
+                        foreignField: "attraction",
+                        as: "reviews",
+                    },
+                },
+                {
+                    $set: {
+                        destination: { $arrayElemAt: ["$destination", 0] },
+                        category: { $arrayElemAt: ["$category", 0] },
+                        totalRating: {
+                            $sum: {
+                                $map: {
+                                    input: "$reviews",
+                                    in: "$$this.rating",
+                                },
+                            },
+                        },
+                        totalReviews: {
+                            $size: "$reviews",
+                        },
+                    },
+                },
+                {
+                    $set: {
+                        averageRating: {
+                            $cond: [
+                                { $eq: ["$totalReviews", 0] },
+                                0,
+                                {
+                                    $divide: ["$totalRating", "$totalReviews"],
+                                },
+                            ],
+                        },
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "attractionactivities",
+                        foreignField: "attraction",
+                        localField: "_id",
+                        as: "activities",
+                    },
+                },
+                {
+                    $addFields: {
+                        activities: {
+                            $filter: {
+                                input: "$activities",
+                                as: "item",
+                                cond: { $eq: ["$$item.isDeleted", false] },
+                            },
+                        },
                     },
                 },
                 {
                     $project: {
-                        totalReviews: 1,
-                        averageRating: {
-                            $divide: ["$totalRating", "$totalReviews"],
-                        },
+                        totalReviews: 0,
                     },
                 },
             ]);
 
-            attraction.totalReviews = reviews[0]?.totalReviews || 0;
-            attraction.averageRating = reviews[0]?.averageRating || 0;
+            if (!attraction || attraction?.length < 1) {
+                return sendErrorResponse(res, 404, "Attraction not found");
+            }
 
-            res.status(200).json(attraction);
+            res.status(200).json(attraction[0]);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

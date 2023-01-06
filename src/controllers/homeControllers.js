@@ -77,9 +77,18 @@ module.exports = {
                         },
                     },
                     {
+                        $lookup: {
+                            from: "destinations",
+                            localField: "destination",
+                            foreignField: "_id",
+                            as: "destination",
+                        },
+                    },
+                    {
                         $set: {
                             activity: { $arrayElemAt: ["$activity", 0] },
                             category: { $arrayElemAt: ["$category", 0] },
+                            destination: { $arrayElemAt: ["$destination", 0] },
                             totalRating: {
                                 $sum: {
                                     $map: {
@@ -117,6 +126,9 @@ module.exports = {
                                         ],
                                     },
                                 ],
+                            },
+                            destination: {
+                                name: 1,
                             },
                         },
                     },
@@ -178,9 +190,18 @@ module.exports = {
                         },
                     },
                     {
+                        $lookup: {
+                            from: "destinations",
+                            localField: "destination",
+                            foreignField: "_id",
+                            as: "destination",
+                        },
+                    },
+                    {
                         $set: {
                             activity: { $arrayElemAt: ["$activity", 0] },
                             category: { $arrayElemAt: ["$category", 0] },
+                            destination: { $arrayElemAt: ["$destination", 0] },
                             totalReviews: {
                                 $size: "$reviews",
                             },
@@ -218,6 +239,9 @@ module.exports = {
                                         ],
                                     },
                                 ],
+                            },
+                            destination: {
+                                name: 1,
                             },
                         },
                     },
