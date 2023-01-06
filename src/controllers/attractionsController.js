@@ -581,11 +581,18 @@ module.exports = {
             const {
                 skip = 0,
                 limit = 10,
-                category,
                 destination,
+                category,
                 priceFrom,
                 priceTo,
                 rating,
+                durationFrom,
+                durationTo,
+                durationFromType,
+                durationToType,
+                search,
+                isCombo,
+                isOffer,
             } = req.query;
 
             const filters1 = { isDeleted: false };
@@ -596,7 +603,7 @@ module.exports = {
                     return sendErrorResponse(res, 400, "Invalid category id");
                 }
 
-                filters1.category = category;
+                filters1.category = Types.ObjectId(category);
             }
 
             if (destination && destination !== "") {
@@ -615,12 +622,74 @@ module.exports = {
                 }
             }
 
-            if (priceFrom && priceFrom !== "") {
-                filters2.activity.adultPrice = { $gte: priceFrom };
+            if (search && search !== "") {
+                filters1.title = { $regex: search, $options: "i" };
             }
 
-            if (priceTo && priceTo !== "") {
-                filters2.activity.adultPrice = { $lte: priceTo };
+            if (isOffer && isOffer !== "") {
+                filters1.isOffer = isOffer === "true";
+            }
+
+            if (isCombo && isCombo !== "") {
+                filters1.isCombo = isCombo === "true";
+            }
+
+            if (
+                durationFrom &&
+                durationFrom != "" &&
+                durationFromType &&
+                durationFromType !== "" &&
+                durationTo &&
+                durationTo !== "" &&
+                durationToType &&
+                durationToType != ""
+            ) {
+                filters1.$and = [
+                    {
+                        duration: { $gte: Number(durationFrom) },
+                        durationType: durationFromType?.toLowerCase(),
+                    },
+                    {
+                        duration: { $lte: Number(durationTo) },
+                        durationType: {
+                            $in: [
+                                durationFromType?.toLowerCase(),
+                                durationToType?.toLowerCase(),
+                            ],
+                        },
+                    },
+                ];
+            } else if (
+                durationFrom &&
+                durationFrom != "" &&
+                durationFromType &&
+                durationFromType !== ""
+            ) {
+                filters1.duration = { $gte: Number(durationFrom) };
+                filters1.durationType = durationFromType?.toLowerCase();
+            } else if (
+                durationTo &&
+                durationTo !== "" &&
+                durationToType &&
+                durationToType != ""
+            ) {
+                filters1.duration = { $lte: Number(durationTo) };
+                filters1.durationType = durationToType?.toLowerCase();
+            }
+
+            if (priceFrom && priceFrom !== "" && priceTo && priceTo !== "") {
+                filters2.$and = [
+                    { "activity.adultPrice": { $gte: Number(priceFrom) } },
+                    { "activity.adultPrice": { $lte: Number(priceTo) } },
+                ];
+            } else if (priceFrom && priceFrom !== "") {
+                filters2["activity.adultPrice"] = { $gte: Number(priceFrom) };
+            } else if (priceTo && priceTo !== "") {
+                filters2["activity.adultPrice"] = { $lte: Number(priceTo) };
+            }
+
+            if (rating && rating !== "") {
+                filters2.averageRating = { $gte: Number(rating) };
             }
 
             const attractions = await Attraction.aggregate([
@@ -640,7 +709,7 @@ module.exports = {
                                 },
                             },
                             {
-                                $sort: { createdAt: -1 },
+                                $sort: { adultPrice: -1 },
                             },
                             {
                                 $limit: 1,
@@ -650,16 +719,51 @@ module.exports = {
                     },
                 },
                 {
-                    $set: {
-                        activity: { $arrayElemAt: ["$activities", 0] },
+                    $lookup: {
+                        from: "attractionreviews",
+                        localField: "_id",
+                        foreignField: "attraction",
+                        as: "reviews",
                     },
                 },
                 {
-                    $match: filters2,
+                    $lookup: {
+                        from: "destinations",
+                        localField: "destination",
+                        foreignField: "_id",
+                        as: "destination",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "attractioncategories",
+                        localField: "category",
+                        foreignField: "_id",
+                        as: "category",
+                    },
+                },
+                {
+                    $set: {
+                        activity: { $arrayElemAt: ["$activities", 0] },
+                        destination: { $arrayElemAt: ["$destination", 0] },
+                        category: { $arrayElemAt: ["$category", 0] },
+                        totalReviews: {
+                            $size: "$reviews",
+                        },
+                        totalRating: {
+                            $sum: {
+                                $map: {
+                                    input: "$reviews",
+                                    in: "$$this.rating",
+                                },
+                            },
+                        },
+                    },
                 },
                 {
                     $project: {
                         title: 1,
+                        destination: 1,
                         category: {
                             categoryName: 1,
                             slug: 1,
@@ -669,17 +773,56 @@ module.exports = {
                         activity: {
                             adultPrice: 1,
                         },
+                        duration: 1,
+                        durationType: 1,
+                        totalReviews: 1,
+                        averageRating: {
+                            $cond: [
+                                { $eq: ["$totalReviews", 0] },
+                                0,
+                                {
+                                    $divide: ["$totalRating", "$totalReviews"],
+                                },
+                            ],
+                        },
+                        cancellationType: 1,
+                        cancelBeforeTime: 1,
+                        cancellationFee: 1,
+                        isCombo: 1,
+                        isOffer: 1,
+                        offerAmountType: 1,
+                        offerAmount: 1,
                     },
                 },
                 {
-                    $skip: Number(limit) * Number(skip),
+                    $match: filters2,
                 },
                 {
-                    $limit: Number(limit),
+                    $group: {
+                        _id: null,
+                        totalAttractions: { $sum: 1 },
+                        data: { $push: "$$ROOT" },
+                    },
+                },
+                {
+                    $project: {
+                        totalAttractions: 1,
+                        data: {
+                            $slice: [
+                                "$data",
+                                Number(limit) * Number(skip),
+                                Number(limit),
+                            ],
+                        },
+                    },
                 },
             ]);
 
-            res.status(200).json(attractions);
+            res.status(200).json({
+                attractions: attractions[0],
+                skip: Number(skip),
+                limit: Number(limit),
+            });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

@@ -9,14 +9,18 @@ const attractionSchema = Joi.object({
     destination: Joi.string().required(),
     isActive: Joi.boolean(),
     isCustomDate: Joi.boolean().required(),
-    startDate: Joi.date().when("isCustomDate", {
-        is: Joi.boolean().valid(true),
-        then: Joi.date().required(),
-    }),
-    endDate: Joi.date().when("isCustomDate", {
-        is: Joi.boolean().valid(true),
-        then: Joi.date().required(),
-    }),
+    startDate: Joi.date()
+        .allow("", null)
+        .when("isCustomDate", {
+            is: Joi.boolean().valid(true),
+            then: Joi.date().required(),
+        }),
+    endDate: Joi.date()
+        .allow("", null)
+        .when("isCustomDate", {
+            is: Joi.boolean().valid(true),
+            then: Joi.date().required(),
+        }),
     availability: Joi.array().items({
         _id: Joi.string(),
         isEnabled: Joi.boolean().required(),
@@ -46,7 +50,7 @@ const attractionSchema = Joi.object({
             .required(),
     }),
     offerAmount: Joi.number()
-        .allow("")
+        .allow("", null)
         .when("isOffer", {
             is: Joi.boolean().valid(true),
             then: Joi.number().required(),
@@ -86,7 +90,7 @@ const attractionSchema = Joi.object({
             is: Joi.string().valid("cancel-with-fee"),
             then: Joi.number().required(),
         }),
-        isCombo: Joi.boolean().required(),
+    isCombo: Joi.boolean().required(),
 });
 
 const attractionActivitySchema = Joi.object({

@@ -51,7 +51,7 @@ module.exports = {
                                     },
                                 },
                                 {
-                                    $sort: { createdAt: -1 },
+                                    $sort: { adultPrice: -1 },
                                 },
                                 {
                                     $limit: 1,
@@ -152,7 +152,7 @@ module.exports = {
                                     },
                                 },
                                 {
-                                    $sort: { createdAt: -1 },
+                                    $sort: { adultPrice: -1 },
                                 },
                                 {
                                     $limit: 1,
