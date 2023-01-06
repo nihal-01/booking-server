@@ -13,6 +13,10 @@ const destinationSchema = new Schema(
             trim: true,
             required: true,
         },
+        image: {
+            type: String,
+            required: true,
+        },
         isDeleted: {
             type: Boolean,
             required: true,

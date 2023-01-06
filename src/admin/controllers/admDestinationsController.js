@@ -51,9 +51,19 @@ module.exports = {
                 return sendErrorResponse(res, 404, "Country not found");
             }
 
+            if (!req.file?.path) {
+                return sendErrorResponse(res, 400, "Image is required");
+            }
+
+            let image;
+            if (req.file?.path) {
+                image = "/" + req.file.path.replace(/\\/g, "/");
+            }
+
             const newDestination = new Destination({
                 country,
                 name,
+                image,
             });
             await newDestination.save();
 
@@ -87,12 +97,17 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid destination id");
             }
 
+            let image;
+            if (req.file?.path) {
+                image = "/" + req.file.path.replace(/\\/g, "/");
+            }
+
             const destination = await Destination.findOneAndUpdate(
                 {
                     _id: id,
                     isDeleted: false,
                 },
-                { country, name },
+                { country, name, image },
                 { runValidators: true, new: true }
             );
 
