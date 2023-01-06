@@ -1,5 +1,11 @@
 const { sendErrorResponse } = require("../helpers");
-const { HomeSettings, Attraction, Country, Destination } = require("../models");
+const {
+    HomeSettings,
+    Attraction,
+    Country,
+    Destination,
+    Blog,
+} = require("../models");
 
 module.exports = {
     getHomeData: async (req, res) => {
@@ -200,15 +206,38 @@ module.exports = {
                             activity: {
                                 adultPrice: 1,
                             },
+                            totalReviews: 1,
+                            averageReviews: {
+                                $cond: [
+                                    { $eq: ["$totalReviews", 0] },
+                                    0,
+                                    {
+                                        $divide: [
+                                            "$totalRating",
+                                            "$totalReviews",
+                                        ],
+                                    },
+                                ],
+                            },
                         },
                     },
                 ]);
             }
 
+            recentBlogs = [];
+            if (home?.isBlogsEnabled) {
+                recentBlogs = await Blog.find({})
+                    .populate("category")
+                    .sort({ createdAt: -1 })
+                    .limit(3)
+                    .lean();
+            }
+
             res.status(200).json({
-                // home,
+                home,
                 bestSellingAttractions,
-                // topAttractions,
+                topAttractions,
+                recentBlogs,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
