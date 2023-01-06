@@ -28,20 +28,12 @@ module.exports = {
 
     getAllCategories: async (req, res) => {
         try {
-            const { skip = 0, limit = 10 } = req.query;
-
-            const categories = await BlogCategory.find({})
-                .sort({ createdAt: -1 })
-                .limit(limit)
-                .skip(limit * skip);
-
-            const totalCategories = await BlogCategory.find({}).count();
+            const categories = await BlogCategory.find({}).sort({
+                createdAt: -1,
+            });
 
             res.status(200).json({
                 categories,
-                totalCategories,
-                skip: Number(skip),
-                limit: Number(limit),
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);

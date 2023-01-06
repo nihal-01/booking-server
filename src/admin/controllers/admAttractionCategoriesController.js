@@ -26,16 +26,11 @@ module.exports = {
 
     getAllCategories: async (req, res) => {
         try {
-            const { skip = 0, limit = 10 } = req.query;
+            const categories = await AttractionCategory.find({}).sort({
+                createdAt: -1,
+            });
 
-            const categories = await AttractionCategory.find({})
-                .sort({ createdAt: -1 })
-                .limit(limit)
-                .skip(limit * skip);
-
-            const totalCategories = await AttractionCategory.find({}).count();
-
-            res.status(200).json({ categories, totalCategories, skip, limit });
+            res.status(200).json({ categories });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

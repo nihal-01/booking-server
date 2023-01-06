@@ -17,7 +17,10 @@ module.exports = {
             }
 
             let bestSellingAttractions = [];
-            if (home?.bestSellingAttractions?.length > 0) {
+            if (
+                home?.isBestSellingAttractionsSectionEnabled &&
+                home?.bestSellingAttractions?.length > 0
+            ) {
                 bestSellingAttractions = await Attraction.aggregate([
                     {
                         $match: {
@@ -52,11 +55,6 @@ module.exports = {
                         },
                     },
                     {
-                        $set: {
-                            activity: { $arrayElemAt: ["$activity", 0] },
-                        },
-                    },
-                    {
                         $lookup: {
                             from: "attractioncategories",
                             foreignField: "_id",
@@ -65,8 +63,28 @@ module.exports = {
                         },
                     },
                     {
+                        $lookup: {
+                            from: "attractionreviews",
+                            localField: "_id",
+                            foreignField: "attraction",
+                            as: "reviews",
+                        },
+                    },
+                    {
                         $set: {
+                            activity: { $arrayElemAt: ["$activity", 0] },
                             category: { $arrayElemAt: ["$category", 0] },
+                            totalRating: {
+                                $sum: {
+                                    $map: {
+                                        input: "$reviews",
+                                        in: "$$this.rating",
+                                    },
+                                },
+                            },
+                            totalReviews: {
+                                $size: "$reviews",
+                            },
                         },
                     },
                     {
@@ -81,13 +99,29 @@ module.exports = {
                             activity: {
                                 adultPrice: 1,
                             },
+                            totalReviews: 1,
+                            averageRating: {
+                                $cond: [
+                                    { $eq: ["$totalReviews", 0] },
+                                    0,
+                                    {
+                                        $divide: [
+                                            "$totalRating",
+                                            "$totalReviews",
+                                        ],
+                                    },
+                                ],
+                            },
                         },
                     },
                 ]);
             }
 
             let topAttractions = [];
-            if (home?.topAttractions?.length > 0) {
+            if (
+                home?.isTopAttractionsSectionEnabled &&
+                home?.topAttractions?.length > 0
+            ) {
                 topAttractions = await Attraction.aggregate([
                     {
                         $match: {
@@ -122,11 +156,6 @@ module.exports = {
                         },
                     },
                     {
-                        $set: {
-                            activity: { $arrayElemAt: ["$activity", 0] },
-                        },
-                    },
-                    {
                         $lookup: {
                             from: "attractioncategories",
                             foreignField: "_id",
@@ -135,8 +164,28 @@ module.exports = {
                         },
                     },
                     {
+                        $lookup: {
+                            from: "attractionreviews",
+                            localField: "_id",
+                            foreignField: "attraction",
+                            as: "reviews",
+                        },
+                    },
+                    {
                         $set: {
+                            activity: { $arrayElemAt: ["$activity", 0] },
                             category: { $arrayElemAt: ["$category", 0] },
+                            totalReviews: {
+                                $size: "$reviews",
+                            },
+                            totalRating: {
+                                $sum: {
+                                    $map: {
+                                        input: "$reviews",
+                                        in: "$$this.rating",
+                                    },
+                                },
+                            },
                         },
                     },
                     {
@@ -157,9 +206,9 @@ module.exports = {
             }
 
             res.status(200).json({
-                home,
+                // home,
                 bestSellingAttractions,
-                topAttractions,
+                // topAttractions,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
