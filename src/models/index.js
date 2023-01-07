@@ -17,6 +17,8 @@ const VisaApplication = require("./visaApplication.model");
 const VisaDocument = require("./visaDocument.model");
 const AttractionReview = require("./attractionReview.model");
 const Payment = require("./payment.model");
+const Currency = require("./currency.modal");
+const Driver = require("./driver.model");
 
 module.exports = {
     HomeSettings,
@@ -38,4 +40,6 @@ module.exports = {
     VisaDocument,
     AttractionReview,
     Payment,
+    Currency,
+    Driver,
 };

@@ -18,21 +18,12 @@ const attractionOrderSchema = Joi.object({
         }),
 });
 
-const attractionOrderPaymentSchema = Joi.object({
-    attractionOrderId: Joi.string().required(),
-    name: Joi.string(),
-    email: Joi.string(),
-    phoneNumber: Joi.string(),
-    country: Joi.string(),
-});
-
 const attractionOrderCaptureSchema = Joi.object({
     orderId: Joi.string().required(),
-    paymentId: Joi.string(),
+    paymentId: Joi.string().required(),
 });
 
 module.exports = {
     attractionOrderSchema,
-    attractionOrderPaymentSchema,
     attractionOrderCaptureSchema,
 };

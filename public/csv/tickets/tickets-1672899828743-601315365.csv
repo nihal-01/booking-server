@@ -1,4 +1,4 @@
-ticketNo,lotNo,validity,validTill,details,ticketFor,costInUsd
+ticketNo,lotNo,validity,validTill,details,ticketFor,ticketCost
 345435,A1,y,2022-12-27T05:39:31.522Z,some details,adult,200
 345437,A2,n,,some details,adult,200
 345438,A1,n,,,adult,200

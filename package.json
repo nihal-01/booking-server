@@ -21,6 +21,7 @@
         "joi": "^17.7.0",
         "jsonwebtoken": "^9.0.0",
         "mongoose": "^6.8.1",
+        "mongoose-sequence": "^5.3.1",
         "mongoose-slug-generator": "^1.0.4",
         "multer": "^1.4.5-lts.1",
         "node-ccavenue": "^1.0.5"

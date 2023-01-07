@@ -1,34 +1,32 @@
 const { Schema, model } = require("mongoose");
 
-const countrySchema = new Schema(
+const currencySchema = new Schema(
     {
-        countryName: {
+        country: {
+            type: Schema.Types.ObjectId,
+            ref: "Country",
+            required: true,
+        },
+        currencyName: {
             type: String,
             required: true,
-            lowercase: true,
+        },
+        currencySymbol: {
+            type: String,
+            required: true,
         },
         isocode: {
             type: String,
-            uppercase: true,
             required: true,
         },
-        phonecode: {
-            type: String,
+        conversionRate: {
+            type: Number,
             required: true,
-        },
-        flag: {
-            type: String,
-            required: true,
-        },
-        isDeleted: {
-            type: Boolean,
-            required: true,
-            default: false,
         },
     },
     { timestamps: true }
 );
 
-const Country = model("Country", countrySchema);
+const Currency = model("Currency", currencySchema);
 
-module.exports = Country;
+module.exports = Currency;

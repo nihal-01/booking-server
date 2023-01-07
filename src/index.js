@@ -14,6 +14,7 @@ const {
     countriesRouter,
     blogsRouter,
     attractionsCategoriesRouter,
+    attractionsOrdersRouter,
 } = require("./routes");
 const { AttractionActivity, Destination, Country } = require("./models");
 
@@ -28,6 +29,7 @@ app.use("/api/v1/home", homeRouter);
 app.use("/api/v1/users", usersRouter);
 app.use("/api/v1/attractions/reviews", attractionReviewsRouter);
 app.use("/api/v1/attractions/categories", attractionsCategoriesRouter);
+app.use("/api/v1/attractions/orders", attractionsOrdersRouter);
 app.use("/api/v1/attractions", attractionsRouter);
 app.use("/api/v1/subscribers", subscribersRouter);
 app.use("/api/v1/countries", countriesRouter);

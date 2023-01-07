@@ -1,4 +1,7 @@
-const { Schema, model } = require("mongoose");
+const mongoose = require("mongoose");
+const AutoIncrement = require("mongoose-sequence")(mongoose);
+
+const { Schema, model } = mongoose;
 
 const attractionOrderSchema = new Schema(
     {
@@ -9,6 +12,11 @@ const attractionOrderSchema = new Schema(
                         type: Schema.Types.ObjectId,
                         ref: "AttractionActivity",
                         required: true,
+                    },
+                    bookingType: {
+                        type: String,
+                        required: true,
+                        enum: ["booking", "ticket"],
                     },
                     date: {
                         type: Date,
@@ -26,6 +34,9 @@ const attractionOrderSchema = new Schema(
                         type: Number,
                         required: true,
                     },
+                    profit: {
+                        type: Number,
+                    },
                     transferType: {
                         type: String,
                         lowercase: true,
@@ -40,6 +51,16 @@ const attractionOrderSchema = new Schema(
                         lowercase: true,
                         enum: ["pending", "booked", "confirmed", "cancelled"],
                     },
+                    bookingConfirmationNumber: {
+                        type: String,
+                        required: function () {
+                            return (
+                                this.status === "confirmed" &&
+                                this.bookingType === "booking"
+                            );
+                        },
+                    },
+                    // add driver here
                     isRefunded: {
                         type: Boolean,
                         required: true,
@@ -56,15 +77,8 @@ const attractionOrderSchema = new Schema(
             type: Number,
             required: true,
         },
-        user: {
-            type: Schema.Types.ObjectId,
-            ref: "User",
-        },
-        orderStatus: {
+        merchant: {
             type: String,
-            required: true,
-            lowercase: true,
-            enum: ["created", "completed"],
         },
         paymentStatus: {
             type: String,
@@ -75,9 +89,36 @@ const attractionOrderSchema = new Schema(
         referenceNo: {
             type: Number,
         },
+        user: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
+        name: {
+            type: String,
+            required: true,
+        },
+        email: {
+            type: String,
+            required: true,
+        },
+        phoneNumber: {
+            type: String,
+            required: true,
+        },
+        country: {
+            type: Schema.Types.ObjectId,
+            ref: "Country",
+            required: true,
+        },
     },
     { timestamps: true }
 );
+
+attractionOrderSchema.plugin(AutoIncrement, {
+    inc_field: "referenceNo",
+    start_seq: 1,
+});
 
 const AttractionOrder = model("AttractionOrder", attractionOrderSchema);
 

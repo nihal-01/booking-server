@@ -14,6 +14,7 @@ const {
     admDestinationsRouter,
     admGeneralRouter,
     admUsersRouter,
+    admAttractionsOrdersRouter,
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
@@ -22,6 +23,7 @@ router.use(adminAuth);
 
 router.use("/attractions/tickets", admAttractionsTicketsRouter);
 router.use("/attractions/categories", admAttractionCategoriesRouter);
+router.use("/attractions/orders", admAttractionsOrdersRouter);
 router.use("/attractions", admAttractionsRouter);
 router.use("/home", admHomeRouter);
 router.use("/blogs/categories", admBlogCategoriesRouter);
@@ -30,6 +32,7 @@ router.use("/subscribers", admSubscribersRouter);
 router.use("/countries", admCountriesRouter);
 router.use("/destinations", admDestinationsRouter);
 router.use("/general", admGeneralRouter);
+router.use("/users", admUsersRouter);
 router.use("/users", admUsersRouter);
 
 module.exports = router;

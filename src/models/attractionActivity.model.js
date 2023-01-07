@@ -33,9 +33,17 @@ const attractionActivitySchema = new Schema(
         },
         infantAgeLimit: {
             type: Number,
-            required: true,
         },
         infantPrice: {
+            type: Number,
+        },
+        adultCost: {
+            type: Number,
+        },
+        childCost: {
+            type: Number,
+        },
+        infantCost: {
             type: Number,
         },
         isVat: {

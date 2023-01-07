@@ -47,7 +47,7 @@ const attractionTicketSchema = new Schema(
             required: true,
             default: false,
         },
-        costInUsd: {
+        ticketCost: {
             type: Number,
             required: true,
         },

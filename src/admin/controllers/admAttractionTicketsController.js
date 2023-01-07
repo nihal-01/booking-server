@@ -72,7 +72,7 @@ module.exports = {
                                 validTill: ticketsList[i]?.validTill,
                                 details: ticketsList[i]?.details,
                                 ticketFor: ticketsList[i]?.ticketFor,
-                                costInUsd: ticketsList[i]?.costInUsd,
+                                ticketCost: ticketsList[i]?.ticketCost,
                             });
                             await newTicket.save();
                             newTickets.push(Object(newTicket));
@@ -95,7 +95,7 @@ module.exports = {
                             validTill: csvrow[3],
                             details: csvrow[4],
                             ticketFor: csvrow[5],
-                            costInUsd: csvrow[6],
+                            ticketCost: csvrow[6],
                         });
                     }
                     csvRow += 1;

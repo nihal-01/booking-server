@@ -15,6 +15,7 @@ const {
     getSingleActivity,
     updateActivity,
     deleteActivity,
+    getSingleAttractionBasicData,
 } = require("../controllers/admAttractionsController");
 
 const storage = multer.diskStorage({
@@ -58,9 +59,9 @@ router.patch("/activities/update/:activityId", updateActivity);
 router.get("/all", getAllAttractions);
 router.get("/initial-data", getInitialData);
 router.get("/single/:id", getSingleAttraction);
-router.get("/orders/all", getAllOrders);
 router.get("/:id/reviews", getSingleAttractionReviews);
 router.get("/activities/:activityId", getSingleActivity);
+router.get("/single/:id/basic-data", getSingleAttractionBasicData)
 
 router.delete("/delete/:id", deleteAttraction);
 router.delete("/activities/delete/:activityId", deleteActivity);

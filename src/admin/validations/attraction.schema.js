@@ -119,6 +119,20 @@ const attractionActivitySchema = Joi.object({
     isActive: Joi.boolean(),
     peakTime: Joi.date().allow("", null),
     note: Joi.string().allow("", null),
+    bookingType: Joi.string().valid("booking", "ticket").required(),
+    childCost: Joi.number()
+        .allow("", null)
+        .when("bookingType", {
+            is: Joi.string().valid("booking"),
+            then: Joi.number().required(),
+        }),
+    adultCost: Joi.number()
+        .allow("", null)
+        .when("bookingType", {
+            is: Joi.string().valid("booking"),
+            then: Joi.number().required(),
+        }),
+    infantCost: Joi.number().allow("", null),
 });
 
 const attractionTicketUploadSchema = Joi.object({

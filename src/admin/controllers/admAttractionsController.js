@@ -307,6 +307,9 @@ module.exports = {
                 isActive,
                 peakTime,
                 note,
+                childCost,
+                adultCost,
+                infantCost,
             } = req.body;
 
             const { _, error } = attractionActivitySchema.validate(req.body);
@@ -344,6 +347,9 @@ module.exports = {
                 isActive,
                 peakTime,
                 note,
+                childCost,
+                adultCost,
+                infantCost,
             });
             await newTicket.save();
 
@@ -362,10 +368,16 @@ module.exports = {
 
     getAllAttractions: async (req, res) => {
         try {
-            const { skip = 0, limit = 10 } = req.query;
+            const { skip = 0, limit = 10, search } = req.query;
+
+            const filters = { isDeleted: false };
+
+            if (search && search !== "") {
+                filters.title = { $regex: search, $options: "i" };
+            }
 
             const attractions = await Attraction.aggregate([
-                { $match: { isDeleted: false } },
+                { $match: filters },
                 {
                     $lookup: {
                         from: "destinations",
@@ -428,9 +440,7 @@ module.exports = {
                 },
             ]);
 
-            const totalAttractions = await Attraction.find({
-                isDeleted: false,
-            }).count();
+            const totalAttractions = await Attraction.find(filters).count();
 
             res.status(200).json({
                 attractions,
@@ -460,13 +470,6 @@ module.exports = {
             if (!isValidObjectId(id)) {
                 return sendErrorResponse(res, 400, "Invalid attraction id");
             }
-
-            // const attraction = await Attraction.findOne({
-            //     _id: id,
-            //     isDeleted: false,
-            // })
-            //     .populate("activities")
-            //     .lean();
 
             const attraction = await Attraction.aggregate([
                 { $match: { _id: Types.ObjectId(id), isDeleted: false } },
@@ -525,105 +528,6 @@ module.exports = {
         }
     },
 
-    getAllOrders: async (req, res) => {
-        try {
-            const { skip = 0, limit = 10 } = req.query;
-
-            const orders = await AttractionOrder.aggregate([
-                { $match: { status: { $ne: "pending" } } },
-                {
-                    $lookup: {
-                        from: "attractions",
-                        localField: "attraction",
-                        foreignField: "_id",
-                        as: "attraction",
-                    },
-                },
-                {
-                    $set: {
-                        attraction: { $arrayElemAt: ["$attraction", 0] },
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "user",
-                        foreignField: "_id",
-                        as: "user",
-                    },
-                },
-                {
-                    $set: {
-                        user: { $arrayElemAt: ["$user", 0] },
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "countries",
-                        localField: "user.country",
-                        foreignField: "_id",
-                        as: "country",
-                    },
-                },
-                {
-                    $set: {
-                        "user.country": { $arrayElemAt: ["$country", 0] },
-                    },
-                },
-                { $unwind: "$activities" },
-                {
-                    $lookup: {
-                        from: "attractionactivities",
-                        localField: "activities.activity",
-                        foreignField: "_id",
-                        as: "activity",
-                    },
-                },
-                {
-                    $set: {
-                        activity: {
-                            $arrayElemAt: ["$activity", 0],
-                        },
-                    },
-                },
-                {
-                    $project: {
-                        activity: {
-                            name: 1,
-                        },
-                        attraction: {
-                            title: 1,
-                            images: 1,
-                        },
-                        activities: 1,
-                        bookingType: 1,
-                        user: {
-                            name: 1,
-                            email: 1,
-                            country: 1,
-                            phoneNumber: 1,
-                        },
-                        orderId: 1,
-                    },
-                },
-                {
-                    $sort: { createdAt: -1 },
-                },
-            ]);
-
-            const totalOrders = await AttractionOrder.find({}).count();
-
-            res.status(200).json({
-                orders,
-                totalOrders,
-                skip: Number(skip),
-                limit: Number(limit),
-            });
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
-
     getSingleAttractionReviews: async (req, res) => {
         try {
             const { id } = req.params;
@@ -674,7 +578,7 @@ module.exports = {
             const activity = await AttractionActivity.findOne({
                 isDeleted: false,
                 _id: activityId,
-            });
+            }).populate("attraction", "title bookingType");
 
             if (!activity) {
                 return sendErrorResponse(res, 404, "Activity not found");
@@ -709,6 +613,9 @@ module.exports = {
                 isActive,
                 peakTime,
                 note,
+                childCost,
+                adultCost,
+                infantCost,
             } = req.body;
 
             const { _, error } = attractionActivitySchema.validate(req.body);
@@ -747,6 +654,9 @@ module.exports = {
                     isActive,
                     peakTime,
                     note,
+                    childCost,
+                    adultCost,
+                    infantCost,
                 },
                 { runValidators: true }
             );
@@ -788,6 +698,28 @@ module.exports = {
                 message: "Activity successfully deleted",
                 _id: activityId,
             });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSingleAttractionBasicData: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid Attraction Id");
+            }
+
+            const attraction = await Attraction.findOne({
+                isDeleted: false,
+                _id: id,
+            }).select("title bookingType");
+            if (!attraction) {
+                return sendErrorResponse(res, 404, "Attraction not found");
+            }
+
+            res.status(200).json(attraction);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

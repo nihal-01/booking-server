@@ -94,14 +94,7 @@ module.exports = {
     updateCountry: async (req, res) => {
         try {
             const { id } = req.params;
-            const {
-                countryName,
-                isocode,
-                phonecode,
-                flag,
-                currency,
-                currencySymbol,
-            } = req.body;
+            const { countryName, isocode, phonecode, flag } = req.body;
 
             const { _, error } = countrySchema.validate(req.body);
             if (error) {
@@ -119,8 +112,6 @@ module.exports = {
                     isocode,
                     phonecode,
                     flag,
-                    currency,
-                    currencySymbol,
                 },
                 { runValidators: true, new: true }
             );

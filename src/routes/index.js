@@ -6,6 +6,7 @@ const attractionReviewsRouter = require("./attractionReviewsRouter");
 const countriesRouter = require("./countriesRouter");
 const blogsRouter = require("./blogsRouter");
 const attractionsCategoriesRouter = require("./attractionsCategoriesRouter");
+const attractionsOrdersRouter = require("./attractionsOrdersRouter");
 
 module.exports = {
     homeRouter,
@@ -16,4 +17,5 @@ module.exports = {
     countriesRouter,
     blogsRouter,
     attractionsCategoriesRouter,
+    attractionsOrdersRouter,
 };
