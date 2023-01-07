@@ -1,5 +1,5 @@
 const { sendErrorResponse } = require("../../helpers");
-const { Country, Destination } = require("../../models");
+const { Country, Destination, Driver } = require("../../models");
 
 module.exports = {
     getGeneralData: async (req, res) => {
@@ -11,8 +11,9 @@ module.exports = {
                 .populate("country")
                 .sort({ createdAt: -1 })
                 .lean();
+            const drivers = await Driver.find({ isDeleted: false });
 
-            res.status(200).json({ destinations, countries });
+            res.status(200).json({ destinations, countries, drivers });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

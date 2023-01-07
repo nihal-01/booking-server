@@ -19,6 +19,34 @@ module.exports = {
         }
     },
 
+    updateDriver: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { driverName, phoneNumber } = req.body;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid driver id");
+            }
+
+            const driver = await Driver.findOneAndUpdate(
+                {
+                    _id: id,
+                    isDeleted: false,
+                },
+                { driverName, phoneNumber },
+                { runValidators: true, new: true }
+            );
+
+            if (!driver) {
+                return sendErrorResponse(res, 404, "Driver not found");
+            }
+
+            res.status(200).json(driver);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
     deleteDriver: async (req, res) => {
         try {
             const { id } = req.params;
