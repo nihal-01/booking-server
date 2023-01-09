@@ -60,7 +60,16 @@ const attractionOrderSchema = new Schema(
                             );
                         },
                     },
-                    // add driver here
+                    driver: {
+                        type: Schema.Types.ObjectId,
+                        ref: "Driver",
+                        required: function () {
+                            return (
+                                this.status === "confirmed" &&
+                                this.bookingType === "booking"
+                            );
+                        },
+                    },
                     isRefunded: {
                         type: Boolean,
                         required: true,
@@ -117,7 +126,7 @@ const attractionOrderSchema = new Schema(
 
 attractionOrderSchema.plugin(AutoIncrement, {
     inc_field: "referenceNo",
-    start_seq: 1,
+    start_seq: 10000,
 });
 
 const AttractionOrder = model("AttractionOrder", attractionOrderSchema);

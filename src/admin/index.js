@@ -15,6 +15,7 @@ const {
     admGeneralRouter,
     admUsersRouter,
     admAttractionsOrdersRouter,
+    admDriversRouter,
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
@@ -34,5 +35,6 @@ router.use("/destinations", admDestinationsRouter);
 router.use("/general", admGeneralRouter);
 router.use("/users", admUsersRouter);
 router.use("/users", admUsersRouter);
+router.use("/drivers", admDriversRouter);
 
 module.exports = router;

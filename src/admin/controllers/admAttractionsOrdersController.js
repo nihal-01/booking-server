@@ -60,6 +60,7 @@ module.exports = {
                         country: { $arrayElemAt: ["$country", 0] },
                     },
                 },
+                { $sort: { createdAt: -1 } },
                 {
                     $project: {
                         totalOffer: 1,
