@@ -1,5 +1,6 @@
+const { isValidObjectId } = require("mongoose");
 const { sendErrorResponse } = require("../../helpers");
-const { AttractionOrder } = require("../../models");
+const { AttractionOrder, Driver } = require("../../models");
 
 module.exports = {
     getAllOrders: async (req, res) => {
@@ -50,6 +51,14 @@ module.exports = {
                     },
                 },
                 {
+                    $lookup: {
+                        from: "drivers",
+                        localField: "activities.driver",
+                        foreignField: "_id",
+                        as: "activities.driver",
+                    },
+                },
+                {
                     $set: {
                         "activities.activity": {
                             $arrayElemAt: ["$activities.activity", 0],
@@ -58,6 +67,9 @@ module.exports = {
                             $arrayElemAt: ["$attraction", 0],
                         },
                         country: { $arrayElemAt: ["$country", 0] },
+                        "activities.driver": {
+                            $arrayElemAt: ["$activities.driver", 0],
+                        },
                     },
                 },
                 { $sort: { createdAt: -1 } },
@@ -98,8 +110,11 @@ module.exports = {
                             status: 1,
                             isRefunded: 1,
                             profit: 1,
+                            bookingConfirmationNumber: 1,
+                            driver: 1,
                             _id: 1,
                         },
+                        referenceNo: 1,
                     },
                 },
                 {
@@ -135,7 +150,16 @@ module.exports = {
 
     confirmBooking: async (req, res) => {
         try {
-            const { order, bookingId, bookingConfirmationNumber } = req.body;
+            const { order, bookingId, bookingConfirmationNumber, driver } =
+                req.body;
+
+            if (!isValidObjectId(order)) {
+                return sendErrorResponse(res, 400, "Invalid order id");
+            }
+
+            if (!isValidObjectId(bookingId)) {
+                return sendErrorResponse(res, 400, "Invalid booking id");
+            }
 
             const orderDetails = await AttractionOrder.findOne(
                 {
@@ -144,7 +168,7 @@ module.exports = {
                 { activities: { $elemMatch: { _id: bookingId } } }
             );
 
-            if (!orderDetails || orderDetails?.activities?.length < 1) {
+            if (!orderDetails || orderDetails?.activities[0]?.length < 1) {
                 return sendErrorResponse(res, 400, "Order not found");
             }
 
@@ -164,6 +188,28 @@ module.exports = {
                 );
             }
 
+            if (
+                orderDetails?.activities[0]?.transferType !== "without" &&
+                !driver
+            ) {
+                return sendErrorResponse(res, 400, "Driver is required");
+            }
+
+            let driverDetails;
+            if (orderDetails?.activities[0]?.transferType !== "without") {
+                if (!isValidObjectId(driver)) {
+                    return sendErrorResponse(res, 400, "Invalid driver id");
+                }
+
+                driverDetails = await Driver.findOne({
+                    _id: driver,
+                    isDeleted: false,
+                });
+                if (!driverDetails) {
+                    return sendErrorResponse(res, 404, "Driver not found");
+                }
+            }
+
             await AttractionOrder.findOneAndUpdate(
                 {
                     _id: order,
@@ -173,6 +219,10 @@ module.exports = {
                     "activities.$.status": "confirmed",
                     "activities.$.bookingConfirmationNumber":
                         bookingConfirmationNumber,
+                    "activities.$.driver":
+                        orderDetails?.activities[0]?.transferType !== "without"
+                            ? driver
+                            : undefined,
                 },
                 { runValidators: true }
             );
@@ -180,7 +230,146 @@ module.exports = {
             res.status(200).json({
                 message: "Booking confirmed successfully",
                 bookingConfirmationNumber,
+                driver: driverDetails,
             });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    cancelBooking: async (req, res) => {
+        try {
+            const { order, bookingId } = req.body;
+
+            if (!isValidObjectId(order)) {
+                return sendErrorResponse(res, 400, "Invalid order id");
+            }
+
+            if (!isValidObjectId(bookingId)) {
+                return sendErrorResponse(res, 400, "Invalid booking id");
+            }
+
+            const orderDetails = await AttractionOrder.findOne(
+                {
+                    _id: order,
+                },
+                { activities: { $elemMatch: { _id: bookingId } } }
+            );
+
+            if (!orderDetails || orderDetails?.activities?.length < 1) {
+                return sendErrorResponse(res, 400, "Order not found");
+            }
+
+            if (orderDetails.activities[0]?.bookingType !== "booking") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "Only bookings can cancelled!"
+                );
+            }
+
+            if (orderDetails.activities[0].status !== "booked") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "You can't confirm this booking. because this order not booked or cancelled or already confirmed"
+                );
+            }
+
+            await AttractionOrder.findOneAndUpdate(
+                {
+                    _id: order,
+                    "activities._id": bookingId,
+                },
+                {
+                    "activities.$.status": "cancelled",
+                },
+                { runValidators: true }
+            );
+
+            // send email and refund balance
+
+            res.status(200).json({
+                message: "Booking cancelled successfully",
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    assignDriverForTicketOrder: async (req, res) => {
+        try {
+            const { order, ticketOrderId, driver } = req.body;
+
+            if (!isValidObjectId(order)) {
+                return sendErrorResponse(res, 400, "Invalid order id");
+            }
+
+            if (!isValidObjectId(ticketOrderId)) {
+                return sendErrorResponse(res, 400, "Invalid Ticket order id");
+            }
+
+            if (!isValidObjectId(driver)) {
+                return sendErrorResponse(res, 400, "Invalid Driver id");
+            }
+
+            const orderDetails = await AttractionOrder.findOne(
+                {
+                    _id: order,
+                },
+                { activities: { $elemMatch: { _id: ticketOrderId } } }
+            );
+
+            if (!orderDetails || orderDetails?.activities[0]?.length < 1) {
+                return sendErrorResponse(res, 400, "Order not found");
+            }
+
+            if (orderDetails.activities[0]?.bookingType !== "ticket") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "This is not a valid ticket order"
+                );
+            }
+
+            if (orderDetails.activities[0]?.driver) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "You already assaigned a driver for this order"
+                );
+            }
+
+            if (orderDetails?.activities[0]?.transferType === "without") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "This order has no transfer"
+                );
+            }
+
+            const driverDetails = await Driver.findOne({
+                _id: driver,
+                isDeleted: false,
+            });
+            if (!driverDetails) {
+                return sendErrorResponse(res, 404, "Driver not found");
+            }
+
+            await AttractionOrder.findOneAndUpdate(
+                {
+                    _id: order,
+                    "activities._id": ticketOrderId,
+                },
+                {
+                    "activities.$.driver": driver,
+                },
+                { runValidators: true }
+            );
+
+            // send mail here
+
+            res.status(200).json({ driver: driverDetails });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

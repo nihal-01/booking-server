@@ -63,4 +63,21 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+    getSingleBlog: async (req, res) => {
+        try {
+            const { slug } = req.params;
+
+            const blog = await Blog.findOne({ slug })
+                .populate("category")
+                .lean();
+            if (!blog) {
+                return sendErrorResponse(res, 404, "Blog not found");
+            }
+
+            res.status(200).json(blog);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };

@@ -19,6 +19,7 @@ const AttractionReview = require("./attractionReview.model");
 const Payment = require("./payment.model");
 const Currency = require("./currency.modal");
 const Driver = require("./driver.model");
+const Transaction = require("./transaction.model");
 
 module.exports = {
     HomeSettings,
@@ -42,4 +43,5 @@ module.exports = {
     Payment,
     Currency,
     Driver,
+    Transaction,
 };

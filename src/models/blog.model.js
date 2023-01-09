@@ -1,10 +1,19 @@
-const { Schema, model } = require("mongoose");
+const mongoose = require("mongoose");
+const slug = require("mongoose-slug-generator");
+const { Schema, model } = mongoose;
+
+mongoose.plugin(slug);
 
 const blogSchema = new Schema(
     {
         title: {
             type: String,
             required: true,
+        },
+        slug: {
+            type: String,
+            slug: ["title"],
+            unique: true,
         },
         body: {
             type: String,

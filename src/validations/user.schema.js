@@ -19,4 +19,28 @@ const userLoginSchema = Joi.object({
     password: Joi.string().required(),
 });
 
-module.exports = { userLoginSchema, userSignupSchema };
+const userUpdateSchema = Joi.object({
+    name: Joi.string().required(),
+    email: Joi.string().email().required(),
+    country: Joi.string().required(),
+    phoneNumber: Joi.string().required(),
+    avatar: Joi.string().allow("", null),
+});
+
+const userPasswordUpdateSchema = Joi.object({
+    oldPassword: Joi.string()
+        .regex(passwordRegx)
+        .error(passswordError)
+        .required(),
+    newPassword: Joi.string()
+        .regex(passwordRegx)
+        .error(passswordError)
+        .required(),
+});
+
+module.exports = {
+    userLoginSchema,
+    userSignupSchema,
+    userUpdateSchema,
+    userPasswordUpdateSchema,
+};
