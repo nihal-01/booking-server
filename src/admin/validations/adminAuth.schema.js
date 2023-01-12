@@ -17,4 +17,23 @@ const adminLoginSchema = Joi.object({
     password: Joi.string().required(),
 });
 
-module.exports = { adminAddSchema, adminLoginSchema };
+const adminPasswordUpdateSchema = Joi.object({
+    oldPassword: Joi.string()
+        .regex(passwordRegx)
+        .error(passswordError)
+        .required(),
+    newPassword: Joi.string()
+        .regex(passwordRegx)
+        .error(passswordError)
+        .required(),
+    confirmPassword: Joi.string()
+        .valid(Joi.ref("newPassword"))
+        .error(new Error("Confirm password must be equal to new password"))
+        .required(),
+});
+
+module.exports = {
+    adminAddSchema,
+    adminLoginSchema,
+    adminPasswordUpdateSchema,
+};

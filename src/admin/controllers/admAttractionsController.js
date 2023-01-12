@@ -724,4 +724,27 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+    deleteAttractionReview: async (req, res) => {
+        try {
+            const { reviewId } = req.params;
+
+            if (!isValidObjectId(reviewId)) {
+                return sendErrorResponse(res, 400, "Invalid Review Id");
+            }
+
+            const review = await AttractionReview.findByIdAndDelete(reviewId);
+
+            if (!review) {
+                return sendErrorResponse(res, 404, "Review not found");
+            }
+
+            res.status(200).json({
+                message: "Review successfully deleted",
+                reviewId,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };

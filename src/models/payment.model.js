@@ -30,7 +30,7 @@ const paymentSchema = new Schema(
             type: String,
             required: true,
             lowercase: true,
-            enum: ["paypal"],
+            enum: ["paypal", "stripe"],
         },
     },
     { timestamps: true }

@@ -5,6 +5,7 @@ const { Admin } = require("../models");
 const {
     adminAddSchema,
     adminLoginSchema,
+    adminPasswordUpdateSchema,
 } = require("../validations/adminAuth.schema");
 const { isValidObjectId } = require("mongoose");
 
@@ -20,6 +21,11 @@ module.exports = {
                     400,
                     error.details ? error.details[0].message : error.message
                 );
+            }
+
+            let avatarImg;
+            if (req.file?.path) {
+                avatarImg = "/" + req.file.path.replace(/\\/g, "/");
             }
 
             const admin = await Admin.findOne({ email });
@@ -122,6 +128,84 @@ module.exports = {
     getAdmin: async (req, res) => {
         try {
             res.status(200).json(req.admin);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    updateAdminDetails: async (req, res) => {
+        try {
+            const {
+                email,
+                name,
+                phoneNumber,
+                designation,
+                joinedDate,
+                city,
+                country,
+                description,
+            } = req.body;
+
+            let avatarImg;
+            if (req.file?.path) {
+                avatarImg = "/" + req.file.path.replace(/\\/g, "/");
+            }
+
+            const admin = await Admin.findOneAndUpdate(
+                { _id: req.admin?._id },
+                {
+                    email,
+                    name,
+                    phoneNumber,
+                    designation,
+                    joinedDate,
+                    city,
+                    country,
+                    description,
+                    avatar: avatarImg,
+                },
+                { runValidators: true, new: true }
+            );
+
+            if (!admin) {
+                return sendErrorResponse(res, 404, "Admin not found");
+            }
+
+            res.status(200).json(admin);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    updateAdminPassword: async (req, res) => {
+        try {
+            const { oldPassword, newPassword } = req.body;
+
+            const { _, error } = adminPasswordUpdateSchema.validate(req.body);
+            if (error) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    error.details ? error?.details[0]?.message : error.message
+                );
+            }
+
+            const isMatch = await compare(oldPassword, req.admin.password);
+            if (!isMatch) {
+                return sendErrorResponse(res, 400, "Old password is incorrect");
+            }
+
+            const hashedPassowrd = await hash(newPassword, 8);
+            const admin = await Admin.findOneAndUpdate(
+                { _id: req.admin._id },
+                { password: hashedPassowrd }
+            );
+
+            if (!admin) {
+                return sendErrorResponse(res, 404, "User not found");
+            }
+
+            res.status(200).json({ message: "Password updated successfully" });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

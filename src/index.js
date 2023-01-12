@@ -16,7 +16,6 @@ const {
     attractionsCategoriesRouter,
     attractionsOrdersRouter,
 } = require("./routes");
-const { AttractionActivity, Destination, Country } = require("./models");
 
 const app = express();
 const PORT = process.env.PORT || 8089;
@@ -34,6 +33,10 @@ app.use("/api/v1/attractions", attractionsRouter);
 app.use("/api/v1/subscribers", subscribersRouter);
 app.use("/api/v1/countries", countriesRouter);
 app.use("/api/v1/blogs", blogsRouter);
+
+app.post("/webhook", (req, res) => {
+    console.log(req);
+});
 
 // ADMIN ROUTE
 app.use("/api/v1/admin", adminRouter);

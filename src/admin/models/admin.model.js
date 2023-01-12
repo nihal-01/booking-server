@@ -13,6 +13,27 @@ const adminSchema = new Schema(
             unique: true,
             required: true,
         },
+        phoneNumber: {
+            type: String,
+            required: true,
+        },
+        designation: {
+            type: String,
+            required: true,
+        },
+        joinedDate: {
+            type: Date,
+        },
+        city: {
+            type: String,
+        },
+        country: {
+            type: String,
+            required: true,
+        },
+        description: {
+            type: String,
+        },
         password: {
             type: String,
             required: true,
@@ -27,6 +48,9 @@ const adminSchema = new Schema(
             type: Date,
         },
         jwtToken: {
+            type: String,
+        },
+        avatar: {
             type: String,
         },
     },
