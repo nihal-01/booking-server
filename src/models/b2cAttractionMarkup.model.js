@@ -12,7 +12,7 @@ const b2cAttractionMarkupSchema = new Schema(
             type: Number,
             required: true,
         },
-        atttraction: {
+        attraction: {
             type: Schema.Types.ObjectId,
             ref: "Attraction",
             required: true,
