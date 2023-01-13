@@ -28,10 +28,7 @@ const userUpdateSchema = Joi.object({
 });
 
 const userPasswordUpdateSchema = Joi.object({
-    oldPassword: Joi.string()
-        .regex(passwordRegx)
-        .error(passswordError)
-        .required(),
+    oldPassword: Joi.string().required(),
     newPassword: Joi.string()
         .regex(passwordRegx)
         .error(passswordError)

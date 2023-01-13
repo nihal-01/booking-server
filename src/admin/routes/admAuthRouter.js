@@ -10,6 +10,8 @@ const {
     getAdmin,
     updateAdminDetails,
     updateAdminPassword,
+    getSingleAdmin,
+    updateSingleAdmin,
 } = require("../controllers/admAuthController");
 const adminAuth = require("../middlewares/adminAuth");
 const superAdminAuth = require("../middlewares/superAdminAuth");
@@ -51,8 +53,15 @@ router.post("/login", adminLogin);
 
 router.patch("/update", adminAuth, upload.single("avatar"), updateAdminDetails);
 router.patch("/update/password", adminAuth, updateAdminPassword);
+router.patch(
+    "/update/single/:id",
+    superAdminAuth,
+    upload.single("avatar"),
+    updateSingleAdmin
+);
 
 router.get("/all", superAdminAuth, getAllAdmins);
+router.get("/single/:id", superAdminAuth, getSingleAdmin);
 router.get("/my-account", adminAuth, getAdmin);
 
 router.delete("/delete/:id", superAdminAuth, deleteAdmin);

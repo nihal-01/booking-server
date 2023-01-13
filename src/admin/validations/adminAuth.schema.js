@@ -8,8 +8,14 @@ const passswordError = new Error(
 
 const adminAddSchema = Joi.object({
     email: Joi.string().email().required(),
-    password: Joi.string().regex(passwordRegx).error(passswordError).required(),
     name: Joi.string().required(),
+    designation: Joi.string().required(),
+    joinedDate: Joi.date().allow("", null),
+    city: Joi.string().allow("", null),
+    country: Joi.string().required(),
+    description: Joi.string().allow("", null),
+    phoneNumber: Joi.string().required(),
+    avatar: Joi.string().allow("", null),
 });
 
 const adminLoginSchema = Joi.object({
@@ -18,10 +24,7 @@ const adminLoginSchema = Joi.object({
 });
 
 const adminPasswordUpdateSchema = Joi.object({
-    oldPassword: Joi.string()
-        .regex(passwordRegx)
-        .error(passswordError)
-        .required(),
+    oldPassword: Joi.string().required(),
     newPassword: Joi.string()
         .regex(passwordRegx)
         .error(passswordError)

@@ -6,6 +6,7 @@ const currencySchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: "Country",
             required: true,
+            unique: true,
         },
         currencyName: {
             type: String,
@@ -17,6 +18,7 @@ const currencySchema = new Schema(
         },
         isocode: {
             type: String,
+            uppercase: true,
             required: true,
         },
         conversionRate: {

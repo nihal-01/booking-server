@@ -1,18 +1,28 @@
 const { hash, compare } = require("bcryptjs");
+const crypto = require("crypto");
+const { isValidObjectId } = require("mongoose");
 
-const { sendErrorResponse } = require("../../helpers");
+const { sendErrorResponse, sendAdminPassword } = require("../../helpers");
 const { Admin } = require("../models");
 const {
     adminAddSchema,
     adminLoginSchema,
     adminPasswordUpdateSchema,
 } = require("../validations/adminAuth.schema");
-const { isValidObjectId } = require("mongoose");
 
 module.exports = {
     addNewAdmin: async (req, res) => {
         try {
-            const { name, email, password } = req.body;
+            const {
+                name,
+                email,
+                phoneNumber,
+                designation,
+                joinedDate,
+                city,
+                country,
+                description,
+            } = req.body;
 
             const { _, error } = adminAddSchema.validate(req.body);
             if (error) {
@@ -33,13 +43,23 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Email already exists");
             }
 
+            const password = crypto.randomBytes(6).toString("hex");
             const hashedPassowrd = await hash(password, 8);
+
+            sendAdminPassword({ email, password });
 
             const newAdmin = new Admin({
                 name,
                 email,
                 password: hashedPassowrd,
                 role: "admin",
+                avatar: avatarImg,
+                phoneNumber,
+                designation,
+                joinedDate,
+                city,
+                country,
+                description,
             });
             await newAdmin.save();
 
@@ -95,9 +115,14 @@ module.exports = {
                 .limit(limit)
                 .skip(limit * skip);
 
-            const totalAdmins = await Admin.find({}).count();
+            const totalAdmins = await Admin.find({ role: "admin" }).count();
 
-            res.status(200).json({ admins, totalAdmins, skip, limit });
+            res.status(200).json({
+                admins,
+                totalAdmins,
+                skip: Number(skip),
+                limit: Number(limit),
+            });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
@@ -111,7 +136,7 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid admin id");
             }
 
-            const admin = await Admin.findByIdAndDelete(id);
+            const admin = await Admin.findOneAndDelete({ id, role: "admin" });
             if (!admin) {
                 return sendErrorResponse(res, 404, "Admin not found");
             }
@@ -206,6 +231,77 @@ module.exports = {
             }
 
             res.status(200).json({ message: "Password updated successfully" });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSingleAdmin: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid admin id");
+            }
+
+            const admin = await Admin.findById(id);
+            if (!admin) {
+                return sendErrorResponse(res, 404, "Admin not found");
+            }
+
+            res.status(200).json(admin);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    updateSingleAdmin: async (req, res) => {
+        try {
+            const { id } = req.params;
+            const {
+                email,
+                name,
+                phoneNumber,
+                designation,
+                joinedDate,
+                city,
+                country,
+                description,
+            } = req.body;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid admin id");
+            }
+
+            let avatarImg;
+            if (req.file?.path) {
+                avatarImg = "/" + req.file.path.replace(/\\/g, "/");
+            }
+
+            const admin = await Admin.findOneAndUpdate(
+                { _id: id },
+                {
+                    email,
+                    name,
+                    phoneNumber,
+                    designation,
+                    joinedDate,
+                    city,
+                    country,
+                    description,
+                    avatar: avatarImg,
+                },
+                { runValidators: true, new: true }
+            );
+
+            if (!admin) {
+                return sendErrorResponse(res, 404, "Admin not found");
+            }
+
+            res.status(200).json({
+                message: "Admin details succesfully updated",
+                _id: id,
+            });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

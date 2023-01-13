@@ -1482,6 +1482,11 @@
   "resolved" "https://registry.npmjs.org/node-ccavenue/-/node-ccavenue-1.0.5.tgz"
   "version" "1.0.5"
 
+"nodemailer@^6.9.0":
+  "integrity" "sha512-jFaCEGTeT3E/m/5R2MHWiyQH3pSARECRUDM+1hokOYc3lQAAG7ASuy+2jIsYVf+RVa9zePopSQwKNVFH8DKUpA=="
+  "resolved" "https://registry.npmjs.org/nodemailer/-/nodemailer-6.9.0.tgz"
+  "version" "6.9.0"
+
 "nodemon@^2.0.20":
   "integrity" "sha512-Km2mWHKKY5GzRg6i1j5OxOHQtuvVsgskLfigG25yTtbyfRGn/GNvIbRyOf1PSCKJ2aT/58TiuUsuOU5UToVViw=="
   "resolved" "https://registry.npmjs.org/nodemon/-/nodemon-2.0.20.tgz"
