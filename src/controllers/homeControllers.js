@@ -274,7 +274,7 @@ module.exports = {
             const countries = await Country.find({ isDeleted: false });
             const destinations = await Destination.find({ isDeleted: false });
             const currencies = await Currency.find({})
-                .populate("currency", "currencyName logo")
+                .populate("country", "countryName flag")
                 .lean();
 
             res.status(200).json({ countries, destinations, currencies });
