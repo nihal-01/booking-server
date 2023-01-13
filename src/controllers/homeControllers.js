@@ -5,6 +5,7 @@ const {
     Country,
     Destination,
     Blog,
+    Currency,
 } = require("../models");
 
 module.exports = {
@@ -272,8 +273,11 @@ module.exports = {
         try {
             const countries = await Country.find({ isDeleted: false });
             const destinations = await Destination.find({ isDeleted: false });
+            const currencies = await Currency.find({})
+                .populate("currency", "currencyName logo")
+                .lean();
 
-            res.status(200).json({ countries, destinations });
+            res.status(200).json({ countries, destinations, currencies });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
