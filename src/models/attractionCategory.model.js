@@ -19,6 +19,10 @@ const attractionCategorySchema = new Schema(
         description: {
             type: String,
         },
+        icon: {
+            type: String,
+            required: true,
+        },
     },
     { timestamps: true }
 );

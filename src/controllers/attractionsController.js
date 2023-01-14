@@ -2,6 +2,7 @@ const { isValidObjectId, Types } = require("mongoose");
 
 const { sendErrorResponse } = require("../helpers");
 const { Attraction, Destination } = require("../models/");
+const { Reseller } = require("../b2b/models");
 
 module.exports = {
     getSingleAttraction: async (req, res) => {
