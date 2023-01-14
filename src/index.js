@@ -5,6 +5,7 @@ require("dotenv").config();
 require("./config/dbConfig");
 
 const adminRouter = require("./admin");
+const b2bRouter = require("./b2b");
 const {
     homeRouter,
     usersRouter,
@@ -40,6 +41,9 @@ app.post("/webhook", (req, res) => {
 
 // ADMIN ROUTE
 app.use("/api/v1/admin", adminRouter);
+
+// B2B Route
+app.use("/api/v1/b2b", b2bRouter);
 
 app.listen(PORT, () => {
     console.log(`server is up and running on port ${PORT}`);
