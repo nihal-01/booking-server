@@ -19,7 +19,7 @@ const paymentSchema = new Schema(
             type: String,
             required: true,
             lowercase: true,
-            enum: ["attraction", "visa"],
+            enum: ["attraction", "visa" ],
         },
         order: {
             type: Schema.Types.ObjectId,

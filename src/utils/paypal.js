@@ -56,8 +56,10 @@ const createOrder = async (amount, currency) => {
             },
         ],
     });
+    
 
     const response = await client.execute(request);
+    console.log(response , "response")
     return response;
 };
 

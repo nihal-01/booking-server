@@ -17,6 +17,7 @@ const {
     blogsRouter,
     attractionsCategoriesRouter,
     attractionsOrdersRouter,
+    transactionRoute
 } = require("./routes");
 
 const app = express();
@@ -35,6 +36,8 @@ app.use("/api/v1/attractions", attractionsRouter);
 app.use("/api/v1/subscribers", subscribersRouter);
 app.use("/api/v1/countries", countriesRouter);
 app.use("/api/v1/blogs", blogsRouter);
+app.use("/api/v1/transation",transactionRoute);
+
 
 app.post("/webhook", (req, res) => {
     console.log(req);
@@ -43,8 +46,8 @@ app.post("/webhook", (req, res) => {
 // ADMIN ROUTE
 app.use("/api/v1/admin", adminRouter);
 
-//RESELLER ROUTES
 
+//RESELLER ROUTES
 app.use("/api/v1/b2b",b2bRoute );
 
 

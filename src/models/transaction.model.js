@@ -7,16 +7,35 @@ const transactionSchema = new Schema(
             ref: "User",
             required: true,
         },
+        userType : {
+            type: String,
+            required: true,
+            lowercase: true,
+            enum: ["b2b"], 
+        },
         transactionType: {
             type: String,
             required: true,
             lowercase: true,
             enum: ["deposit", "withdraw", "deduct", "refund"],
         },
-        // lastBalance: {
-        //     type: Number,
-        //     required: true,
-        // },
+        status:{
+            type : "String",
+            default : "true"
+
+        },
+        paymentProcessor: {
+            type: String,
+            required: true,
+            lowercase: true,
+            enum: ["paypal", "stripe"],
+        },
+        paymentId : {
+            type: String
+        },
+        processStatus: {
+            type :String
+        },    
         amount: {
             type: Number,
             required: true,
