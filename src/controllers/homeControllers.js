@@ -86,8 +86,17 @@ module.exports = {
                         },
                     },
                     {
+                        $lookup: {
+                            from: "b2cattractionmarkups",
+                            localField: "_id",
+                            foreignField: "attraction",
+                            as: "markup",
+                        },
+                    },
+                    {
                         $set: {
                             activity: { $arrayElemAt: ["$activity", 0] },
+                            markup: { $arrayElemAt: ["$markup", 0] },
                             category: { $arrayElemAt: ["$category", 0] },
                             destination: { $arrayElemAt: ["$destination", 0] },
                             totalRating: {
@@ -113,7 +122,38 @@ module.exports = {
                             images: 1,
                             bookingType: 1,
                             activity: {
-                                adultPrice: 1,
+                                adultPrice: {
+                                    $cond: [
+                                        {
+                                            $eq: [
+                                                "$markup.markupType",
+                                                "percentage",
+                                            ],
+                                        },
+                                        {
+                                            $sum: [
+                                                "$activity.adultPrice",
+                                                {
+                                                    $divide: [
+                                                        {
+                                                            $multiply: [
+                                                                "$markup.markup",
+                                                                "$activity.adultPrice",
+                                                            ],
+                                                        },
+                                                        100,
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                        {
+                                            $sum: [
+                                                "$activity.adultPrice",
+                                                "$markup.markup",
+                                            ],
+                                        },
+                                    ],
+                                },
                             },
                             totalReviews: 1,
                             averageRating: {
@@ -199,8 +239,17 @@ module.exports = {
                         },
                     },
                     {
+                        $lookup: {
+                            from: "b2cattractionmarkups",
+                            localField: "_id",
+                            foreignField: "attraction",
+                            as: "markup",
+                        },
+                    },
+                    {
                         $set: {
                             activity: { $arrayElemAt: ["$activity", 0] },
+                            markup: { $arrayElemAt: ["$markup", 0] },
                             category: { $arrayElemAt: ["$category", 0] },
                             destination: { $arrayElemAt: ["$destination", 0] },
                             totalReviews: {
@@ -226,7 +275,38 @@ module.exports = {
                             images: 1,
                             bookingType: 1,
                             activity: {
-                                adultPrice: 1,
+                                adultPrice: {
+                                    $cond: [
+                                        {
+                                            $eq: [
+                                                "$markup.markupType",
+                                                "percentage",
+                                            ],
+                                        },
+                                        {
+                                            $sum: [
+                                                "$activity.adultPrice",
+                                                {
+                                                    $divide: [
+                                                        {
+                                                            $multiply: [
+                                                                "$markup.markup",
+                                                                "$activity.adultPrice",
+                                                            ],
+                                                        },
+                                                        100,
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                        {
+                                            $sum: [
+                                                "$activity.adultPrice",
+                                                "$markup.markup",
+                                            ],
+                                        },
+                                    ],
+                                },
                             },
                             totalReviews: 1,
                             averageReviews: {
@@ -274,7 +354,7 @@ module.exports = {
             const countries = await Country.find({ isDeleted: false });
             const destinations = await Destination.find({ isDeleted: false });
             const currencies = await Currency.find({})
-                .populate("currency", "currencyName logo")
+                .populate("country", "countryName flag")
                 .lean();
 
             res.status(200).json({ countries, destinations, currencies });
