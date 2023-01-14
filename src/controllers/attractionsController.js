@@ -86,8 +86,21 @@ module.exports = {
                 {
                     $lookup: {
                         from: "attractionactivities",
-                        foreignField: "attraction",
-                        localField: "_id",
+                        let: {
+                            attraction: "$_id",
+                        },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $eq: ["$attraction", "$$attraction"],
+                                    },
+                                },
+                            },
+                            {
+                                $sort: { adultPrice: 1 },
+                            },
+                        ],
                         as: "activities",
                     },
                 },
@@ -100,6 +113,10 @@ module.exports = {
                                 cond: { $eq: ["$$item.isDeleted", false] },
                             },
                         },
+                    },
+                },
+                {
+                    $addFields: {
                         activities: {
                             $map: {
                                 input: "$activities",
@@ -374,7 +391,7 @@ module.exports = {
                                 },
                             },
                             {
-                                $sort: { adultPrice: -1 },
+                                $sort: { adultPrice: 1 },
                             },
                             {
                                 $limit: 1,
