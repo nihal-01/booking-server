@@ -20,7 +20,7 @@ const Payment = require("./payment.model");
 const Currency = require("./currency.modal");
 const Driver = require("./driver.model");
 const Transaction = require("./transaction.model");
-const B2CMarkup = require("./b2cMarkup.model");
+const B2CAttractionMarkup = require("./b2cAttractionMarkup.model");
 
 module.exports = {
     HomeSettings,
@@ -45,5 +45,5 @@ module.exports = {
     Currency,
     Driver,
     Transaction,
-    B2CMarkup,
+    B2CAttractionMarkup,
 };

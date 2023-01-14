@@ -14,6 +14,8 @@ const admUsersRouter = require("./admUsersRouter");
 const admAttractionsOrdersRouter = require("./admAttractionsOrdersRouter");
 const admDriversRouter = require("./admDriversRouter");
 const admCurrenciesRouter = require("./admCurrenciesRouter");
+const admB2cAttractionMarkupRouter = require("./admB2cAttractionMarkupRouter");
+const admResellersRouter = require("./admResellersRouter");
 
 module.exports = {
     admAuthRouter,
@@ -32,4 +34,6 @@ module.exports = {
     admAttractionsOrdersRouter,
     admDriversRouter,
     admCurrenciesRouter,
+    admB2cAttractionMarkupRouter,
+    admResellersRouter,
 };

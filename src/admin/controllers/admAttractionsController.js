@@ -395,6 +395,14 @@ module.exports = {
                     },
                 },
                 {
+                    $lookup: {
+                        from: "b2cattractionmarkups",
+                        localField: "_id",
+                        foreignField: "attraction",
+                        as: "markup",
+                    },
+                },
+                {
                     $set: {
                         totalRating: {
                             $sum: {
@@ -408,6 +416,7 @@ module.exports = {
                             $size: "$reviews",
                         },
                         destination: { $arrayElemAt: ["$destination", 0] },
+                        markup: { $arrayElemAt: ["$markup", 0] },
                     },
                 },
                 {
@@ -427,6 +436,7 @@ module.exports = {
                             ],
                         },
                         createdAt: 1,
+                        markup: 1,
                     },
                 },
                 {

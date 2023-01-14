@@ -8,6 +8,15 @@ module.exports = {
         try {
             const { categoryName, description } = req.body;
 
+            if (!req.file?.path) {
+                return sendErrorResponse(res, 400, "Category Icon required");
+            }
+
+            let iconImg;
+            if (req.file?.path) {
+                iconImg = "/" + req.file.path.replace(/\\/g, "/");
+            }
+
             if (!categoryName) {
                 return sendErrorResponse(res, 400, "CategoryName is required");
             }
@@ -15,6 +24,7 @@ module.exports = {
             const newCategory = new AttractionCategory({
                 categoryName,
                 description,
+                icon: iconImg,
             });
             await newCategory.save();
 
@@ -67,11 +77,17 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid category id!");
             }
 
+            let iconImg;
+            if (req.file?.path) {
+                iconImg = "/" + req.file.path.replace(/\\/g, "/");
+            }
+
             const category = await AttractionCategory.findByIdAndUpdate(
                 id,
                 {
                     categoryName,
                     description,
+                    icon: iconImg,
                 },
                 { runValidators: true, new: true }
             );
