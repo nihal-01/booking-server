@@ -1,8 +1,7 @@
 const router = require("express").Router();
 
-const reseller = require ('./routes/resellerRoutes')
+const { b2bResellersAuthRouter } = require("./routes");
 
-
-router.use('/reseller' , reseller )
+router.use("/resellers/auth", b2bResellersAuthRouter);
 
 module.exports = router;

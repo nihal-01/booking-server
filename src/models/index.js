@@ -22,7 +22,6 @@ const Driver = require("./driver.model");
 const Transaction = require("./transaction.model");
 const B2CAttractionMarkup = require("./b2cAttractionMarkup.model");
 
-
 module.exports = {
     HomeSettings,
     Subscriber,

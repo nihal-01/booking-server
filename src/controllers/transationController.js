@@ -52,8 +52,6 @@ module.exports = {
     }
   },
 
-  
-
   capturePayment: async (req, res) => {
     try {
       const { orderId, paymentId } = req.body;
@@ -92,16 +90,12 @@ module.exports = {
           400,
           "Error while fetching order status from paypal. Check with XYZ team if amount is debited from your bank!"
         );
-
-
       } else if (orderObject.status !== "COMPLETED") {
         return sendErrorResponse(
           res,
           400,
           "Paypal order status is not Completed. Check with XYZ team if amount is debited from your bank!"
         );
-
-
       } else {
         newTransation.paymentStatus = orderObject.status;
         newTransation.paymentId = paymentId;
@@ -115,8 +109,6 @@ module.exports = {
             400,
             "Error while fetching payment status from paypal. Check with XYZ team if amount is debited from your bank!"
           );
-
-
         } else if (paymentObject.result.status !== "COMPLETED") {
           return sendErrorResponse(
             res,
@@ -133,7 +125,6 @@ module.exports = {
             order: newTransation._id,
             paymentDetails: paymentObject.result,
           });
-
 
           await payment.save();
         }
