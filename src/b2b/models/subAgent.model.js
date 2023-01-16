@@ -4,10 +4,15 @@ const jwt = require("jsonwebtoken");
 
 const AutoIncrement = require("mongoose-sequence")(mongoose);
 
-const resellerSchema = new Schema(
+const subAgentSchema = new Schema(
     {
         agentCode: {
             type: Number,
+        },
+        referredBy : {
+            type: Schema.Types.ObjectId,
+            ref: "Reseller",
+            required: true,
         },
         companyName: {
             type: String,
@@ -49,10 +54,6 @@ const resellerSchema = new Schema(
             type: String,
             required: true,
         },
-        telephoneNumber:{
-            type: String,
-
-        },
         email: {
             type: String,
             required: true,
@@ -87,29 +88,29 @@ const resellerSchema = new Schema(
     { timestamps: true }
 );
 
-resellerSchema.plugin(AutoIncrement, {
-    inc_field: "agentCode",
+subAgentSchema.plugin(AutoIncrement, {
+    inc_field: "agentcode",
     start_seq: 10000,
 });
 
-resellerSchema.methods.toJSON = function () {
-    const reseller = this;
-    const resellerObj = reseller.toObject();
+subAgentSchema.methods.toJSON = function () {
+    const subAgent = this;
+    const subAgentObj = subAgent.toObject();
 
-    delete resellerObj.password;
-    delete resellerObj.jwtToken;
-    delete resellerObj.status;
+    delete subAgentObj.password;
+    delete subAgentObj.jwtToken;
+    delete subAgentObj.status;
 
-    return resellerObj;
+    return subAgentObj;
 };
 
-resellerSchema.methods.generateAuthToken = async function () {
+subAgentSchema.methods.generateAuthToken = async function () {
     try {
-        const reseller = this;
+        const subAgent = this;
         const jwtToken = jwt.sign(
             {
-                _id: reseller._id.toString(),
-                email: reseller?.email?.toString(),
+                _id: subAgent._id.toString(),
+                email: subAgent?.email?.toString(),
             },
             process.env.JWT_SECRET,
             {
@@ -117,13 +118,13 @@ resellerSchema.methods.generateAuthToken = async function () {
             }
         );
 
-        reseller.jwtToken = jwtToken;
+        subAgent.jwtToken = jwtToken;
         return jwtToken;
     } catch (err) {
         throw new Error(err);
     }
 };
 
-const Reseller = model("Reseller", resellerSchema);
+const SubAgent = model("SubAgent", subAgentSchema);
 
-module.exports = Reseller;
+module.exports = SubAgent;

@@ -63,7 +63,6 @@ module.exports = {
         phoneNumber,
         skypeId,
         whatsappNumber,
-        resellerId,
         trnNumber,
         companyRegistration,
         password: hashedPassowrd,
@@ -131,9 +130,8 @@ module.exports = {
         skypeId,
         whatsappNumber,
         designation,
-        zipCode,
         phoneNumber,
-        country,
+        telephoneNumber,
       } = req.body;
 
       const { _, error } = resellerProfileUpdateSchema.validate(req.body);
@@ -146,28 +144,19 @@ module.exports = {
         avatarImg = "/" + req.file.path.replace(/\\/g, "/");
       }
 
-      if (country) {
-        const countryDetails = await Country.findOne({
-          _id: country,
-          isDeleted: false,
-        });
-        if (!countryDetails) {
-          return sendErrorResponse(res, 404, "Country details not found");
-        }
-      }
+      
 
       const reseller = await Reseller.findOneAndUpdate(
         { _id: req.reseller._id },
         {
           name,
           email,
-          country,
           phoneNumber,
           skypeId,
           whatsappNumber,
+          telephoneNumber,
           designation,
           avatarImg,
-          zipCode,
         },
         { runValidators: true, new: true }
       );
@@ -190,12 +179,25 @@ module.exports = {
         trnNumber,
         website,
         city,
+        country,
+        zipCode
       } = req.body;
 
       console.log(req.body, "bodyyy");
       const { _, error } = resellerCompanyUpdateSchema.validate(req.body);
       if (error) {
         return sendErrorResponse(res, 400, error.details[0].message);
+      }
+
+
+      if (country) {
+        const countryDetails = await Country.findOne({
+          _id: country,
+          isDeleted: false,
+        });
+        if (!countryDetails) {
+          return sendErrorResponse(res, 404, "Country details not found");
+        }
       }
 
       const reseller = await Reseller.findOneAndUpdate(
@@ -207,7 +209,10 @@ module.exports = {
           companyRegistration,
           trnNumber,
           website,
+          country,
           city,
+          zipCode,
+
         },
         { runValidators: true, new: true }
       );

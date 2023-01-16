@@ -34,10 +34,9 @@ const resellerProfileUpdateSchema = Joi.object({
     name: Joi.string().required(),
     whatsappNumber: Joi.string().required(),
     designation: Joi.string().required(),
-    zipCode: Joi.number().required(),
     skypeId: Joi.string().allow("", null),
     email: Joi.string().email().required(),
-    country: Joi.string().required(),
+    telephoneNumber : Joi.string(),
     phoneNumber: Joi.string().required(),
     
 });
@@ -47,6 +46,8 @@ const resellerCompanyUpdateSchema = Joi.object({
     address: Joi.string().required(),
     website: Joi.string().required(),
     city: Joi.string().required(),
+    zipCode: Joi.number().required(),
+    country: Joi.string().required(),
     trnNumber: Joi.string(),
     companyRegistration: Joi.string(),
 });
