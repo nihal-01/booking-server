@@ -47,7 +47,6 @@ const resellerCompanyUpdateSchema = Joi.object({
     address: Joi.string().required(),
     website: Joi.string().required(),
     city: Joi.string().required(),
-    designation: Joi.string().required(),
     trnNumber: Joi.string(),
     companyRegistration: Joi.string(),
 });
