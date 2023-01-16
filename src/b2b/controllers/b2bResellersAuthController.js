@@ -26,7 +26,6 @@ module.exports = {
                 skypeId,
                 whatsappNumber,
                 password,
-                resellerId,
             } = req.body;
 
             const { _, error } = resellerRegisterSchema.validate(req.body);
@@ -59,7 +58,6 @@ module.exports = {
                 phoneNumber,
                 skypeId,
                 whatsappNumber,
-                resellerId,
                 trnNumber,
                 companyRegistration,
                 password: hashedPassowrd,
@@ -114,6 +112,146 @@ module.exports = {
             await reseller.save();
 
             res.status(200).json({ reseller, jwtToken });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    updateProfileSetting: async (req, res) => {
+        try {
+            const {
+                name,
+                email,
+                skypeId,
+                whatsappNumber,
+                designation,
+                phoneNumber,
+                telephoneNumber,
+            } = req.body;
+
+            const { _, error } = resellerProfileUpdateSchema.validate(req.body);
+            if (error) {
+                return sendErrorResponse(res, 400, error.details[0].message);
+            }
+
+            let avatarImg;
+            if (req.file?.path) {
+                avatarImg = "/" + req.file.path.replace(/\\/g, "/");
+            }
+
+            const reseller = await Reseller.findOneAndUpdate(
+                { _id: req.reseller._id },
+                {
+                    name,
+                    email,
+                    phoneNumber,
+                    skypeId,
+                    whatsappNumber,
+                    telephoneNumber,
+                    designation,
+                    avatarImg,
+                },
+                { runValidators: true, new: true }
+            );
+            if (!reseller) {
+                return sendErrorResponse(res, 404, "User not found");
+            }
+
+            res.status(200).json(reseller);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    updateCompanySettings: async (req, res) => {
+        try {
+            const {
+                companyName,
+                address,
+                companyRegistration,
+                trnNumber,
+                website,
+                city,
+                country,
+                zipCode,
+            } = req.body;
+
+            const { _, error } = resellerCompanyUpdateSchema.validate(req.body);
+            if (error) {
+                return sendErrorResponse(res, 400, error.details[0].message);
+            }
+
+            if (country) {
+                const countryDetails = await Country.findOne({
+                    _id: country,
+                    isDeleted: false,
+                });
+                if (!countryDetails) {
+                    return sendErrorResponse(
+                        res,
+                        404,
+                        "Country details not found"
+                    );
+                }
+            }
+
+            const reseller = await Reseller.findOneAndUpdate(
+                { _id: req.reseller._id },
+
+                {
+                    companyName,
+                    address,
+                    companyRegistration,
+                    trnNumber,
+                    website,
+                    country,
+                    city,
+                    zipCode,
+                },
+                { runValidators: true, new: true }
+            );
+
+            if (!reseller) {
+                return sendErrorResponse(res, 404, "User not found");
+            }
+
+            res.status(200).json(reseller);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    updatePassword: async (req, res) => {
+        try {
+            const { oldPassword, newPassword } = req.body;
+
+            const { _, error } = resellerPasswordUpdateSchema.validate(
+                req.body
+            );
+            if (error) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    error.details ? error?.details[0]?.message : error.message
+                );
+            }
+
+            const isMatch = await compare(oldPassword, req.reseller.password);
+            if (!isMatch) {
+                return sendErrorResponse(res, 400, "Old password is incorrect");
+            }
+
+            const hashedPassowrd = await hash(newPassword, 8);
+            const reseller = await Reseller.findOneAndUpdate(
+                { _id: req.reseller._id },
+                { password: hashedPassowrd }
+            );
+
+            if (!reseller) {
+                return sendErrorResponse(res, 404, "User not found");
+            }
+
+            res.status(200).json({ message: "Password updated successfully" });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
