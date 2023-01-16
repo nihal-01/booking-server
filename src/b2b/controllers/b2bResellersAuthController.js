@@ -12,6 +12,7 @@ const {
 } = require("../validations/b2bReseller.schema");
 
 module.exports = {
+
   resellerRegister: async (req, res) => {
     try {
       const {
@@ -65,6 +66,7 @@ module.exports = {
         whatsappNumber,
         trnNumber,
         companyRegistration,
+        role : "reseller",
         password: hashedPassowrd,
         status: "pending",
       });
@@ -183,7 +185,6 @@ module.exports = {
         zipCode
       } = req.body;
 
-      console.log(req.body, "bodyyy");
       const { _, error } = resellerCompanyUpdateSchema.validate(req.body);
       if (error) {
         return sendErrorResponse(res, 400, error.details[0].message);

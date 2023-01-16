@@ -77,6 +77,22 @@ const resellerSchema = new Schema(
         companyRegistration: {
             type: String,
         },
+        role:{
+            type : String , 
+            required: true,
+            lowercase: true,
+            enum: ["reseller", "sub-agent"],
+
+        },
+        referredBy : {
+            type: Schema.Types.ObjectId,
+            ref: "Reseller",
+            required: function () {
+                return (
+                    this.role === "sub-agent"
+                );
+        }
+    },
         status: {
             type: String,
             required: true,

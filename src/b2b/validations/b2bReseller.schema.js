@@ -25,7 +25,7 @@ const resellerRegisterSchema = Joi.object({
 });
 
 const resellerLoginSchema = Joi.object({
-    agentCode: Joi.number().required(),
+    
     email: Joi.string().required(),
     password: Joi.string().regex(passwordRegx).error(passswordError).required(),
 });

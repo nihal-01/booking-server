@@ -8,7 +8,6 @@ const passswordError = new Error(
 
 const subAgentRegisterSchema = Joi.object({
     name: Joi.string().required(),
-    referredBy : Joi.string().required(),
     companyName: Joi.string().required(),
     address: Joi.string().required(),
     website: Joi.string().required(),
@@ -23,6 +22,7 @@ const subAgentRegisterSchema = Joi.object({
     trnNumber: Joi.string(),
     companyRegistration: Joi.string(),
 });
+
 
 module.exports = {
     subAgentRegisterSchema

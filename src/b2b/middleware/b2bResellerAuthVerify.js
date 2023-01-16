@@ -5,7 +5,8 @@ const Reseller = require("../models/reseller.model");
 
 const resellerAuth = async (req, res, next) => {
     try {
-        const token = req.headers.authoriza        if (token) {
+        const token = req.headers.authorization?.split(" ")[1];
+        if (token) {
             const decode = jwt.verify(token, process.env.JWT_SECRET);
             const reseller = await Reseller.findOne({
                 _id: decode._id,

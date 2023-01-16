@@ -4,7 +4,7 @@ const { isValidObjectId } = require("mongoose");
 
 const { sendErrorResponse } = require("../../helpers");
 const sendSubAgentPassword = require("../helpers/sendSubAgentPassword");
-const SubAgent = require("../models/subAgent.model");
+const { Reseller } = require("../models");
 const { subAgentRegisterSchema } = require("../validations/b2bSubAgent.schema");
 
 module.exports = {
@@ -26,7 +26,6 @@ module.exports = {
               phoneNumber,
               skypeId,
               whatsappNumber,
-              referredBy,
             } = req.body;
       
             const { _, error } =   subAgentRegisterSchema.validate(req.body);
@@ -38,7 +37,7 @@ module.exports = {
               );
             }
       
-            const subAgentReg = await SubAgent.findOne({ email });
+            const subAgentReg = await Reseller.findOne({ email });
       
             if (subAgentReg) {
               return sendErrorResponse(res, 400, "Email already exists");
@@ -47,12 +46,10 @@ module.exports = {
             const password = crypto.randomBytes(6).toString("hex");
             const hashedPassowrd = await hash(password, 8);
             
-            // console.log(password)
-
             sendSubAgentPassword({ email, password });
 
       
-            const newSubAgent = new SubAgent({
+            const newSubAgent = new Reseller({
               email,
               companyName,
               address,
@@ -65,9 +62,10 @@ module.exports = {
               phoneNumber,
               skypeId,
               whatsappNumber,
-              referredBy,
+              referredBy : req.reseller._id ,
               trnNumber,
               companyRegistration,
+              role:"sub-agent",
               password: hashedPassowrd,
               status: "pending",
             });
@@ -80,7 +78,10 @@ module.exports = {
             sendErrorResponse(res, 500, err);
           }
 
-    }
+    },
+
+ 
+
 }
 
 
