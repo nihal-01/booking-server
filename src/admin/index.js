@@ -19,6 +19,8 @@ const {
     admCurrenciesRouter,
     admB2cAttractionMarkupRouter,
     admResellersRouter,
+    admEmailSettingsRouter,
+    admTransactionsRouter,
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
@@ -42,5 +44,7 @@ router.use("/users", admUsersRouter);
 router.use("/drivers", admDriversRouter);
 router.use("/currencies", admCurrenciesRouter);
 router.use("/resellers", admResellersRouter);
+router.use("/email-settings", admEmailSettingsRouter);
+router.use("/transactions", admTransactionsRouter);
 
 module.exports = router;
