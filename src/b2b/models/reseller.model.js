@@ -70,11 +70,27 @@ const resellerSchema = new Schema(
         companyRegistration: {
             type: String,
         },
+        telephoneNumber: {
+            type: String,
+        },
         status: {
             type: String,
             required: true,
             lowercase: true,
             enum: ["pending", "ok", "cancelled", "disabled"],
+        },
+        role: {
+            type: String,
+            required: true,
+            lowercase: true,
+            enum: ["reseller", "sub-agent"],
+        },
+        referredBy: {
+            type: Schema.Types.ObjectId,
+            ref: "Reseller",
+            required: function () {
+                return this.role === "sub-agent";
+            },
         },
     },
     { timestamps: true }

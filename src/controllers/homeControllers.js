@@ -52,7 +52,7 @@ module.exports = {
                                     },
                                 },
                                 {
-                                    $sort: { adultPrice: -1 },
+                                    $sort: { adultPrice: 1 },
                                 },
                                 {
                                     $limit: 1,
@@ -205,7 +205,7 @@ module.exports = {
                                     },
                                 },
                                 {
-                                    $sort: { adultPrice: -1 },
+                                    $sort: { adultPrice: 1 },
                                 },
                                 {
                                     $limit: 1,
