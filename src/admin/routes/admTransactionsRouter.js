@@ -4,6 +4,6 @@ const {
     getAllB2cTransactions,
 } = require("../controllers/admTransactionsController");
 
-router.get("/b2/all", getAllB2cTransactions);
+router.get("/b2c/all", getAllB2cTransactions);
 
 module.exports = router;

@@ -89,8 +89,10 @@ const attractionOrderSchema = new Schema(
         merchant: {
             type: String,
         },
-        paymentStatus: {
+        orderStatus: {
             type: String,
+            required: true,
+            
         },
         paymentOrderId: {
             type: String,

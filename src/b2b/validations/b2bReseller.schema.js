@@ -21,8 +21,8 @@ const resellerRegisterSchema = Joi.object({
     country: Joi.string().required(),
     phoneNumber: Joi.string().required(),
     telephoneNumber: Joi.string().allow("", null),
-    trnNumber: Joi.string(),
-    companyRegistration: Joi.string(),
+    trnNumber: Joi.string().allow("", null),
+    companyRegistration: Joi.string().allow("", null),
 });
 
 const resellerLoginSchema = Joi.object({
