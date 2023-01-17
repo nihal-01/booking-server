@@ -62,6 +62,7 @@ module.exports = {
                 companyRegistration,
                 password: hashedPassowrd,
                 status: "pending",
+                role: "reseller",
             });
 
             await newReseller.save();

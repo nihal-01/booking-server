@@ -10,13 +10,14 @@ const {
     AttractionTicket,
     User,
     Country,
-    Payment,
+    B2CTransaction,
 } = require("../models/");
 const {
     attractionOrderSchema,
     attractionOrderCaptureSchema,
 } = require("../validations/attractionOrder.schema");
 const { createOrder, fetchOrder, fetchPayment } = require("../utils/paypal");
+const { B2CWallet } = require("../models/b2cWallet.model");
 
 const dayNames = [
     "sunday",
@@ -42,7 +43,6 @@ module.exports = {
                 email,
                 phoneNumber,
                 country,
-                paymentProcessor,
             } = req.body;
 
             const { _, error } = attractionOrderSchema.validate(req.body);
@@ -358,31 +358,6 @@ module.exports = {
                 }
             }
 
-            let result;
-            if (paymentProcessor === "paypal") {
-                const currency = "USD";
-                const response = await createOrder(totalAmount, currency);
-
-                if (response.statusCode !== 201) {
-                    return sendErrorResponse(
-                        res,
-                        400,
-                        "Something went wrong while fetching order! Please try again later"
-                    );
-                }
-
-                result = response.result;
-            } else if (paymentProcessor === "razorpay") {
-                const options = {
-                    amount: totalAmount * 100,
-                    currency: "INR",
-                };
-                const order = await instance.orders.create(options);
-                return res.status(200).json(order);
-            } else {
-                return sendErrorResponse(res, 400, "Invalid payment processor");
-            }
-
             let buyer = req.user || user;
 
             const newAttractionOrder = new AttractionOrder({
@@ -402,6 +377,69 @@ module.exports = {
             await newAttractionOrder.save();
 
             res.status(200).json(result);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    initiateAttractionOrderPayment: async (req, res) => {
+        try {
+            const { orderId } = req.params;
+            const { paymentProcessor, isWallet } = req.body;
+
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "Invalid order id");
+            }
+
+            const attractionOrder = await AttractionOrder.findById(orderId);
+            if (!attractionOrder) {
+                return sendErrorResponse(
+                    res,
+                    404,
+                    "Attraction order not found"
+                );
+            }
+
+            // creating transaction
+            const transaction = new B2CTransaction({
+                user: attractionOrder.user,
+                transactionType: "deposit",
+                status: "pending",
+            });
+
+            let totalAmount = attractionOrder.totalAmount;
+
+            // taking wallet balance if it allowed
+            if (isWallet === true && req.user) {
+                const wallet = await B2CWallet.findOne({ _id: req.user?._id });
+                if (wallet && wallet.balance > 0) {
+                    totalAmount -= balance;
+                }
+            }
+
+            if (paymentProcessor === "paypal") {
+                const currency = "USD";
+                const response = await createOrder(totalAmount, currency);
+
+                if (response.statusCode !== 201) {
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        "Something went wrong while fetching order! Please try again later"
+                    );
+                }
+
+                return res.status(200).json(response.result);
+            } else if (paymentProcessor === "razorpay") {
+                const options = {
+                    amount: totalAmount * 100,
+                    currency: "INR",
+                };
+                const order = await instance.orders.create(options);
+                return res.status(200).json(order);
+            } else {
+                return sendErrorResponse(res, 400, "Invalid payment processor");
+            }
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
@@ -580,6 +618,15 @@ module.exports = {
             }
 
             res.status(200).json(attractionOrder);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    cancelAttractionOrder: async (req, res) => {
+        try {
+            const { orderId } = req.params;
+
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

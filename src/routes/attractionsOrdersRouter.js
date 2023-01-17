@@ -13,3 +13,8 @@ router.post("/create", userAuthOrNot, createAttractionOrder);
 router.get("/single/:id", getSingleAttractionOrder);
 
 module.exports = router;
+
+
+// create order
+// initiate-payment
+// pay payment
