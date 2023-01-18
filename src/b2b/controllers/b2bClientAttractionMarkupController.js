@@ -6,13 +6,14 @@ const { b2bClientAttractionMarkupSchema } = require("../validations/b2bClientAtt
 
 
 module.exports = {
-    upsertB2cAttractionMarkup: async (req, res) => {
+    upsertB2bClientAttractionMarkup: async (req, res) => {
         try {
             const { markupType, markup, attraction } = req.body;
 
             const { _, error } = b2bClientAttractionMarkupSchema.validate(req.body);
             if (error) {
-                return sendErrorResponse(res, 400, error.details[0].message);
+                consolr.log(error , "error")
+                return sendErrorResponse(res, 400, error.details[0]?.message);
             }
 
             if (!isValidObjectId(attraction)) {
@@ -24,10 +25,10 @@ module.exports = {
                 isDeleted: false,
             });
             if (!attractionDetail) {
-                return sendErrorResponse(res);
+                return sendErrorResponse(res ,  400, "Attraction Not Found" );
             }
 
-            const b2cAttractionMarkup =
+            const b2bClientAttractionMarkups =
                 await B2BClientAttractionMarkup.findOneAndUpdate(
                     {
                         attraction,
@@ -36,7 +37,7 @@ module.exports = {
                     { upsert: true, new: true, runValidators: true }
                 );
 
-            let tempObj = Object(b2cAttractionMarkup);
+            let tempObj = Object(b2bClientAttractionMarkups);
             tempObj.attraction = {
                 _id: attractionDetail?._id,
                 title: attractionDetail?.title,
@@ -48,7 +49,7 @@ module.exports = {
         }
     },
 
-    deleteB2cAttractionMarkup: async (req, res) => {
+    deleteB2bClientAttractionMarkup: async (req, res) => {
         try {
             const { id } = req.params;
 
@@ -56,10 +57,10 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid markup id");
             }
 
-            const b2cAttractionMarkup =
+            const b2bClientAttractionMarkups =
                 await B2BClientAttractionMarkup.findByIdAndDelete(id);
 
-            if (!b2cAttractionMarkup) {
+            if (!b2bClientAttractionMarkups) {
                 return sendErrorResponse(
                     res,
                     404,
@@ -75,11 +76,11 @@ module.exports = {
         }
     },
 
-    getAllB2cAttractionMarkups: async (req, res) => {
+    getAllB2bClientAttractionMarkups: async (req, res) => {
         try {
             const { skip = 0, limit = 10 } = req.query;
 
-            const b2cAttractionMarkups = await B2CAttractionMarkup.find({})
+            const b2bClientAttractionMarkups = await B2BClientAttractionMarkup.find({ resellerId : req.reseller._id})
                 .populate("attraction", "title")
                 .sort({ createdAt: -1 })
                 .limit(limit)
@@ -87,7 +88,7 @@ module.exports = {
                 .lean();
 
             res.status(200).json({
-                b2cAttractionMarkups,
+                b2bClientAttractionMarkups,
                 skip: Number(skip),
                 limit: Number(limit),
             });

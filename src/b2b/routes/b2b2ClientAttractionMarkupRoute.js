@@ -1,14 +1,14 @@
 const router = require("express").Router();
 
 const {
-    getAllB2cAttractionMarkups,
-    deleteB2cAttractionMarkup,
-    upsertB2cAttractionMarkup,
+    getAllB2bClientAttractionMarkups,
+    deleteB2bClientAttractionMarkup,
+    upsertB2bClientAttractionMarkup,
 } = require("../controllers/b2bClientAttractionMarkupController");
 const { b2bAuth } = require("../middlewares");
 
-router.get("/all", getAllB2cAttractionMarkups);
-router.patch("/upsert", b2bAuth , upsertB2cAttractionMarkup);
-router.delete("/delete/:id", deleteB2cAttractionMarkup);
+router.get("/all",b2bAuth, getAllB2bClientAttractionMarkups);
+router.patch("/upsert", b2bAuth , upsertB2bClientAttractionMarkup);
+router.delete("/delete/:id",b2bAuth , deleteB2bClientAttractionMarkup);
 
 module.exports = router;

@@ -7,6 +7,6 @@ const {
 const { b2bAuth } = require("../middlewares");
 
 router.get("/single/:id", b2bAuth, getSingleAttraction);
-router.get("/all", getAllAttractions);
+router.get("/all", b2bAuth , getAllAttractions);
 
 module.exports = router;
