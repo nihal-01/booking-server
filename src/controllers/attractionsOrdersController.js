@@ -35,15 +35,14 @@ const instance = new Razorpay({
 });
 
 module.exports = {
+    // TODO
+    // 1. VAT Calculation
+    // 2. Send password for new emails
+    // 3. Verify Mobile Number
     createAttractionOrder: async (req, res) => {
         try {
-            const {
-                selectedActivities,
-                name,
-                email,
-                phoneNumber,
-                country,
-            } = req.body;
+            const { selectedActivities, name, email, phoneNumber, country } =
+                req.body;
 
             const { _, error } = attractionOrderSchema.validate(req.body);
             if (error) {
@@ -365,14 +364,11 @@ module.exports = {
                 totalAmount,
                 totalOffer,
                 user: buyer?._id,
-                country: buyer?.country,
-                name: buyer?.name,
-                email: buyer?.email,
-                phoneNumber: buyer?.phoneNumber,
-                orderStatus: "created",
-                paymentStatus: "PENDING",
-                paymentOrderId: result.id,
-                merchant: "Paypal",
+                country,
+                name,
+                email,
+                phoneNumber,
+                orderStatus: "pending",
             });
             await newAttractionOrder.save();
 
@@ -626,7 +622,6 @@ module.exports = {
     cancelAttractionOrder: async (req, res) => {
         try {
             const { orderId } = req.params;
-
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

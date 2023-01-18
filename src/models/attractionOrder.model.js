@@ -90,16 +90,10 @@ const attractionOrderSchema = new Schema(
             type: String,
             required: true,
             lowercase: true,
-            enum: ["", ""]
-        },
-        merchant: {
-            type: String,
+            enum: ["pending", "paid", "failed"]
         },
         paymentOrderId: {
             type: String,
-        },
-        referenceNo: {
-            type: Number,
         },
         user: {
             type: Schema.Types.ObjectId,
@@ -122,6 +116,9 @@ const attractionOrderSchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: "Country",
             required: true,
+        },
+        referenceNo: {
+            type: Number,
         },
     },
     { timestamps: true }
