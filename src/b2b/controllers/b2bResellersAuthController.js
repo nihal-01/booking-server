@@ -3,7 +3,6 @@ const { hash, compare } = require("bcryptjs");
 const { sendErrorResponse } = require("../../helpers");
 const { Country } = require("../../models");
 const { Reseller } = require("../models");
-const { Country } = require("../../models");
 const {
     resellerRegisterSchema,
     resellerLoginSchema,

@@ -18,7 +18,6 @@ const VisaDocument = require("./visaDocument.model");
 const AttractionReview = require("./attractionReview.model");
 const Currency = require("./currency.modal");
 const Driver = require("./driver.model");
-const Transaction = require("./transaction.model");
 const B2CTransaction = require("./b2cTransaction.model");
 const B2CAttractionMarkup = require("./b2cAttractionMarkup.model");
 const B2CWallet = require("./b2cWallet.model");
@@ -44,7 +43,6 @@ module.exports = {
     AttractionReview,
     Currency,
     Driver,
-    Transaction,
     B2CAttractionMarkup,
     B2CAttractionMarkup,
     B2CTransaction,
