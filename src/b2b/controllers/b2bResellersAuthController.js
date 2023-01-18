@@ -1,6 +1,7 @@
 const { hash, compare } = require("bcryptjs");
 
 const { sendErrorResponse } = require("../../helpers");
+const { Country } = require("../../models");
 const { Reseller } = require("../models");
 const {
     resellerRegisterSchema,
@@ -26,10 +27,6 @@ module.exports = {
                 skypeId,
                 whatsappNumber,
                 password,
-<<<<<<< HEAD
-                resellerId,
-=======
->>>>>>> 83dc796ba5af883e0c7fd7cc4d14457f511ea005
             } = req.body;
 
             const { _, error } = resellerRegisterSchema.validate(req.body);
@@ -62,14 +59,12 @@ module.exports = {
                 phoneNumber,
                 skypeId,
                 whatsappNumber,
-<<<<<<< HEAD
-                resellerId,
-=======
->>>>>>> 83dc796ba5af883e0c7fd7cc4d14457f511ea005
                 trnNumber,
                 companyRegistration,
                 password: hashedPassowrd,
                 status: "pending",
+                role: "reseller",
+
             });
 
             await newReseller.save();
@@ -124,8 +119,6 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
-<<<<<<< HEAD
-=======
 
     updateProfileSetting: async (req, res) => {
         try {
@@ -266,5 +259,4 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
->>>>>>> 83dc796ba5af883e0c7fd7cc4d14457f511ea005
 };
