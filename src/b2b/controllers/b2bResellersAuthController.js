@@ -2,10 +2,12 @@ const { hash, compare } = require("bcryptjs");
 
 const { sendErrorResponse } = require("../../helpers");
 const { Reseller } = require("../models");
+const { Country } = require("../../models");
 const {
     resellerRegisterSchema,
     resellerLoginSchema,
 } = require("../validations/b2bReseller.schema");
+const { isValidObjectId } = require("mongoose");
 
 module.exports = {
     resellerRegister: async (req, res) => {
@@ -128,6 +130,7 @@ module.exports = {
                 designation,
                 phoneNumber,
                 telephoneNumber,
+                country,
             } = req.body;
 
             const { _, error } = resellerProfileUpdateSchema.validate(req.body);
@@ -138,6 +141,17 @@ module.exports = {
             let avatarImg;
             if (req.file?.path) {
                 avatarImg = "/" + req.file.path.replace(/\\/g, "/");
+            }
+
+            if (country) {
+                if (!isValidObjectId(country)) {
+                    return sendErrorResponse(res, 400, "Invalid country id");
+                }
+
+                const countryDetails = await Country.findById(country);
+                if (!countryDetails) {
+                    return sendErrorResponse(res, 404, "Country not found");
+                }
             }
 
             const reseller = await Reseller.findOneAndUpdate(
@@ -151,6 +165,7 @@ module.exports = {
                     telephoneNumber,
                     designation,
                     avatarImg,
+                    country,
                 },
                 { runValidators: true, new: true }
             );
@@ -173,27 +188,12 @@ module.exports = {
                 trnNumber,
                 website,
                 city,
-                country,
                 zipCode,
             } = req.body;
 
             const { _, error } = resellerCompanyUpdateSchema.validate(req.body);
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
-            }
-
-            if (country) {
-                const countryDetails = await Country.findOne({
-                    _id: country,
-                    isDeleted: false,
-                });
-                if (!countryDetails) {
-                    return sendErrorResponse(
-                        res,
-                        404,
-                        "Country details not found"
-                    );
-                }
             }
 
             const reseller = await Reseller.findOneAndUpdate(
@@ -205,7 +205,6 @@ module.exports = {
                     companyRegistration,
                     trnNumber,
                     website,
-                    country,
                     city,
                     zipCode,
                 },
@@ -213,7 +212,7 @@ module.exports = {
             );
 
             if (!reseller) {
-                return sendErrorResponse(res, 404, "User not found");
+                return sendErrorResponse(res, 404, "Reseller not found");
             }
 
             res.status(200).json(reseller);
@@ -253,6 +252,14 @@ module.exports = {
             }
 
             res.status(200).json({ message: "Password updated successfully" });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getReseller: async (req, res) => {
+        try {
+            res.status(200).json(req.reseller);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

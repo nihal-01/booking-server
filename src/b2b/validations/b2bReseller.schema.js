@@ -48,8 +48,45 @@ const subAgentRegisterSchema = Joi.object({
     companyRegistration: Joi.string(),
 });
 
+const resellerProfileUpdateSchema = Joi.object({
+    name: Joi.string().required(),
+    whatsappNumber: Joi.string().required(),
+    designation: Joi.string().required(),
+    country: Joi.string().required(),
+    skypeId: Joi.string().allow("", null),
+    email: Joi.string().email().required(),
+    telephoneNumber: Joi.string(),
+    phoneNumber: Joi.string().required(),
+});
+
+const resellerCompanyUpdateSchema = Joi.object({
+    companyName: Joi.string().required(),
+    address: Joi.string().required(),
+    website: Joi.string().required(),
+    city: Joi.string().required(),
+    zipCode: Joi.number().required(),
+    // country: Joi.string().required(),
+    trnNumber: Joi.string(),
+    companyRegistration: Joi.string(),
+});
+
+const resellerPasswordUpdateSchema = Joi.object({
+    oldPassword: Joi.string().required(),
+    newPassword: Joi.string()
+        .regex(passwordRegx)
+        .error(passswordError)
+        .required(),
+    confirmPassword: Joi.string()
+        .valid(Joi.ref("newPassword"))
+        .error(new Error("Confirm password must be equal to new password"))
+        .required(),
+});
+
 module.exports = {
     resellerRegisterSchema,
     resellerLoginSchema,
     subAgentRegisterSchema,
+    resellerProfileUpdateSchema,
+    resellerCompanyUpdateSchema,
+    resellerPasswordUpdateSchema,
 };
