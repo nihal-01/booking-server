@@ -7,6 +7,8 @@ const {
     resellerRegisterSchema,
     resellerLoginSchema,
     resellerProfileUpdateSchema,
+    resellerCompanyUpdateSchema,
+    resellerPasswordUpdateSchema,
 } = require("../validations/b2bReseller.schema");
 const { isValidObjectId } = require("mongoose");
 
