@@ -1,6 +1,7 @@
 const { hash, compare } = require("bcryptjs");
 
 const { sendErrorResponse } = require("../../helpers");
+const { Country } = require("../../models");
 const { Reseller } = require("../models");
 const { Country } = require("../../models");
 const {
@@ -64,7 +65,6 @@ module.exports = {
                 companyRegistration,
                 password: hashedPassowrd,
                 status: "pending",
-                role: "reseller",
             });
 
             await newReseller.save();
