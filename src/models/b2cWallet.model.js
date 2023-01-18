@@ -7,29 +7,6 @@ const b2cWalletSchema = new Schema(
             required: true,
             default: 0,
         },
-        pendingBalance: {
-            type: [
-                {
-                    amount: {
-                        type: Number,
-                        required: true,
-                    },
-                    orderId: {
-                        type: Number,
-                        required: true,
-                    },
-                    orderType: {
-                        type: String,
-                        required: true,
-                    },
-                    expiresIn: {
-                        type: Date,
-                        required: true,
-                    },
-                },
-            ],
-            default: [],
-        },
         user: {
             type: Schema.Types.ObjectId,
             ref: "User",

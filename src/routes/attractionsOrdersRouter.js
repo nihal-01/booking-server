@@ -8,8 +8,13 @@ const {
 const { userAuthOrNot } = require("../middlewares");
 
 router.post("/create", userAuthOrNot, createAttractionOrder);
-router.post("/paypal/capture", capturePayment);
+// router.post("/paypal/capture", capturePayment);
 
 router.get("/single/:id", getSingleAttractionOrder);
 
 module.exports = router;
+
+
+// create order
+// initiate-payment
+// pay payment

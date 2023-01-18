@@ -1,5 +1,6 @@
 const { isValidObjectId } = require("mongoose");
 const crypto = require("crypto");
+const Razorpay = require("razorpay");
 
 const { sendErrorResponse } = require("../helpers");
 const {
@@ -9,13 +10,14 @@ const {
     AttractionTicket,
     User,
     Country,
-    Payment,
+    B2CTransaction,
 } = require("../models/");
 const {
     attractionOrderSchema,
     attractionOrderCaptureSchema,
 } = require("../validations/attractionOrder.schema");
 const { createOrder, fetchOrder, fetchPayment } = require("../utils/paypal");
+const { B2CWallet } = require("../models/b2cWallet.model");
 
 const dayNames = [
     "sunday",
@@ -27,11 +29,21 @@ const dayNames = [
     "saturday",
 ];
 
+const instance = new Razorpay({
+    key_id: "rzp_test_wRs1QW9pU0kcUb",
+    key_secret: "b5EAobCLbhyi6wpOOA2HNGzV",
+});
+
 module.exports = {
     createAttractionOrder: async (req, res) => {
         try {
-            const { selectedActivities, name, email, phoneNumber, country } =
-                req.body;
+            const {
+                selectedActivities,
+                name,
+                email,
+                phoneNumber,
+                country,
+            } = req.body;
 
             const { _, error } = attractionOrderSchema.validate(req.body);
             if (error) {
@@ -346,17 +358,6 @@ module.exports = {
                 }
             }
 
-            const currency = "USD";
-            const response = await createOrder(totalAmount, currency);
-
-            if (response.statusCode !== 201) {
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "Something went wrong while fetching order! Please try again later"
-                );
-            }
-
             let buyer = req.user || user;
 
             const newAttractionOrder = new AttractionOrder({
@@ -370,20 +371,83 @@ module.exports = {
                 phoneNumber: buyer?.phoneNumber,
                 orderStatus: "created",
                 paymentStatus: "PENDING",
-                paymentOrderId: response.result.id,
+                paymentOrderId: result.id,
                 merchant: "Paypal",
             });
             await newAttractionOrder.save();
 
-            res.status(200).json(response.result);
+            res.status(200).json(result);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
     },
 
-    capturePayment: async (req, res) => {
+    initiateAttractionOrderPayment: async (req, res) => {
         try {
-            const { orderId, paymentId } = req.body;
+            const { orderId } = req.params;
+            const { paymentProcessor, isWallet } = req.body;
+
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "Invalid order id");
+            }
+
+            const attractionOrder = await AttractionOrder.findById(orderId);
+            if (!attractionOrder) {
+                return sendErrorResponse(
+                    res,
+                    404,
+                    "Attraction order not found"
+                );
+            }
+
+            // creating transaction
+            const transaction = new B2CTransaction({
+                user: attractionOrder.user,
+                transactionType: "deposit",
+                status: "pending",
+            });
+
+            let totalAmount = attractionOrder.totalAmount;
+
+            // taking wallet balance if it allowed
+            if (isWallet === true && req.user) {
+                const wallet = await B2CWallet.findOne({ _id: req.user?._id });
+                if (wallet && wallet.balance > 0) {
+                    totalAmount -= balance;
+                }
+            }
+
+            if (paymentProcessor === "paypal") {
+                const currency = "USD";
+                const response = await createOrder(totalAmount, currency);
+
+                if (response.statusCode !== 201) {
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        "Something went wrong while fetching order! Please try again later"
+                    );
+                }
+
+                return res.status(200).json(response.result);
+            } else if (paymentProcessor === "razorpay") {
+                const options = {
+                    amount: totalAmount * 100,
+                    currency: "INR",
+                };
+                const order = await instance.orders.create(options);
+                return res.status(200).json(order);
+            } else {
+                return sendErrorResponse(res, 400, "Invalid payment processor");
+            }
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    capturePaypalAttractionOrder: async (req, res) => {
+        try {
+            const { paypalOrderId, paymentId, orderId } = req.body;
 
             const { _, error } = attractionOrderCaptureSchema.validate(
                 req.body
@@ -392,185 +456,138 @@ module.exports = {
                 return sendErrorResponse(res, 400, error.details[0].message);
             }
 
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "Invalid order id");
+            }
+
             const attractionOrder = await AttractionOrder.findOne({
-                paymentOrderId: orderId,
+                _id: orderId,
             });
             if (!attractionOrder) {
                 return sendErrorResponse(
                     res,
                     400,
-                    "Attraction order not found!. Check with XYZ team if amount is debited from your bank!"
+                    "Attraction order not found!. Please create an order first. Check with our team if amount is debited from your bank!"
                 );
             }
 
+            // checking for already paid or not
             if (attractionOrder.orderStatus === "completed") {
                 return sendErrorResponse(
                     res,
                     400,
-                    "This order already completed, Thank you"
+                    "This order already completed, Thank you. Check with our team if you paid multiple times."
                 );
             }
 
-            const orderObject = await fetchOrder(orderId);
+            attractionOrder.paymentStatus = orderObject.status;
+            attractionOrder.paymentId = paymentId;
+            await attractionOrder.save();
 
-            if (orderObject.statusCode == "500") {
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "Error while fetching order status from paypal. Check with XYZ team if amount is debited from your bank!"
-                );
-            } else if (orderObject.status !== "COMPLETED") {
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "Paypal order status is not Completed. Check with XYZ team if amount is debited from your bank!"
-                );
-            } else {
-                attractionOrder.paymentStatus = orderObject.status;
-                attractionOrder.paymentId = paymentId;
-                await attractionOrder.save();
+            for (let i = 0; i < attractionOrder.activities?.length; i++) {
+                let activity = attractionOrder.activities[i];
 
-                const paymentObject = await fetchPayment(paymentId);
+                if (activity.bookingType === "ticket") {
+                    let adultTickets = [];
+                    let childTickets = [];
+                    let totalAdultPurchaseCost = 0;
+                    let totalChildPurchaseCost = 0;
 
-                if (paymentObject.statusCode == "500") {
-                    return sendErrorResponse(
-                        res,
-                        400,
-                        "Error while fetching payment status from paypal. Check with XYZ team if amount is debited from your bank!"
-                    );
-                } else if (paymentObject.result.status !== "COMPLETED") {
-                    return sendErrorResponse(
-                        res,
-                        400,
-                        "Paypal payment status is not Completed. Please complete your payment!"
-                    );
-                } else {
-                    const payment = new Payment({
-                        merchant: "paypal",
-                        paymentId,
-                        paymentOrderId: orderId,
-                        user: attractionOrder.user,
-                        orderType: "attraction",
-                        order: attractionOrder._id,
-                        paymentDetails: paymentObject.result,
-                    });
-                    await payment.save();
-
-                    for (
-                        let i = 0;
-                        i < attractionOrder.activities?.length;
-                        i++
-                    ) {
-                        let activity = attractionOrder.activities[i];
-
-                        if (activity.bookingType === "ticket") {
-                            let adultTickets = [];
-                            let childTickets = [];
-                            let totalAdultPurchaseCost = 0;
-                            let totalChildPurchaseCost = 0;
-
-                            for (let i = 0; i < activity.adultsCount; i++) {
-                                const ticket =
-                                    await AttractionTicket.findOneAndUpdate(
-                                        {
-                                            activity: activity.activity,
-                                            status: "ok",
-                                            ticketFor: "adult",
-                                            $or: [
-                                                {
-                                                    validity: true,
-                                                    validTill: {
-                                                        $gte: new Date(
-                                                            activity.date
-                                                        ).toISOString(),
-                                                    },
-                                                },
-                                                { validity: false },
-                                            ],
+                    for (let i = 0; i < activity.adultsCount; i++) {
+                        const ticket = await AttractionTicket.findOneAndUpdate(
+                            {
+                                activity: activity.activity,
+                                status: "ok",
+                                ticketFor: "adult",
+                                $or: [
+                                    {
+                                        validity: true,
+                                        validTill: {
+                                            $gte: new Date(
+                                                activity.date
+                                            ).toISOString(),
                                         },
-                                        { status: "used" }
-                                    );
-                                if (!ticket) {
-                                    return sendErrorResponse(
-                                        res,
-                                        400,
-                                        "Ooh. sorry, We know you already paid. But tickets sold out. We are trying maximum to provide tickets for you. Otherwise amount will be refunded within 24hrs"
-                                    );
-                                }
-                                adultTickets.push({
-                                    ticketId: ticket._id,
-                                    ticketNo: ticket?.ticketNo,
-                                    lotNo: ticket?.lotNo,
-                                    ticketFor: ticket?.ticketFor,
-                                    validity: ticket.validity,
-                                    validTill: ticket.validTill,
-                                    cost: ticket?.ticketCost,
-                                });
-                                totalAdultPurchaseCost += ticket?.ticketCost;
-                            }
-
-                            for (let i = 0; i < activity.childrenCount; i++) {
-                                const ticket =
-                                    await AttractionTicket.findOneAndUpdate(
-                                        {
-                                            activity: activity.activity,
-                                            status: "ok",
-                                            ticketFor: "child",
-                                            $or: [
-                                                {
-                                                    validity: true,
-                                                    validTill: {
-                                                        $gte: new Date(
-                                                            activity.date
-                                                        ).toISOString(),
-                                                    },
-                                                },
-                                                { validity: false },
-                                            ],
-                                        },
-                                        { status: "used" }
-                                    );
-                                if (!ticket) {
-                                    return sendErrorResponse(
-                                        res,
-                                        404,
-                                        "Ooh. sorry, We know you already paid. But tickets sold out. We are trying maximum to provide tickets for you. Otherwise amount will be refunded within 24hrs"
-                                    );
-                                }
-                                childTickets.push({
-                                    ticketId: ticket._id,
-                                    ticketNo: ticket?.ticketNo,
-                                    lotNo: ticket?.lotNo,
-                                    ticketFor: ticket?.ticketFor,
-                                    validity: ticket.validity,
-                                    validTill: ticket.validTill,
-                                    cost: ticket?.ticketCost,
-                                });
-                                totalChildPurchaseCost += ticket?.ticketCost;
-                            }
-
-                            attractionOrder.activities[i].adultTickets =
-                                adultTickets;
-                            attractionOrder.activities[i].childTickets =
-                                childTickets;
-                            attractionOrder.activities[i].profit =
-                                attractionOrder.activities[i].amount -
-                                (totalAdultPurchaseCost +
-                                    totalChildPurchaseCost);
-                            attractionOrder.activities[i].status = "confirmed";
-                        } else {
-                            attractionOrder.activities[i].status = "booked";
+                                    },
+                                    { validity: false },
+                                ],
+                            },
+                            { status: "used" }
+                        );
+                        if (!ticket) {
+                            return sendErrorResponse(
+                                res,
+                                400,
+                                "Ooh. sorry, We know you already paid. But tickets sold out. We are trying maximum to provide tickets for you. Otherwise amount will be refunded within 24hrs"
+                            );
                         }
+                        adultTickets.push({
+                            ticketId: ticket._id,
+                            ticketNo: ticket?.ticketNo,
+                            lotNo: ticket?.lotNo,
+                            ticketFor: ticket?.ticketFor,
+                            validity: ticket.validity,
+                            validTill: ticket.validTill,
+                            cost: ticket?.ticketCost,
+                        });
+                        totalAdultPurchaseCost += ticket?.ticketCost;
                     }
 
-                    attractionOrder.orderStatus = "completed";
-                    await attractionOrder.save();
+                    for (let i = 0; i < activity.childrenCount; i++) {
+                        const ticket = await AttractionTicket.findOneAndUpdate(
+                            {
+                                activity: activity.activity,
+                                status: "ok",
+                                ticketFor: "child",
+                                $or: [
+                                    {
+                                        validity: true,
+                                        validTill: {
+                                            $gte: new Date(
+                                                activity.date
+                                            ).toISOString(),
+                                        },
+                                    },
+                                    { validity: false },
+                                ],
+                            },
+                            { status: "used" }
+                        );
+                        if (!ticket) {
+                            return sendErrorResponse(
+                                res,
+                                404,
+                                "Ooh. sorry, We know you already paid. But tickets sold out. We are trying maximum to provide tickets for you. Otherwise amount will be refunded within 24hrs"
+                            );
+                        }
+                        childTickets.push({
+                            ticketId: ticket._id,
+                            ticketNo: ticket?.ticketNo,
+                            lotNo: ticket?.lotNo,
+                            ticketFor: ticket?.ticketFor,
+                            validity: ticket.validity,
+                            validTill: ticket.validTill,
+                            cost: ticket?.ticketCost,
+                        });
+                        totalChildPurchaseCost += ticket?.ticketCost;
+                    }
 
-                    return res.status(200).json({
-                        message: "Transaction Successful",
-                    });
+                    attractionOrder.activities[i].adultTickets = adultTickets;
+                    attractionOrder.activities[i].childTickets = childTickets;
+                    attractionOrder.activities[i].profit =
+                        attractionOrder.activities[i].amount -
+                        (totalAdultPurchaseCost + totalChildPurchaseCost);
+                    attractionOrder.activities[i].status = "confirmed";
+                } else {
+                    attractionOrder.activities[i].status = "booked";
                 }
             }
+
+            attractionOrder.orderStatus = "completed";
+            await attractionOrder.save();
+
+            return res.status(200).json({
+                message: "Transaction Successful",
+            });
         } catch (error) {
             console.log(error);
             return sendErrorResponse(
@@ -601,6 +618,15 @@ module.exports = {
             }
 
             res.status(200).json(attractionOrder);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    cancelAttractionOrder: async (req, res) => {
+        try {
+            const { orderId } = req.params;
+
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

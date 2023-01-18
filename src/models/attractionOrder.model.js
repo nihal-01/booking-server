@@ -86,10 +86,13 @@ const attractionOrderSchema = new Schema(
             type: Number,
             required: true,
         },
-        merchant: {
+        orderStatus: {
             type: String,
+            required: true,
+            lowercase: true,
+            enum: ["", ""]
         },
-        paymentStatus: {
+        merchant: {
             type: String,
         },
         paymentOrderId: {

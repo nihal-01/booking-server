@@ -18,12 +18,10 @@ const VisaDocument = require("./visaDocument.model");
 const AttractionReview = require("./attractionReview.model");
 const Currency = require("./currency.modal");
 const Driver = require("./driver.model");
-<<<<<<< HEAD
 const Transaction = require("./transaction.model");
-=======
 const B2CTransaction = require("./b2cTransaction.model");
->>>>>>> 83dc796ba5af883e0c7fd7cc4d14457f511ea005
 const B2CAttractionMarkup = require("./b2cAttractionMarkup.model");
+const B2CWallet = require("./b2cWallet.model");
 
 module.exports = {
     HomeSettings,
@@ -46,11 +44,10 @@ module.exports = {
     AttractionReview,
     Currency,
     Driver,
-<<<<<<< HEAD
     Transaction,
     B2CAttractionMarkup,
-=======
     B2CAttractionMarkup,
     B2CTransaction,
->>>>>>> 83dc796ba5af883e0c7fd7cc4d14457f511ea005
+
+    B2CWallet,
 };
