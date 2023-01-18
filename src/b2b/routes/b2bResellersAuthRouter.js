@@ -8,6 +8,7 @@ const {
     updateCompanySettings,
     updatePassword,
     updateProfileSetting,
+    getReseller
 } = require("../controllers/b2bResellersAuthController");
 const { b2bAuth } = require("../middlewares");
 
@@ -53,5 +54,6 @@ router.patch(
 );
 router.patch("/update/comapnySettings", b2bAuth, updateCompanySettings);
 router.patch("/update/password", b2bAuth, updatePassword);
+router.get('/getReseller' ,b2bAuth , getReseller  )
 
 module.exports = router;

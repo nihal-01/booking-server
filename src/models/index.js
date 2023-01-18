@@ -48,6 +48,5 @@ module.exports = {
     B2CAttractionMarkup,
     B2CAttractionMarkup,
     B2CTransaction,
-
     B2CWallet,
 };
