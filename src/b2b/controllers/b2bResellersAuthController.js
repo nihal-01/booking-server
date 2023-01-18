@@ -6,6 +6,7 @@ const { Reseller } = require("../models");
 const {
     resellerRegisterSchema,
     resellerLoginSchema,
+    resellerProfileUpdateSchema,
 } = require("../validations/b2bReseller.schema");
 const { isValidObjectId } = require("mongoose");
 
