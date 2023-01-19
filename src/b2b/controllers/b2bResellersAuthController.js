@@ -1,4 +1,5 @@
 const { hash, compare } = require("bcryptjs");
+const { isValidObjectId } = require("mongoose");
 
 const { sendErrorResponse } = require("../../helpers");
 const { Country } = require("../../models");
@@ -10,7 +11,6 @@ const {
     resellerCompanyUpdateSchema,
     resellerPasswordUpdateSchema,
 } = require("../validations/b2bReseller.schema");
-const { isValidObjectId } = require("mongoose");
 
 module.exports = {
     resellerRegister: async (req, res) => {
@@ -65,6 +65,7 @@ module.exports = {
                 whatsappNumber,
                 trnNumber,
                 companyRegistration,
+                role : "reseller",
                 password: hashedPassowrd,
                 status: "pending",
             });
@@ -102,7 +103,7 @@ module.exports = {
 
             const isMatch = await compare(password, reseller.password);
             if (!isMatch) {
-                return sendErrorResponse(res, 400, "Invalid credentials");
+                return sendErrorResponse(res, 400, "Invalid Password credentials");
             }
 
             if (reseller.status !== "ok") {

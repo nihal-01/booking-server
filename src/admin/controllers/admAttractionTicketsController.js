@@ -1,7 +1,7 @@
 const fs = require("fs");
 const { parse } = require("csv-parse");
 
-const { sendErrorResponse } = require("../../helpers");
+const { sendErrorResponse, createQuotationPdf } = require("../../helpers");
 const { AttractionTicket, AttractionActivity } = require("../../models");
 const { isValidObjectId } = require("mongoose");
 const {
@@ -177,6 +177,67 @@ module.exports = {
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
+        }
+    },
+
+    updateTicketStatus: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid Ticket Id");
+            }
+
+            const ticket = await AttractionTicket.findById(id);
+
+            if (!ticket) {
+                return sendErrorResponse(res, 400, "Invalid Ticket Id");
+            }
+
+            if (ticket.status !== "ok") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "Ticket Already Reserved Or Used"
+                );
+            }
+
+            if (ticket.validity) {
+                if (new Date(ticket.validTill) < new Date()) {
+                    return sendErrorResponse(res, 400, "Ticket Date Experied");
+                }
+            }
+
+            ticket.status = "used";
+            await ticket.save();
+
+            res.status(200).json({ status: ticket?.status });
+        } catch (error) {
+            sendErrorResponse(res, 500, error);
+        }
+    },
+
+    downloadTicket: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid Ticket Id");
+            }
+
+            let ticketData = await AttractionTicket.findById(id);
+
+            createQuotationPdf(ticketData);
+
+            if (!ticketData) {
+                sendErrorResponse(res, 400, "Ticket Not Found");
+            }
+
+            res.status(200).json({
+                ticketData,
+            });
+        } catch (error) {
+            sendErrorResponse(res, 500, error);
         }
     },
 };

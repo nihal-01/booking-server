@@ -13,6 +13,8 @@ const b2bResellerAuth = async (req, res, next) => {
                 jwtToken: token,
             });
 
+            console.log(reseller , "reseller")
+
             if (!reseller) {
                 return sendErrorResponse(res, 401, "Invalid Token");
             }
