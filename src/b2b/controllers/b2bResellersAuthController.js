@@ -1,4 +1,5 @@
 const { hash, compare } = require("bcryptjs");
+const { isValidObjectId } = require("mongoose");
 
 const { sendErrorResponse } = require("../../helpers");
 const { Country } = require("../../models");
@@ -7,7 +8,6 @@ const {
     resellerRegisterSchema,
     resellerLoginSchema,
 } = require("../validations/b2bReseller.schema");
-const { isValidObjectId } = require("mongoose");
 
 module.exports = {
     resellerRegister: async (req, res) => {
