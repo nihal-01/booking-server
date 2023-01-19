@@ -280,6 +280,8 @@ module.exports = {
                 
             } = req.query;
 
+            console.log(req.reseller , "reseller")
+
             const filters1 = { isDeleted: false };
 
             if (category && category !== "") {
@@ -350,21 +352,27 @@ module.exports = {
                 {
                     $lookup: {
                         from: "b2bclientattractionmarkups",
-                        localField: "_id",
-                        foreignField: "attraction",
+                        let : {
+                            attraction : "$_id"
+                        },
+                        pipeline :[
+                             {
+
+                            $match : {
+                                $expr: {
+                                    $and : [ {$eq: [ "$resellerId", req.reseller._id ]},
+                                   {$eq: [ "$attraction", "$$attraction" ]}
+                                    ]
+
+                                }
+                            }
+                        }
+                    ],
                         as: "markup",
                     },
                 },
                
-                {
-                    $unwind: "$markup"
-                },
-                {
-                    $match: { 
-                        
-                        "markup.resellerId" :  req.reseller._id
-                    }
-                },
+                             
                 {
                     $lookup: {
                         from: "destinations",
@@ -384,7 +392,7 @@ module.exports = {
                 {
                     $set: {
                         activity: { $arrayElemAt: ["$activities", 0] },
-                        // markup: { $arrayElemAt: ["$markup", 0] },
+                        markup: { $arrayElemAt: ["$markup", 0] },
                         destination: { $arrayElemAt: ["$destination", 0] },
                         category: { $arrayElemAt: ["$category", 0] },
                         totalReviews: {
@@ -414,10 +422,17 @@ module.exports = {
                             adultPrice: {
                                 $cond: [
                                     {
+                                    $and :   [{
                                         $eq: [
                                             "$markup.markupType",
                                             "percentage",
                                         ],
+                                        $eq: [
+                                            "$markupAdmin.markupType",
+                                            "percentage",
+                                        ],
+
+                                    }] 
                                     },
                                     {
                                         $sum: [
@@ -439,6 +454,7 @@ module.exports = {
                                         $sum: [
                                             "$activity.adultPrice",
                                             "$markup.markup",
+                                            "$markupAdmin.markup"
                                         ],
                                     },
                                 ],
@@ -489,7 +505,7 @@ module.exports = {
                 },
             ]);
 
-            console.log( attractions , "attractions")
+            console.log( attractions[0].data , "attractions")
 
             res.status(200).json({
                 attractions: attractions[0],

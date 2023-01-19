@@ -25,7 +25,7 @@ const {
 
 router.use("/auth", admAuthRouter);
 
-router.use(adminAuth);
+// router.use(adminAuth);
 
 router.use("/attractions/tickets", admAttractionsTicketsRouter);
 router.use("/attractions/categories", admAttractionCategoriesRouter);
