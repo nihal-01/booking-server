@@ -28,7 +28,7 @@ const resellerRegisterSchema = Joi.object({
 const resellerLoginSchema = Joi.object({
     agentCode: Joi.number().required(),
     email: Joi.string().required(),
-    password: Joi.string().regex(passwordRegx).error(passswordError).required(),
+    password: Joi.string().required(),
 });
 
 const subAgentRegisterSchema = Joi.object({
@@ -42,6 +42,7 @@ const subAgentRegisterSchema = Joi.object({
     zipCode: Joi.number().required(),
     skypeId: Joi.string().allow("", null),
     email: Joi.string().email().required(),
+    telephoneNumber : Joi.string(),
     country: Joi.string().required(),
     phoneNumber: Joi.string().required(),
     trnNumber: Joi.string(),

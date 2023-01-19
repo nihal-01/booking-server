@@ -7,6 +7,9 @@ const { Reseller } = require("../models");
 const {
     resellerRegisterSchema,
     resellerLoginSchema,
+    resellerProfileUpdateSchema,
+    resellerCompanyUpdateSchema,
+    resellerPasswordUpdateSchema,
 } = require("../validations/b2bReseller.schema");
 
 module.exports = {
@@ -62,6 +65,7 @@ module.exports = {
                 whatsappNumber,
                 trnNumber,
                 companyRegistration,
+                role : "reseller",
                 password: hashedPassowrd,
                 status: "pending",
             });
@@ -99,7 +103,7 @@ module.exports = {
 
             const isMatch = await compare(password, reseller.password);
             if (!isMatch) {
-                return sendErrorResponse(res, 400, "Invalid credentials");
+                return sendErrorResponse(res, 400, "Invalid Password credentials");
             }
 
             if (reseller.status !== "ok") {

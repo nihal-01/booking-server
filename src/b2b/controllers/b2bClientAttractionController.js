@@ -1,7 +1,7 @@
 const { isValidObjectId, Types } = require("mongoose");
+const { sendErrorResponse } = require("../../helpers");
+const { Attraction, Destination } = require("../../models");
 
-const { sendErrorResponse } = require("../helpers");
-const { Attraction, Destination } = require("../models/");
 
 module.exports = {
     getSingleAttraction: async (req, res) => {
@@ -11,7 +11,8 @@ module.exports = {
             if (!isValidObjectId(id)) {
                 return sendErrorResponse(res, 400, "Invalid attraction id");
             }
-
+            
+            console.log(req.reseller._id)
             const attraction = await Attraction.aggregate([
                 {
                     $match: {
@@ -45,12 +46,24 @@ module.exports = {
                 },
                 {
                     $lookup: {
-                        from: "b2cattractionmarkups",
+                        from: "b2bclientattractionmarkups",
                         localField: "_id",
                         foreignField: "attraction",
                         as: "markup",
                     },
                 },
+               
+                {
+                    $unwind: "$markup"
+                },
+                {
+                    $match: { 
+                        
+                        "markup.resellerId" :  req.reseller._id
+                    }
+                },
+               
+               
                 {
                     $set: {
                         destination: { $arrayElemAt: ["$destination", 0] },
@@ -66,7 +79,7 @@ module.exports = {
                         totalReviews: {
                             $size: "$reviews",
                         },
-                        markup: { $arrayElemAt: ["$markup", 0] },
+                       
                     },
                 },
                 {
@@ -236,13 +249,15 @@ module.exports = {
                         },
                     },
                 },
-               
+              
                 {
                     $project: {
                         totalReviews: 0,
                     },
                 },
             ]);
+
+            console.log(attraction , "attraction")
 
             if (!attraction || attraction?.length < 1) {
                 return sendErrorResponse(res, 404, "Attraction not found");
@@ -261,20 +276,13 @@ module.exports = {
                 limit = 10,
                 destination,
                 category,
-                priceFrom,
-                priceTo,
-                rating,
-                durationFrom,
-                durationTo,
-                durationFromType,
-                durationToType,
-                search,
-                isCombo,
-                isOffer,
+                search
+                
             } = req.query;
 
+            console.log(req.reseller , "reseller")
+
             const filters1 = { isDeleted: false };
-            const filters2 = {};
 
             if (category && category !== "") {
                 if (!isValidObjectId(category)) {
@@ -299,76 +307,13 @@ module.exports = {
                     });
                 }
             }
+            console.log(search , "search")
 
             if (search && search !== "") {
                 filters1.title = { $regex: search, $options: "i" };
             }
 
-            if (isOffer && isOffer !== "") {
-                filters1.isOffer = isOffer === "true";
-            }
-
-            if (isCombo && isCombo !== "") {
-                filters1.isCombo = isCombo === "true";
-            }
-
-            if (
-                durationFrom &&
-                durationFrom != "" &&
-                durationFromType &&
-                durationFromType !== "" &&
-                durationTo &&
-                durationTo !== "" &&
-                durationToType &&
-                durationToType != ""
-            ) {
-                filters1.$and = [
-                    {
-                        duration: { $gte: Number(durationFrom) },
-                        durationType: durationFromType?.toLowerCase(),
-                    },
-                    {
-                        duration: { $lte: Number(durationTo) },
-                        durationType: {
-                            $in: [
-                                durationFromType?.toLowerCase(),
-                                durationToType?.toLowerCase(),
-                            ],
-                        },
-                    },
-                ];
-            } else if (
-                durationFrom &&
-                durationFrom != "" &&
-                durationFromType &&
-                durationFromType !== ""
-            ) {
-                filters1.duration = { $gte: Number(durationFrom) };
-                filters1.durationType = durationFromType?.toLowerCase();
-            } else if (
-                durationTo &&
-                durationTo !== "" &&
-                durationToType &&
-                durationToType != ""
-            ) {
-                filters1.duration = { $lte: Number(durationTo) };
-                filters1.durationType = durationToType?.toLowerCase();
-            }
-
-            if (priceFrom && priceFrom !== "" && priceTo && priceTo !== "") {
-                filters2.$and = [
-                    { "activity.adultPrice": { $gte: Number(priceFrom) } },
-                    { "activity.adultPrice": { $lte: Number(priceTo) } },
-                ];
-            } else if (priceFrom && priceFrom !== "") {
-                filters2["activity.adultPrice"] = { $gte: Number(priceFrom) };
-            } else if (priceTo && priceTo !== "") {
-                filters2["activity.adultPrice"] = { $lte: Number(priceTo) };
-            }
-
-            if (rating && rating !== "") {
-                filters2.averageRating = { $gte: Number(rating) };
-            }
+          
 
             const attractions = await Attraction.aggregate([
                 { $match: filters1 },
@@ -406,12 +351,28 @@ module.exports = {
                 },
                 {
                     $lookup: {
-                        from: "b2cattractionmarkups",
-                        localField: "_id",
-                        foreignField: "attraction",
+                        from: "b2bclientattractionmarkups",
+                        let : {
+                            attraction : "$_id"
+                        },
+                        pipeline :[
+                             {
+
+                            $match : {
+                                $expr: {
+                                    $and : [ {$eq: [ "$resellerId", req.reseller._id ]},
+                                   {$eq: [ "$attraction", "$$attraction" ]}
+                                    ]
+
+                                }
+                            }
+                        }
+                    ],
                         as: "markup",
                     },
                 },
+               
+                             
                 {
                     $lookup: {
                         from: "destinations",
@@ -461,10 +422,17 @@ module.exports = {
                             adultPrice: {
                                 $cond: [
                                     {
+                                    $and :   [{
                                         $eq: [
                                             "$markup.markupType",
                                             "percentage",
                                         ],
+                                        $eq: [
+                                            "$markupAdmin.markupType",
+                                            "percentage",
+                                        ],
+
+                                    }] 
                                     },
                                     {
                                         $sum: [
@@ -486,6 +454,7 @@ module.exports = {
                                         $sum: [
                                             "$activity.adultPrice",
                                             "$markup.markup",
+                                            "$markupAdmin.markup"
                                         ],
                                     },
                                 ],
@@ -512,9 +481,9 @@ module.exports = {
                         offerAmount: 1,
                     },
                 },
-                {
-                    $match: filters2,
-                },
+                // {
+                //     $match: filters2,
+                // },
                 {
                     $group: {
                         _id: null,
@@ -535,6 +504,8 @@ module.exports = {
                     },
                 },
             ]);
+
+            console.log( attractions[0].data , "attractions")
 
             res.status(200).json({
                 attractions: attractions[0],
