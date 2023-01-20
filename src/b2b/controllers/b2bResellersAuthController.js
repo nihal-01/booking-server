@@ -33,6 +33,8 @@ module.exports = {
                 password,
             } = req.body;
 
+            console.log(req.body , "bodyy")
+
             const { _, error } = resellerRegisterSchema.validate(req.body);
             if (error) {
                 return sendErrorResponse(

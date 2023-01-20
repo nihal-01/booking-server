@@ -40,6 +40,6 @@ const b2bWalletSchema = new Schema(
     { timestamps: true }
 );
 
-const B2BWallet = model("B2BWallet", b2cWalletSchema);
+const B2BWallet = model("B2BWallet", b2bWalletSchema);
 
 module.exports = { B2BWallet };

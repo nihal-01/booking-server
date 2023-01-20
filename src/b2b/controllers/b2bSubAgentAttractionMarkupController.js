@@ -77,22 +77,31 @@ module.exports = {
     },
 
     getAllB2bSubAgentAttractionMarkups: async (req, res) => {
-        try {
-            const { skip = 0, limit = 10 } = req.query;
+        // try {
+        //     const { skip = 0, limit = 10 } = req.query;
 
-            const b2bClientAttractionMarkups = await B2BSubAgentAttractionMarkup.find({ resellerId : req.reseller._id})
-                .populate("attraction", "title")
-                .sort({ createdAt: -1 })
-                .limit(limit)
-                .skip(limit * skip)
-                .lean();
+        //     const b2bClientAttractionMarkups = await B2BSubAgentAttractionMarkup.find({ resellerId : req.reseller._id})
+        //         .populate("attraction", "title")
+        //         .sort({ createdAt: -1 })
+        //         .limit(limit)
+        //         .skip(limit * skip)
+        //         .lean();
 
-            res.status(200).json({
-                b2bClientAttractionMarkups,
-                skip: Number(skip),
-                limit: Number(limit),
-            });
-        } catch (err) {
+        //     res.status(200).json({
+        //         b2bClientAttractionMarkups,
+        //         skip: Number(skip),
+        //         limit: Number(limit),
+        //     });
+        // } catch (err) {
+        //     sendErrorResponse(res, 400, err);
+        // }
+
+        try{
+
+                        const { skip = 0, limit = 10 } = req.query;
+
+
+         } catch (err) {
             sendErrorResponse(res, 400, err);
         }
     },

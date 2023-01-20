@@ -42,11 +42,11 @@ const subAgentRegisterSchema = Joi.object({
     zipCode: Joi.number().required(),
     skypeId: Joi.string().allow("", null),
     email: Joi.string().email().required(),
-    telephoneNumber : Joi.string(),
+    telephoneNumber : Joi.string().allow("", null),
     country: Joi.string().required(),
     phoneNumber: Joi.string().required(),
-    trnNumber: Joi.string(),
-    companyRegistration: Joi.string(),
+    trnNumber: Joi.string().allow("", null),
+    companyRegistration: Joi.string().allow("", null),
 });
 
 const resellerProfileUpdateSchema = Joi.object({
@@ -56,7 +56,7 @@ const resellerProfileUpdateSchema = Joi.object({
     country: Joi.string().required(),
     skypeId: Joi.string().allow("", null),
     email: Joi.string().email().required(),
-    telephoneNumber: Joi.string(),
+    telephoneNumber: Joi.string().allow("", null),
     phoneNumber: Joi.string().required(),
 });
 

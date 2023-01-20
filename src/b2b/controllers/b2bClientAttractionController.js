@@ -47,20 +47,24 @@ module.exports = {
                 {
                     $lookup: {
                         from: "b2bclientattractionmarkups",
-                        localField: "_id",
-                        foreignField: "attraction",
+                        let : {
+                            attraction : "$_id"
+                        },
+                        pipeline :[
+                             {
+
+                            $match : {
+                                $expr: {
+                                    $and : [ {$eq: [ "$resellerId", req.reseller._id ]},
+                                   {$eq: [ "$attraction", "$$attraction" ]}
+                                    ]
+
+                                }
+                            }
+                        }
+                    ],
                         as: "markup",
                     },
-                },
-               
-                {
-                    $unwind: "$markup"
-                },
-                {
-                    $match: { 
-                        
-                        "markup.resellerId" :  req.reseller._id
-                    }
                 },
                
                
@@ -68,6 +72,7 @@ module.exports = {
                     $set: {
                         destination: { $arrayElemAt: ["$destination", 0] },
                         category: { $arrayElemAt: ["$category", 0] },
+                        markup: { $arrayElemAt: ["$markup", 0] },
                         totalRating: {
                             $sum: {
                                 $map: {
@@ -422,17 +427,12 @@ module.exports = {
                             adultPrice: {
                                 $cond: [
                                     {
-                                    $and :   [{
+                                   
                                         $eq: [
                                             "$markup.markupType",
                                             "percentage",
                                         ],
-                                        $eq: [
-                                            "$markupAdmin.markupType",
-                                            "percentage",
-                                        ],
-
-                                    }] 
+                                     
                                     },
                                     {
                                         $sum: [
@@ -454,7 +454,6 @@ module.exports = {
                                         $sum: [
                                             "$activity.adultPrice",
                                             "$markup.markup",
-                                            "$markupAdmin.markup"
                                         ],
                                     },
                                 ],
