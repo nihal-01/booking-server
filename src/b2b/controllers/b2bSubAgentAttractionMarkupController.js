@@ -1,4 +1,4 @@
-const { isValidObjectId } = require("mongoose");
+const { isValidObjectId, Types } = require("mongoose");
 const { sendErrorResponse } = require("../../helpers");
 const { Attraction } = require("../../models");
 const {  B2BSubAgentAttractionMarkup } = require("../models");
@@ -64,45 +64,16 @@ module.exports = {
                 return sendErrorResponse(
                     res,
                     404,
-                    "B2C Attraction markup not found"
+                    "B2b Reseller Attraction markup not found"
                 );
             }
 
             res.status(200).json({
-                message: "b2c attraction markup deleted successfully",
+                message: "b2b Reseller attraction markup deleted successfully",
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
     },
 
-    getAllB2bSubAgentAttractionMarkups: async (req, res) => {
-        // try {
-        //     const { skip = 0, limit = 10 } = req.query;
-
-        //     const b2bClientAttractionMarkups = await B2BSubAgentAttractionMarkup.find({ resellerId : req.reseller._id})
-        //         .populate("attraction", "title")
-        //         .sort({ createdAt: -1 })
-        //         .limit(limit)
-        //         .skip(limit * skip)
-        //         .lean();
-
-        //     res.status(200).json({
-        //         b2bClientAttractionMarkups,
-        //         skip: Number(skip),
-        //         limit: Number(limit),
-        //     });
-        // } catch (err) {
-        //     sendErrorResponse(res, 400, err);
-        // }
-
-        try{
-
-                        const { skip = 0, limit = 10 } = req.query;
-
-
-         } catch (err) {
-            sendErrorResponse(res, 400, err);
-        }
-    },
 };

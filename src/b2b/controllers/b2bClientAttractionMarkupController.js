@@ -1,4 +1,4 @@
-const { isValidObjectId } = require("mongoose");
+const { isValidObjectId , Types } = require("mongoose");
 const { sendErrorResponse } = require("../../helpers");
 const { Attraction } = require("../../models");
 const { B2BClientAttractionMarkup } = require("../models");
@@ -76,24 +76,5 @@ module.exports = {
         }
     },
 
-    getAllB2bClientAttractionMarkups: async (req, res) => {
-        try {
-            const { skip = 0, limit = 10 } = req.query;
-
-            const b2bClientAttractionMarkups = await B2BClientAttractionMarkup.find({ resellerId : req.reseller._id})
-                .populate("attraction", "title")
-                .sort({ createdAt: -1 })
-                .limit(limit)
-                .skip(limit * skip)
-                .lean();
-
-            res.status(200).json({
-                b2bClientAttractionMarkups,
-                skip: Number(skip),
-                limit: Number(limit),
-            });
-        } catch (err) {
-            sendErrorResponse(res, 400, err);
-        }
-    },
+    
 };
