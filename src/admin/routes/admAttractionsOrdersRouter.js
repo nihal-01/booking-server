@@ -4,12 +4,12 @@ const {
     getAllOrders,
     confirmBooking,
     cancelBooking,
-    assignDriverForTicketOrder,
+    updateDriverForOrder,
 } = require("../controllers/admAttractionsOrdersController");
 
 router.get("/all", getAllOrders);
 router.patch("/bookings/confirm", confirmBooking);
 router.patch("/bookings/cancel", cancelBooking);
-router.patch("/tickets/assign-driver", assignDriverForTicketOrder);
+router.patch("/assign-driver", updateDriverForOrder);
 
 module.exports = router;

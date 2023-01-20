@@ -23,7 +23,7 @@ const b2cTransactionSchema = new Schema(
             type: String,
             required: true,
             lowercase: true,
-            enum: ["paypal", "stripe", "razorpay"],
+            enum: ["paypal", "stripe", "razorpay", "wallet"],
         },
         paymentId: {
             type: String,

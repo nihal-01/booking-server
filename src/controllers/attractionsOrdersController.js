@@ -396,20 +396,27 @@ module.exports = {
                 );
             }
 
-            // creating transaction
-
             let totalAmount = attractionOrder.totalAmount;
 
-            // taking wallet balance if it allowed
+            // taking wallet balance if allowed
             if (useWallet === true && req.user) {
                 const wallet = await B2CWallet.findOne({ _id: req.user?._id });
                 if (wallet && wallet.balance > 0) {
+                    // deducting amount from user's wallet
+                    let amount =
+                        totalAmount > wallet.balance
+                            ? totalAmount - wallet.balance
+                            : totalAmount;
+                    totalAmount -= amount;
+
                     const transaction = new B2CTransaction({
                         user: attractionOrder.user,
                         transactionType: "deduct",
                         status: "pending",
+                        paymentProcessor: "wallet",
+                        amount,
                     });
-                    totalAmount -= balance;
+                    await transaction.save();
                 }
             }
 
@@ -417,7 +424,7 @@ module.exports = {
                 return sendErrorResponse(
                     res,
                     400,
-                    "Please select a payment option"
+                    "Insufficient balance in wallet. Please select a payment processor."
                 );
             }
 
@@ -622,14 +629,6 @@ module.exports = {
             }
 
             res.status(200).json(attractionOrder);
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
-
-    cancelAttractionOrder: async (req, res) => {
-        try {
-            const { orderId } = req.params;
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

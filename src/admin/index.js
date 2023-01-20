@@ -21,11 +21,14 @@ const {
     admResellersRouter,
     admEmailSettingsRouter,
     admTransactionsRouter,
+    admEmailServicesRouter,
+    admEmailsRouter,
+    admPaymentServicesRouter,
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
 
-// router.use(adminAuth);
+router.use(adminAuth);
 
 router.use("/attractions/tickets", admAttractionsTicketsRouter);
 router.use("/attractions/categories", admAttractionCategoriesRouter);
@@ -44,7 +47,10 @@ router.use("/users", admUsersRouter);
 router.use("/drivers", admDriversRouter);
 router.use("/currencies", admCurrenciesRouter);
 router.use("/resellers", admResellersRouter);
-router.use("/email-settings", admEmailSettingsRouter);
+router.use("/email-services", admEmailServicesRouter);
+router.use("/emails", admEmailsRouter);
 router.use("/transactions", admTransactionsRouter);
+router.use("/payment-services", admPaymentServicesRouter);
+router.use("/email-settings", admEmailSettingsRouter);
 
 module.exports = router;

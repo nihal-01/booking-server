@@ -239,9 +239,9 @@ module.exports = {
 
     cancelBooking: async (req, res) => {
         try {
-            const { order, bookingId } = req.body;
+            const { orderId, bookingId } = req.body;
 
-            if (!isValidObjectId(order)) {
+            if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "Invalid order id");
             }
 
@@ -251,7 +251,7 @@ module.exports = {
 
             const orderDetails = await AttractionOrder.findOne(
                 {
-                    _id: order,
+                    _id: orderId,
                 },
                 { activities: { $elemMatch: { _id: bookingId } } }
             );
@@ -272,13 +272,13 @@ module.exports = {
                 return sendErrorResponse(
                     res,
                     400,
-                    "You can't confirm this booking. because this order not booked or cancelled or already confirmed"
+                    "You cantn't canel this booking."
                 );
             }
 
             await AttractionOrder.findOneAndUpdate(
                 {
-                    _id: order,
+                    _id: orderId,
                     "activities._id": bookingId,
                 },
                 {
@@ -297,16 +297,16 @@ module.exports = {
         }
     },
 
-    assignDriverForTicketOrder: async (req, res) => {
+    updateDriverForOrder: async (req, res) => {
         try {
-            const { order, ticketOrderId, driver } = req.body;
+            const { orderId, orderItemId, driver } = req.body;
 
-            if (!isValidObjectId(order)) {
+            if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "Invalid order id");
             }
 
-            if (!isValidObjectId(ticketOrderId)) {
-                return sendErrorResponse(res, 400, "Invalid Ticket order id");
+            if (!isValidObjectId(orderItemId)) {
+                return sendErrorResponse(res, 400, "Invalid order item id");
             }
 
             if (!isValidObjectId(driver)) {
@@ -315,28 +315,20 @@ module.exports = {
 
             const orderDetails = await AttractionOrder.findOne(
                 {
-                    _id: order,
+                    _id: orderId,
                 },
-                { activities: { $elemMatch: { _id: ticketOrderId } } }
+                { activities: { $elemMatch: { _id: orderItemId } } }
             );
 
-            if (!orderDetails || orderDetails?.activities[0]?.length < 1) {
+            if (!orderDetails || orderDetails?.activities?.length < 1) {
                 return sendErrorResponse(res, 400, "Order not found");
             }
 
-            if (orderDetails.activities[0]?.bookingType !== "ticket") {
+            if (orderDetails.activities[0].status !== "confirmed") {
                 return sendErrorResponse(
                     res,
                     400,
-                    "This is not a valid ticket order"
-                );
-            }
-
-            if (orderDetails.activities[0]?.driver) {
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "You already assaigned a driver for this order"
+                    "You can only assign driver for confirmed orders"
                 );
             }
 
@@ -344,7 +336,7 @@ module.exports = {
                 return sendErrorResponse(
                     res,
                     400,
-                    "This order has no transfer"
+                    "Sorry, This order has no transfer"
                 );
             }
 
@@ -358,8 +350,8 @@ module.exports = {
 
             await AttractionOrder.findOneAndUpdate(
                 {
-                    _id: order,
-                    "activities._id": ticketOrderId,
+                    _id: orderId,
+                    "activities._id": orderItemId,
                 },
                 {
                     "activities.$.driver": driver,
