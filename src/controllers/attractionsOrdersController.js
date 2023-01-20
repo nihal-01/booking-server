@@ -381,7 +381,7 @@ module.exports = {
     initiateAttractionOrderPayment: async (req, res) => {
         try {
             const { orderId } = req.params;
-            const { paymentProcessor, isWallet } = req.body;
+            const { paymentProcessor, useWallet } = req.body;
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "Invalid order id");
@@ -397,20 +397,28 @@ module.exports = {
             }
 
             // creating transaction
-            const transaction = new B2CTransaction({
-                user: attractionOrder.user,
-                transactionType: "deposit",
-                status: "pending",
-            });
 
             let totalAmount = attractionOrder.totalAmount;
 
             // taking wallet balance if it allowed
-            if (isWallet === true && req.user) {
+            if (useWallet === true && req.user) {
                 const wallet = await B2CWallet.findOne({ _id: req.user?._id });
                 if (wallet && wallet.balance > 0) {
+                    const transaction = new B2CTransaction({
+                        user: attractionOrder.user,
+                        transactionType: "deduct",
+                        status: "pending",
+                    });
                     totalAmount -= balance;
                 }
+            }
+
+            if (totalAmount > 0 && !paymentProcessor) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "Please select a payment option"
+                );
             }
 
             if (paymentProcessor === "paypal") {
@@ -443,7 +451,7 @@ module.exports = {
 
     capturePaypalAttractionOrder: async (req, res) => {
         try {
-            const { paypalOrderId, paymentId, orderId } = req.body;
+            const { paymentId, orderId } = req.body;
 
             const { _, error } = attractionOrderCaptureSchema.validate(
                 req.body
