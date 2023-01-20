@@ -530,19 +530,33 @@ module.exports = {
               as: "markupSubagent",
             },
           },
-        {
-          $group: {
-            _id: null,
-            totalAttractions: { $sum: 1 },
-            data: { $push: "$$ROOT" },
+          {
+            $lookup: {
+              from: "destinations",
+              localField: "destination",
+              foreignField: "_id",
+              as: "destination",
+            },
           },
+       
+        {
+        $set: {
+            markupSubagent: { $arrayElemAt: ["$markupSubagent", 0] },
+            markupClient: { $arrayElemAt: ["$markupClient", 0] },
+            destination: { $arrayElemAt: ["$destination", 0] },
+        }
+    },
+    {
+        $group: {
+          _id: null,
+          totalAttractions: { $sum: 1 },
+          data: { $push: "$$ROOT" },
         },
+      },
         {
           $project: {
             totalAttractions: 1,
-            data: {
-              $slice: ["$data", Number(limit) * Number(skip), Number(limit)],
-            },
+            data: 1
           },
         },
       ]);
@@ -556,8 +570,7 @@ module.exports = {
 
       res.status(200).json({
         attractions: attractions[0],
-        skip: Number(skip),
-        limit: Number(limit),
+        
       });
 
 
