@@ -570,8 +570,7 @@ module.exports = {
 
       res.status(200).json({
         attractions: attractions[0],
-        skip: Number(skip),
-        limit: Number(limit),
+        
       });
 
 
