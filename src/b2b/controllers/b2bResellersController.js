@@ -77,4 +77,23 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+    listResellers : async(req,res)=>{
+
+        try{
+
+            const resellerList = await Reseller.find({referredBy : req.reseller.id})
+
+            if(!resellerList){
+                sendErrorResponse(res, 500, "No Resellers Found");
+
+            }
+
+            res.status(200).json(resellerList);
+        }catch(error){
+
+            sendErrorResponse(res, 500, err);
+
+        }
+    }
 };

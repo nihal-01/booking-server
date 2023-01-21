@@ -61,7 +61,28 @@ module.exports = {
                 },
               },
             ],
-            as: "markup",
+            as: "markupClient",
+          },
+        },
+        {
+          $lookup: {
+            from: "b2bsubagentattractionmarkups",
+            let: {
+              attraction: "$_id",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$resellerId", req.referredBy._id] },
+                      { $eq: ["$attraction", "$$attraction"] },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "markupSubAgent",
           },
         },
 
@@ -69,7 +90,9 @@ module.exports = {
           $set: {
             destination: { $arrayElemAt: ["$destination", 0] },
             category: { $arrayElemAt: ["$category", 0] },
-            markup: { $arrayElemAt: ["$markup", 0] },
+            markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
+            markupClient: { $arrayElemAt: ["$markupSubAgent", 0] },
+
             totalRating: {
               $sum: {
                 $map: {
@@ -229,6 +252,102 @@ module.exports = {
                 },
               },
             },
+            // activities: {
+            //   $map: {
+            //     input: "$activities",
+            //     as: "activity",
+            //     in: {
+            //       $cond: {
+            //          if: 
+            //         {
+            //           $and: {
+            //             $eq: ["$markupClient.markupType", "flat"],
+            //             $eq: ["$markupSubAgent.markupType", "percentage"],
+            //           },
+                     
+            //         },
+            //         then: {
+            //             $mergeObjects: [
+            //               "$$activity",
+            //               {  
+            //                 let :{
+            //                  total : {
+            //                            $sum: [
+            //                   "$$activity.adultPrice",
+            //                   "$markupClient.markupType",
+            //                            ]
+            //                  }
+            //                 },
+            //                  adultPrice: {
+            //                 $sum: [
+            //                   "$$activity.adultPrice",
+            //                   "$markupClient.markupType",
+            //                   {
+            //                     $divide: [
+            //                       {
+            //                         $multiply: [
+            //                           "$markup.markup",
+            //                           "$$total",
+            //                         ],
+            //                       },
+            //                       100,
+            //                     ],
+            //                   },
+            //                 ],
+            //               },
+            //                 childPrice: {
+            //                   $sum: ["$$activity.adultPrice", "$markupSubAgent.markup" , "$markupClient.markup"],                          },
+            //                 infantPrice: {
+            //                   $cond: [
+            //                     {
+            //                       $eq: ["$$activity.infantPrice", 0],
+            //                     },
+            //                     0,
+            //                     {
+            //                       $sum: ["$$activity.adultPrice", "$markupSubAgent.markup" , "$markupClient.markup"],
+            //                     },
+            //                   ],
+            //                 },
+            //               },
+            //             ],
+            //           }
+            //         ,
+            //         else: 
+            //         {
+            //           $and: {
+            //             $eq: ["$markupClient.markupType", "flat"],
+            //             $eq: ["$markupSubAgent.markupType", "flat"],
+            //           },
+                     
+            //         },
+            //         then: {
+            //             $mergeObjects: [
+            //               "$$activity",
+            //               {
+            //                 adultPrice: {
+            //                   $sum: ["$$activity.adultPrice", "$markupSubAgent.markup" , "$markupClient.markup"],
+            //                 },
+            //                 childPrice: {
+            //                   $sum: ["$$activity.adultPrice", "$markupSubAgent.markup" , "$markupClient.markup"],                          },
+            //                 infantPrice: {
+            //                   $cond: [
+            //                     {
+            //                       $eq: ["$$activity.infantPrice", 0],
+            //                     },
+            //                     0,
+            //                     {
+            //                       $sum: ["$$activity.adultPrice", "$markupSubAgent.markup" , "$markupClient.markup"],
+            //                     },
+            //                   ],
+            //                 },
+            //               },
+            //             ],
+            //           },
+            //         else : 0 
+            //       },
+            //     },
+            //   },
+            // },
           },
         },
 
@@ -438,9 +557,7 @@ module.exports = {
             offerAmount: 1,
           },
         },
-        // {
-        //     $match: filters2,
-        // },
+
         {
           $group: {
             _id: null,
@@ -472,8 +589,6 @@ module.exports = {
 
   listAllAttractions: async (req, res) => {
     try {
-
-
       const { skip = 0, limit = 10, search } = req.query;
       console.log(req.reseller._id, "resellerId");
 
@@ -510,70 +625,60 @@ module.exports = {
           },
         },
         {
-            $lookup: {
-              from: "b2bsubagentattractionmarkups",
-              let: {
-                attraction: "$_id",
-              },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: ["$resellerId", req.reseller._id] },
-                        { $eq: ["$attraction", "$$attraction"] },
-                      ],
-                    },
+          $lookup: {
+            from: "b2bsubagentattractionmarkups",
+            let: {
+              attraction: "$_id",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$resellerId", req.reseller._id] },
+                      { $eq: ["$attraction", "$$attraction"] },
+                    ],
                   },
                 },
-              ],
-              as: "markupSubagent",
-            },
+              },
+            ],
+            as: "markupSubagent",
           },
-          {
-            $lookup: {
-              from: "destinations",
-              localField: "destination",
-              foreignField: "_id",
-              as: "destination",
-            },
-          },
-       
+        },
         {
-        $set: {
+          $lookup: {
+            from: "destinations",
+            localField: "destination",
+            foreignField: "_id",
+            as: "destination",
+          },
+        },
+
+        {
+          $set: {
             markupSubagent: { $arrayElemAt: ["$markupSubagent", 0] },
             markupClient: { $arrayElemAt: ["$markupClient", 0] },
             destination: { $arrayElemAt: ["$destination", 0] },
-        }
-    },
-    {
-        $group: {
-          _id: null,
-          totalAttractions: { $sum: 1 },
-          data: { $push: "$$ROOT" },
+          },
         },
-      },
+        {
+          $group: {
+            _id: null,
+            totalAttractions: { $sum: 1 },
+            data: { $push: "$$ROOT" },
+          },
+        },
         {
           $project: {
             totalAttractions: 1,
-            data: 1
+            data: 1,
           },
         },
       ]);
 
-      console.log({
-        attractions: attractions[0],
-        skip: Number(skip),
-        limit: Number(limit),},
-        "b2bClientAttractionMarkups"
-      );
-
       res.status(200).json({
         attractions: attractions[0],
-        
       });
-
-
     } catch (err) {
       sendErrorResponse(res, 400, err);
     }
