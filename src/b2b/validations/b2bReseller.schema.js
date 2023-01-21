@@ -14,7 +14,7 @@ const resellerRegisterSchema = Joi.object({
     whatsappNumber: Joi.string().required(),
     city: Joi.string().required(),
     designation: Joi.string().required(),
-    zipCode: Joi.number().required(),
+    zipCode: Joi.number().allow("", null),
     skypeId: Joi.string().allow("", null),
     email: Joi.string().email().required(),
     password: Joi.string().regex(passwordRegx).error(passswordError).required(),
