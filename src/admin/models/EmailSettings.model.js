@@ -2,19 +2,20 @@ const { Schema, model } = require("mongoose");
 
 const emailSettingsSchema = new Schema(
     {
-        email: {
-            type: String,
+        emailService: {
+            type: Schema.Types.ObjectId,
+            ref: "EmailService",
             required: true,
         },
-        emailType: {
-            type: String,
+        sendOfferMails: {
+            type: Boolean,
             required: true,
-            lowercase: true,
+        },
+        refNo: {
+            type: Number,
+            required: true,
+            default: 1,
             unique: true,
-        },
-        password: {
-            type: String,
-            required: true,
         },
     },
     { timestamps: true }
