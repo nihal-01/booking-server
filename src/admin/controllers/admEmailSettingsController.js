@@ -1,7 +1,7 @@
 const { isValidObjectId } = require("mongoose");
 
 const { sendErrorResponse } = require("../../helpers");
-const { EmailSettings } = require("../models");
+const { EmailSettings } = require("../../models");
 
 module.exports = {
     updateEmailSettings: async (req, res) => {

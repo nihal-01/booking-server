@@ -24,6 +24,7 @@ const {
     admEmailServicesRouter,
     admEmailsRouter,
     admPaymentServicesRouter,
+    admOtpSettingsRouter,
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
@@ -52,5 +53,6 @@ router.use("/emails", admEmailsRouter);
 router.use("/transactions", admTransactionsRouter);
 router.use("/payment-services", admPaymentServicesRouter);
 router.use("/email-settings", admEmailSettingsRouter);
+router.use("/otp-settings", admOtpSettingsRouter);
 
 module.exports = router;

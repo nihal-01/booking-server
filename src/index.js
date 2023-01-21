@@ -37,7 +37,7 @@ app.use("/api/v1/blogs", blogsRouter);
 
 app.post("/webhook", (req, res) => {
     console.log(req);
-});
+}); 
 
 // ADMIN ROUTE
 app.use("/api/v1/admin", adminRouter);

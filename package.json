@@ -28,6 +28,7 @@
         "node-ccavenue": "^1.0.5",
         "nodemailer": "^6.9.0",
         "razorpay": "^2.8.4",
+        "redis": "^4.5.1",
         "stripe": "^11.6.0"
     },
     "devDependencies": {
