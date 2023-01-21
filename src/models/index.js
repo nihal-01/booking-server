@@ -22,6 +22,8 @@ const B2CTransaction = require("./b2cTransaction.model");
 const B2CAttractionMarkup = require("./b2cAttractionMarkup.model");
 const B2CWallet = require("./b2cWallet.model");
 const PaymentService = require("./paymentService.model");
+const OtpSettings = require("./otpSettings.model");
+const EmailSettings = require("./emailSettings.model");
 
 module.exports = {
     HomeSettings,
@@ -49,4 +51,6 @@ module.exports = {
     B2CTransaction,
     B2CWallet,
     PaymentService,
+    OtpSettings,
+    EmailSettings,
 };
