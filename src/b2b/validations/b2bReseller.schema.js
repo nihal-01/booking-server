@@ -39,7 +39,7 @@ const subAgentRegisterSchema = Joi.object({
     whatsappNumber: Joi.string().required(),
     city: Joi.string().required(),
     designation: Joi.string().required(),
-    zipCode: Joi.number().string().allow("", null),
+    zipCode: Joi.number().allow("", null),
     skypeId: Joi.string().allow("", null),
     email: Joi.string().email().required(),
     telephoneNumber : Joi.string().allow("", null),
