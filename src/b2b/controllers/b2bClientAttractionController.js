@@ -11,7 +11,7 @@ module.exports = {
         return sendErrorResponse(res, 400, "Invalid attraction id");
       }
 
-      console.log(req.reseller._id);
+      console.log(req.reseller);
       const attraction = await Attraction.aggregate([
         {
           $match: {
@@ -61,37 +61,37 @@ module.exports = {
                 },
               },
             ],
-            as: "markupClient",
+            as: "markup",
           },
         },
-        {
-          $lookup: {
-            from: "b2bsubagentattractionmarkups",
-            let: {
-              attraction: "$_id",
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$resellerId", req.referredBy._id] },
-                      { $eq: ["$attraction", "$$attraction"] },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "markupSubAgent",
-          },
-        },
+        // {
+        //   $lookup: {
+        //     from: "b2bsubagentattractionmarkups",
+        //     let: {
+        //       attraction: "$_id",
+        //     },
+        //     pipeline: [
+        //       {
+        //         $match: {
+        //           $expr: {
+        //             $and: [
+        //               { $eq: ["$resellerId", req?.reseller.referredBy] },
+        //               { $eq: ["$attraction", "$$attraction"] },
+        //             ],
+        //           },
+        //         },
+        //       },
+        //     ],
+        //     as: "markupSubAgent",
+        //   },
+        // },
 
         {
           $set: {
             destination: { $arrayElemAt: ["$destination", 0] },
             category: { $arrayElemAt: ["$category", 0] },
-            markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
-            markupClient: { $arrayElemAt: ["$markupSubAgent", 0] },
+            markup: { $arrayElemAt: ["$markup", 0] },
+            // markupClient: { $arrayElemAt: ["$markupClient", 0] },
 
             totalRating: {
               $sum: {
@@ -258,36 +258,32 @@ module.exports = {
             //     as: "activity",
             //     in: {
             //       $cond: {
-            //          if: 
-            //         {
+            //         if: {
             //           $and: {
-            //             $eq: ["$markupClient.markupType", "flat"],
-            //             $eq: ["$markupSubAgent.markupType", "percentage"],
+            //             $eq: ["$markupClient.markupType", "percentage"],
+
+            //             $eq: ["$markupSubAgent.markupType", "flat"],
             //           },
-                     
             //         },
             //         then: {
-            //             $mergeObjects: [
-            //               "$$activity",
-            //               {  
-            //                 let :{
-            //                  total : {
-            //                            $sum: [
-            //                   "$$activity.adultPrice",
-            //                   "$markupClient.markupType",
-            //                            ]
-            //                  }
-            //                 },
-            //                  adultPrice: {
+            //           $mergeObjects: [
+            //             "$$activity",
+            //             {
+            //               adultPrice: {
             //                 $sum: [
             //                   "$$activity.adultPrice",
-            //                   "$markupClient.markupType",
+            //                   "$markupSubAgent.markup",
             //                   {
             //                     $divide: [
             //                       {
             //                         $multiply: [
-            //                           "$markup.markup",
-            //                           "$$total",
+            //                           "$markupClient.markup",
+            //                           {
+            //                             $sum: [
+            //                               "$$activity.adultPrice",
+            //                               "$markupSubAgent.markup",
+            //                             ],
+            //                           },
             //                         ],
             //                       },
             //                       100,
@@ -295,55 +291,397 @@ module.exports = {
             //                   },
             //                 ],
             //               },
-            //                 childPrice: {
-            //                   $sum: ["$$activity.adultPrice", "$markupSubAgent.markup" , "$markupClient.markup"],                          },
-            //                 infantPrice: {
-            //                   $cond: [
-            //                     {
-            //                       $eq: ["$$activity.infantPrice", 0],
-            //                     },
-            //                     0,
-            //                     {
-            //                       $sum: ["$$activity.adultPrice", "$markupSubAgent.markup" , "$markupClient.markup"],
-            //                     },
-            //                   ],
-            //                 },
+            //               childPrice: {
+            //                 $sum: [
+            //                   "$$activity.childPrice",
+            //                   "$markupSubAgent.markup",
+
+            //                   {
+            //                     $divide: [
+            //                       {
+            //                         $multiply: [
+            //                           "$markupClient.markup",
+            //                           {
+            //                             $sum: [
+            //                               "$$activity.childPrice",
+            //                               "$markupSubAgent.markupType",
+            //                             ],
+            //                           },
+            //                         ],
+            //                       },
+            //                       100,
+            //                     ],
+            //                   },
+            //                 ],
             //               },
-            //             ],
-            //           }
-            //         ,
-            //         else: 
-            //         {
-            //           $and: {
-            //             $eq: ["$markupClient.markupType", "flat"],
-            //             $eq: ["$markupSubAgent.markupType", "flat"],
-            //           },
-                     
+            //               infantPrice: {
+            //                 $cond: [
+            //                   {
+            //                     $eq: ["$$activity.infantPrice", 0],
+            //                   },
+            //                   0,
+            //                   {
+            //                     $sum: [
+            //                       "$$activity.infantPrice",
+            //                       {
+            //                         $divide: [
+            //                           {
+            //                             $multiply: [
+            //                               "$markupClient.markup",
+            //                               {
+            //                                 $sum: [
+            //                                   "$$activity.infantPrice",
+            //                                   "$markupSubAgent.markupType",
+            //                                 ],
+            //                               },
+            //                             ],
+            //                           },
+            //                           100,
+            //                         ],
+            //                       },
+            //                     ],
+            //                   },
+            //                 ],
+            //               },
+            //             },
+            //           ],
             //         },
-            //         then: {
-            //             $mergeObjects: [
-            //               "$$activity",
-            //               {
-            //                 adultPrice: {
-            //                   $sum: ["$$activity.adultPrice", "$markupSubAgent.markup" , "$markupClient.markup"],
+            //         else: {
+            //           $cond: {
+            //             if: {
+            //               $and: [
+            //                 {
+            //                   $eq: ["$markupClient.markupType", "flat"],
             //                 },
-            //                 childPrice: {
-            //                   $sum: ["$$activity.adultPrice", "$markupSubAgent.markup" , "$markupClient.markup"],                          },
-            //                 infantPrice: {
-            //                   $cond: [
-            //                     {
-            //                       $eq: ["$$activity.infantPrice", 0],
-            //                     },
-            //                     0,
-            //                     {
-            //                       $sum: ["$$activity.adultPrice", "$markupSubAgent.markup" , "$markupClient.markup"],
-            //                     },
-            //                   ],
+            //                 {
+            //                   $eq: ["$markupSubAgent.markupType", "percentage"],
             //                 },
+            //               ],
+            //             },
+            //             then: {
+            //               $mergeObjects: [
+            //                 "$$activity",
+            //                 {
+            //                   adultPrice: {
+            //                     $sum: [
+            //                       "$$activity.adultPrice",
+            //                       "$markupClient.markup",
+            //                       {
+            //                         $divide: [
+            //                           {
+            //                             $multiply: [
+            //                               "$markupSubAgent.markup",
+            //                               "$$activity.adultPrice",
+            //                             ],
+            //                           },
+            //                           100,
+            //                         ],
+            //                       },
+            //                     ],
+            //                   },
+            //                   childPrice: {
+            //                     $sum: [
+            //                       "$$activity.childPrice",
+            //                       "$markupClient.markup",
+
+            //                       {
+            //                         $divide: [
+            //                           {
+            //                             $multiply: [
+            //                               "$markupSubAgent.markup",
+            //                               "$$activity.adultPrice",
+            //                             ],
+            //                           },
+            //                           100,
+            //                         ],
+            //                       },
+            //                     ],
+            //                   },
+            //                   infantPrice: {
+            //                     $cond: [
+            //                       {
+            //                         $eq: ["$$activity.infantPrice", 0],
+            //                       },
+            //                       0,
+            //                       {
+            //                         $sum: [
+            //                           "$$activity.infantPrice",
+            //                           "$markupClient.markup",
+
+            //                           {
+            //                             $divide: [
+            //                               {
+            //                                 $multiply: [
+            //                                   "$markupSubAgent.markup",
+            //                                   "$$activity.infantPrice",
+            //                                 ],
+            //                               },
+            //                               100,
+            //                             ],
+            //                           },
+            //                         ],
+            //                       },
+            //                     ],
+            //                   },
+            //                 },
+            //               ],
+            //             },
+            //             else: {
+            //               if: {
+            //                 $and: [
+            //                   {
+            //                     $eq: ["$markupClient.markupType", "percentage"],
+            //                   },
+            //                   {
+            //                     $eq: [
+            //                       "$markupSubAgent.markupType",
+            //                       "percentage",
+            //                     ],
+            //                   },
+            //                 ],
             //               },
-            //             ],
+            //               then: {
+            //                 $mergeObjects: [
+            //                   "$$activity",
+            //                   {
+            //                     adultPrice: {
+            //                       $sum: [
+            //                         "$$activity.adultPrice",
+            //                         {
+            //                           $divide: [
+            //                             {
+            //                               $multiply: [
+            //                                 "$markupClient.markup",
+            //                                 {
+            //                                   $sum: [
+            //                                     "$$activity.adultPrice",
+            //                                     "$markupSubAgent.markup",
+            //                                   ],
+            //                                 },
+            //                               ],
+            //                             },
+            //                             100,
+            //                           ],
+            //                         },
+            //                         {
+            //                           $divide: [
+            //                             {
+            //                               $multiply: [
+            //                                 "$markupSubAgent.markup",
+            //                                 "$$activity.adultPrice",
+            //                               ],
+            //                             },
+            //                             100,
+            //                           ],
+            //                         },
+            //                       ],
+            //                     },
+            //                     childPrice: {
+            //                       $sum: [
+            //                         "$$activity.childPrice",
+            //                         {
+            //                           $divide: [
+            //                             {
+            //                               $multiply: [
+            //                                 "$markupClient.markup",
+            //                                 {
+            //                                   $sum: [
+            //                                     "$$activity.childPrice",
+            //                                     "$markupSubAgent.markup",
+            //                                   ],
+            //                                 },
+            //                               ],
+            //                             },
+            //                             100,
+            //                           ],
+            //                         },
+            //                         {
+            //                           $divide: [
+            //                             {
+            //                               $multiply: [
+            //                                 "$markupSubAgent.markup",
+            //                                 "$$activity.adultPrice",
+            //                               ],
+            //                             },
+            //                             100,
+            //                           ],
+            //                         },
+            //                       ],
+            //                     },
+            //                     infantPrice: {
+            //                       $cond: [
+            //                         {
+            //                           $eq: ["$$activity.infantPrice", 0],
+            //                         },
+            //                         0,
+            //                         {
+            //                           $sum: [
+            //                             "$$activity.infantPrice",
+            //                             {
+            //                               $divide: [
+            //                                 {
+            //                                   $multiply: [
+            //                                     "$markupClient.markup",
+            //                                     {
+            //                                       $sum: [
+            //                                         "$$activity.infantPrice",
+            //                                         "$markupSubAgent.markup",
+            //                                       ],
+            //                                     },
+            //                                   ],
+            //                                 },
+            //                                 100,
+            //                               ],
+            //                             },
+            //                             {
+            //                               $divide: [
+            //                                 {
+            //                                   $multiply: [
+            //                                     "$markupSubAgent.markup",
+            //                                     "$$activity.infantPrice",
+            //                                   ],
+            //                                 },
+            //                                 100,
+            //                               ],
+            //                             },
+            //                           ],
+            //                         },
+            //                       ],
+            //                     },
+            //                   },
+            //                 ],
+            //               },
+            //             },
             //           },
-            //         else : 0 
+            //         },
+
+            //         // else:
+            //         // {
+            //         //   $and: {
+            //         //     $eq: ["$markupClient.markupType", "flat"],
+            //         //     $eq: ["$markupSubAgent.markupType", "percentage"],
+            //         //   },
+
+            //         // },
+            //         // then: {
+            //         //     $mergeObjects: [
+            //         //       "$$activity",
+            //         //       {
+
+            //         //          adultPrice: {
+            //         //         $sum: [
+            //         //           "$$activity.adultPrice",
+            //         //           "$markupClient.markup",
+            //         //           {
+            //         //             $divide: [
+            //         //               {
+            //         //                 $multiply: [
+            //         //                   "$markupSubAgent.markup",
+            //         //                     "$$activity.adultPrice"
+
+            //         //                 ],
+            //         //               },
+            //         //               100,
+            //         //             ],
+            //         //           },
+            //         //         ],
+            //         //       },
+            //         //       childPrice: {
+            //         //         $sum: [
+            //         //           "$$activity.childPrice",
+            //         //           "$markupClient.markup",
+
+            //         //           {
+            //         //             $divide: [
+            //         //               {
+            //         //                 $multiply: [
+            //         //                   "$markupSubAgent.markup",
+            //         //                     "$$activity.adultPrice"
+
+            //         //                 ],
+            //         //               },
+            //         //               100,
+            //         //             ],
+            //         //           },
+            //         //         ],
+            //         //       },
+            //         //       infantPrice: {
+            //         //         $cond: [
+            //         //           {
+            //         //             $eq: ["$$activity.infantPrice", 0],
+            //         //           },
+            //         //           0,
+            //         //           {
+            //         //             $sum: [
+            //         //               "$$activity.infantPrice",
+            //         //               "$markupClient.markup",
+
+            //         //               {
+            //         //                 $divide: [
+            //         //                   {
+            //         //                     $multiply: [
+            //         //                       "$markupSubAgent.markup",
+            //         //                         "$$activity.infantPrice"
+
+            //         //                     ],
+            //         //                   },
+            //         //                   100,
+            //         //                 ],
+            //         //               },
+            //         //             ],
+            //         //           },
+            //         //         ],
+            //         //       },
+            //         //       },
+            //         //     ],
+            //         //   },
+            //         // else: {
+            //         //   $and: [
+            //         //     {
+            //         //       $eq: ["$markupClient.markupType", "flat"],
+            //         //     },
+            //         //     {
+            //         //       $eq: ["$markupSubAgent.markupType", "flat"],
+            //         //     },
+            //         //   ],
+            //         // },
+            //         // then: {
+            //         //   $mergeObjects: [
+            //         //     "$$activity",
+            //         //     {
+            //         //       adultPrice: {
+            //         //         $sum: [
+            //         //           "$$activity.adultPrice",
+            //         //           "$markupSubAgent.markup",
+            //         //           "$markupClient.markup",
+            //         //         ],
+            //         //       },
+            //         //       childPrice: {
+            //         //         $sum: [
+            //         //           "$$activity.adultPrice",
+            //         //           "$markupSubAgent.markup",
+            //         //           "$markupClient.markup",
+            //         //         ],
+            //         //       },
+            //         //       infantPrice: {
+            //         //         $cond: [
+            //         //           {
+            //         //             $eq: ["$$activity.infantPrice", 0],
+            //         //           },
+            //         //           0,
+            //         //           {
+            //         //             $sum: [
+            //         //               "$$activity.adultPrice",
+            //         //               "$markupSubAgent.markup",
+            //         //               "$markupClient.markup",
+            //         //             ],
+            //         //           },
+            //         //         ],
+            //         //       },
+            //         //     },
+            //         //   ],
+            //         // },
+            //         // else: 0,
             //       },
             //     },
             //   },
@@ -358,7 +696,7 @@ module.exports = {
         },
       ]);
 
-      console.log(attraction, "attraction");
+      // console.log(attraction, "attraction");
 
       if (!attraction || attraction?.length < 1) {
         return sendErrorResponse(res, 404, "Attraction not found");
