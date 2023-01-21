@@ -90,7 +90,7 @@ const attractionOrderSchema = new Schema(
             type: String,
             required: true,
             lowercase: true,
-            enum: ["pending", "paid", "failed"]
+            enum: ["pending", "paid", "failed"],
         },
         paymentOrderId: {
             type: String,
@@ -111,6 +111,14 @@ const attractionOrderSchema = new Schema(
         phoneNumber: {
             type: String,
             required: true,
+        },
+        phoneNumberVerified: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
+        otp: {
+            type: Number,
         },
         country: {
             type: Schema.Types.ObjectId,

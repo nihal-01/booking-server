@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 require("dotenv").config();
 
+require("./config/cache");
 require("./config/dbConfig");
 
 const adminRouter = require("./admin");
@@ -37,7 +38,7 @@ app.use("/api/v1/blogs", blogsRouter);
 
 app.post("/webhook", (req, res) => {
     console.log(req);
-}); 
+});
 
 // ADMIN ROUTE
 app.use("/api/v1/admin", adminRouter);

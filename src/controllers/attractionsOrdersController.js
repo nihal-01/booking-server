@@ -323,14 +323,6 @@ module.exports = {
 
             let user;
             if (!req.user) {
-                if (!name || !email || !phoneNumber || !country) {
-                    return sendErrorResponse(
-                        res,
-                        400,
-                        "Please login or provide User details. (name, email, phoneNumber, country)"
-                    );
-                }
-
                 if (!isValidObjectId(country)) {
                     return sendErrorResponse(res, 400, "Invalid country id");
                 }
@@ -369,12 +361,42 @@ module.exports = {
                 email,
                 phoneNumber,
                 orderStatus: "pending",
+                otp: 11111,
             });
             await newAttractionOrder.save();
+
+            // Send otp from here
 
             res.status(200).json(result);
         } catch (err) {
             sendErrorResponse(res, 500, err);
+        }
+    },
+
+    verifyAttractionOrderOTP: async (req, res) => {
+        try {
+            const { orderId } = req.params;
+
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "Invalid order id");
+            }
+
+            const attractionOrder = await AttractionOrder.findById(orderId);
+            if (!attractionOrder) {
+                return sendErrorResponse(
+                    res,
+                    404,
+                    "Attraction order not found"
+                );
+            }
+
+            attractionOrder.phoneNumberVerified = true;
+            attractionOrder.otp = "";
+
+            // Verify otp here
+            res.status(200).json({ message: "OTP successfully verified" });
+        } catch (err) {
+            sendErrorResponse(res, 400, err);
         }
     },
 
@@ -397,36 +419,6 @@ module.exports = {
             }
 
             let totalAmount = attractionOrder.totalAmount;
-
-            // taking wallet balance if allowed
-            if (useWallet === true && req.user) {
-                const wallet = await B2CWallet.findOne({ _id: req.user?._id });
-                if (wallet && wallet.balance > 0) {
-                    // deducting amount from user's wallet
-                    let amount =
-                        totalAmount > wallet.balance
-                            ? totalAmount - wallet.balance
-                            : totalAmount;
-                    totalAmount -= amount;
-
-                    const transaction = new B2CTransaction({
-                        user: attractionOrder.user,
-                        transactionType: "deduct",
-                        status: "pending",
-                        paymentProcessor: "wallet",
-                        amount,
-                    });
-                    await transaction.save();
-                }
-            }
-
-            if (totalAmount > 0 && !paymentProcessor) {
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "Insufficient balance in wallet. Please select a payment processor."
-                );
-            }
 
             if (paymentProcessor === "paypal") {
                 const currency = "USD";
