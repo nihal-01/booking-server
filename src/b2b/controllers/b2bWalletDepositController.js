@@ -6,6 +6,7 @@ const { B2BTransaction, B2BWallet } = require("../models");
 
 
 module.exports = {
+    
     walletDeposit: async (req, res) => {
         try {
             const { paymentProcessor, amount } = req.body;
@@ -15,7 +16,7 @@ module.exports = {
             if (!isValidObjectId(reseller)) {
                 return sendErrorResponse(res, 400, "Invalid category id");
             }
-            
+
             let result;
 
 
