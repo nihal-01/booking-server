@@ -18,6 +18,7 @@ const {
 } = require("../validations/attractionOrder.schema");
 const { createOrder, fetchOrder, fetchPayment } = require("../utils/paypal");
 const { B2CWallet } = require("../models/b2cWallet.model");
+const sendMobileOtp = require("../helpers/sendMobileOtp");
 
 const dayNames = [
     "sunday",
@@ -351,6 +352,7 @@ module.exports = {
 
             let buyer = req.user || user;
 
+            const otp = await sendMobileOtp();
             const newAttractionOrder = new AttractionOrder({
                 activities: selectedActivities,
                 totalAmount,
@@ -361,11 +363,9 @@ module.exports = {
                 email,
                 phoneNumber,
                 orderStatus: "pending",
-                otp: 11111,
+                otp,
             });
             await newAttractionOrder.save();
-
-            // Send otp from here
 
             res.status(200).json(result);
         } catch (err) {
@@ -375,7 +375,7 @@ module.exports = {
 
     verifyAttractionOrderOTP: async (req, res) => {
         try {
-            const { orderId } = req.params;
+            const { orderId, otp } = req.params;
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "Invalid order id");
@@ -390,10 +390,13 @@ module.exports = {
                 );
             }
 
+            if (attractionOrder.otp !== otp) {
+                return sendErrorResponse(res, 400, "Incorrect otp!");
+            }
+
             attractionOrder.phoneNumberVerified = true;
             attractionOrder.otp = "";
 
-            // Verify otp here
             res.status(200).json({ message: "OTP successfully verified" });
         } catch (err) {
             sendErrorResponse(res, 400, err);
@@ -403,7 +406,7 @@ module.exports = {
     initiateAttractionOrderPayment: async (req, res) => {
         try {
             const { orderId } = req.params;
-            const { paymentProcessor, useWallet } = req.body;
+            const { paymentProcessor } = req.body;
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "Invalid order id");
@@ -421,6 +424,7 @@ module.exports = {
             let totalAmount = attractionOrder.totalAmount;
 
             if (paymentProcessor === "paypal") {
+                // convert currency to usd
                 const currency = "USD";
                 const response = await createOrder(totalAmount, currency);
 
@@ -434,6 +438,7 @@ module.exports = {
 
                 return res.status(200).json(response.result);
             } else if (paymentProcessor === "razorpay") {
+                // convert currency to INR
                 const options = {
                     amount: totalAmount * 100,
                     currency: "INR",

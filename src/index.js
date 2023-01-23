@@ -18,6 +18,7 @@ const {
     attractionsCategoriesRouter,
     attractionsOrdersRouter,
 } = require("./routes");
+const { sendEmail } = require("./helpers");
 
 const app = express();
 const PORT = process.env.PORT || 8089;

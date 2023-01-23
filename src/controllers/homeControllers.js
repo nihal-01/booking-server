@@ -44,9 +44,14 @@ module.exports = {
                                 {
                                     $match: {
                                         $expr: {
-                                            $eq: [
-                                                "$attraction",
-                                                "$$attraction",
+                                            $and: [
+                                                {
+                                                    $eq: [
+                                                        "$attraction",
+                                                        "$$attraction",
+                                                    ],
+                                                },
+                                                { $eq: ["$isDeleted", false] },
                                             ],
                                         },
                                     },
@@ -197,9 +202,14 @@ module.exports = {
                                 {
                                     $match: {
                                         $expr: {
-                                            $eq: [
-                                                "$attraction",
-                                                "$$attraction",
+                                            $and: [
+                                                {
+                                                    $eq: [
+                                                        "$attraction",
+                                                        "$$attraction",
+                                                    ],
+                                                },
+                                                { $eq: ["$isDeleted", false] },
                                             ],
                                         },
                                     },

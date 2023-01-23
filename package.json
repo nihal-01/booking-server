@@ -30,6 +30,7 @@
         "razorpay": "^2.8.4",
         "redis": "^4.5.1",
         "stripe": "^11.6.0",
+        "twilio": "^3.84.1",
         "util": "^0.12.5"
     },
     "devDependencies": {

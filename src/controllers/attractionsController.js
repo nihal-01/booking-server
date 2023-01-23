@@ -92,7 +92,15 @@ module.exports = {
                             {
                                 $match: {
                                     $expr: {
-                                        $eq: ["$attraction", "$$attraction"],
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    "$attraction",
+                                                    "$$attraction",
+                                                ],
+                                            },
+                                            { $eq: ["$isDeleted", false] },
+                                        ],
                                     },
                                 },
                             },
@@ -105,13 +113,6 @@ module.exports = {
                 },
                 {
                     $addFields: {
-                        activities: {
-                            $filter: {
-                                input: "$activities",
-                                as: "item",
-                                cond: { $eq: ["$$item.isDeleted", false] },
-                            },
-                        },
                         activities: {
                             $map: {
                                 input: "$activities",
@@ -236,7 +237,6 @@ module.exports = {
                         },
                     },
                 },
-               
                 {
                     $project: {
                         totalReviews: 0,
@@ -382,7 +382,15 @@ module.exports = {
                             {
                                 $match: {
                                     $expr: {
-                                        $eq: ["$attraction", "$$attraction"],
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    "$attraction",
+                                                    "$$attraction",
+                                                ],
+                                            },
+                                            { $eq: ["$isDeleted", false] },
+                                        ],
                                     },
                                 },
                             },
