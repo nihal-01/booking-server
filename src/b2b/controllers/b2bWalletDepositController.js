@@ -17,19 +17,19 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid category id");
             }
 
-            let result;
-
-
+            
+            
             const newTransation = new B2BTransaction({
                 reseller: req.reseller?._id,
                 transactionType: "deposit",
                 amount,
                 paymentProcessor,
                 status: "pending",
-                paymentId: result?.id,
+                paymentId: response.result.id,
             });
-          
-
+            
+            
+            let result;
             if (paymentProcessor === "paypal") {
                 const currency = "USD";
                 const response = await createOrder(amount, currency);

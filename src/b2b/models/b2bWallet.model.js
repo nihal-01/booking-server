@@ -42,4 +42,4 @@ const b2bWalletSchema = new Schema(
 
 const B2BWallet = model("B2BWallet", b2bWalletSchema);
 
-module.exports = { B2BWallet };
+module.exports =  B2BWallet ;
