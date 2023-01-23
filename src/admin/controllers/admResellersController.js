@@ -83,10 +83,9 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid reseller id");
             }
 
-            const reseller = await Reseller.findById(id).populate(
-                "country",
-                "countryName flag phonecode"
-            );
+            const reseller = await Reseller.findById(id)
+                .populate("country", "countryName flag phonecode")
+                .lean();
             if (!reseller) {
                 return sendErrorResponse(res, 404, "Reseller not found");
             }
