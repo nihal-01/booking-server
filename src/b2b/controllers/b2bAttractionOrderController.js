@@ -482,7 +482,7 @@ module.exports = {
             const wallet = await B2BWallet.findOne({ reseller: req.reseller.id });
 
 
-           if ( wallet.balance > totalAmount) {
+           if ( !wallet || wallet.balance < totalAmount) {
             return sendErrorResponse(
                 res,
                 400,

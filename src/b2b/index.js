@@ -8,7 +8,6 @@ router.use('/resellers/client/attraction' , b2bClientAttractionRouter)
 router.use('/resellers/client/markup' , b2bClientAttractionMarkupRouter)
 router.use('/resellers/subagent/markup' , b2bSubAgentAttractionMarkupRouter)
 router.use('/resellers/wallet' , b2bWalletDepositRouter)
-router.use('/resellers/attraction/order' , b2bWalletDepositRouter)
 router.use('/reseller/attraction/orders' ,   b2bAttractionOrdersRouter)
 
 

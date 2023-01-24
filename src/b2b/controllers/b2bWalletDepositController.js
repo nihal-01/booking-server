@@ -86,7 +86,7 @@ module.exports = {
                 return sendErrorResponse(
                     res,
                     400,
-                    "Attraction order not found!. Check with XYZ team if amount is debited from your bank!"
+                    " Transation not found!. Check with XYZ team if amount is debited from your bank!"
                 );
             }
 
