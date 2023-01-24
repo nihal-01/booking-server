@@ -20,13 +20,14 @@ module.exports = {
             
             
             let result;
+            let resultFinal;
             const newTransation = new B2BTransaction({
                 reseller: req.reseller?._id,
                 transactionType: "deposit",
                 amount,
                 paymentProcessor,
                 status: "pending",
-                paymentId: result.id,
+                paymentId: result,
             });
             
             
@@ -34,7 +35,8 @@ module.exports = {
                 const currency = "USD";
                 const response = await createOrder(amount, currency);
                
-                result = response.result;
+                result = response.result.id;
+                resultFinal = response.result
 
 
                 if (response.statusCode !== 201) {
@@ -59,7 +61,7 @@ module.exports = {
             console.log(newTransation , "newTransation") 
 
             await newTransation.save();
-            res.status(200).json(result);
+            res.status(200).json(resultFinal);
         } catch (err) {
             // handle transaction fail here
             sendErrorResponse(res, 500, err);
