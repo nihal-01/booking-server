@@ -64,6 +64,7 @@ module.exports = {
         }
     },
 
+
     captureWalletDeposit: async (req, res) => {
         try {
             const { orderId, paymentId } = req.body;
@@ -145,10 +146,10 @@ module.exports = {
                     transaction.paymentDetails = paymentObject.result;
                     await transaction.save();
 
-                    await B2BWallet.findByIdAndUpdate(
-                        req.reseller._id,
+                    await B2BWallet.updateOne({
+                        resellerId : req.reseller._id},
                         {
-                            $inc: { balance: amount },
+                            $inc: { balance: transaction.amount },
                         },
                         { upsert: true, runValidators: true, new: true }
                     );

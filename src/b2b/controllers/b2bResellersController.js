@@ -95,5 +95,26 @@ module.exports = {
             sendErrorResponse(res, 500, err);
 
         }
-    }
+    },
+
+    getSingleSubAgent: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid reseller id");
+            }
+
+            const subAgent = await Reseller.findById(id)
+                .populate("country", "countryName flag phonecode")
+                .lean();
+            if (!subAgent) {
+                return sendErrorResponse(res, 404, "SubAgent not found");
+            }
+
+            res.status(200).json({ subAgent });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };

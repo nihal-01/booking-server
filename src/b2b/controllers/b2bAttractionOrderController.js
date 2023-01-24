@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const { b2bAttractionOrderSchema } = require("../validations/b2bAttractionOrder.schema");
 const { sendErrorResponse } = require("../../helpers");
 const { Attraction, AttractionActivity } = require("../../models");
-const { B2BClientAttractionMarkup, B2BSubAgentAttractionMarkup } = require("../models");
+const { B2BClientAttractionMarkup, B2BSubAgentAttractionMarkup, B2BAttractionOrder, B2BWallet } = require("../models");
 
 
 
@@ -21,10 +21,8 @@ const dayNames = [
 
 
 module.exports = {
-    // TODO
-    // 1. VAT Calculation
-    // 2. Send password for new emails
-    // 3. Verify Mobile Number
+    
+    
     createAttractionOrder: async (req, res) => {
         try {
             const { selectedActivities} =
@@ -192,93 +190,110 @@ module.exports = {
 
                 let price = 0;
                 let reseller = {}
-                let markup = 0
                 let subAgent = {}
-                let profitReseller
-                let profitSubAgent
+                let profitReseller = 0
+                let profitSubAgent = 0
+                reseller.adultPrice =  0 ;
+                subAgent.adultPrice = 0;
+                reseller.childPrice =  0 ;
+                subAgent.childPrice = 0;
+                reseller.totalInfantPrice =  0 ;
+                subAgent.totalInfantPrice = 0;
                 reseller.totalAdultPrice =  0 ;
                 subAgent.totalAdultPrice = 0;
                 reseller.totalChildPrice =  0 ;
                 subAgent.totalChildPrice = 0;
-                reseller.totalInfantPrice =  0 ;
-                subAgent.totalInfantPrice = 0;
+                reseller.infantPrice =  0 ;
+                subAgent.infantPrice = 0;
                     
             
                 if( req.reseller.role == "sub-agent"){
                   
 
-                    console.log(req.reseller.referredBy,activity.attraction , "hiii")
+                    // console.log(req.reseller.referredBy,activity.attraction , "hiii")
                    
-                   let  resellerMarkUP = await B2BSubAgentAttractionMarkup.findOne({
+                   let  subAgentMarkUP = await B2BSubAgentAttractionMarkup.findOne({
 
                     resellerId : req.reseller.referredBy,
                     attraction : activity.attraction
                    })
-                   console.log(resellerMarkUP , "resellerMarkUP")
+                //    console.log(resellerMarkUP , "resellerMarkUP")
 
-                 reseller.markupType = resellerMarkUP?.markupType ? resellerMarkUP?.markupType  : "flat"
-                 reseller.markup = resellerMarkUP?.markup  ? resellerMarkUP?.markup  : 0
+                 subAgent.markupType = subAgentMarkUP?.markupType ? subAgentMarkUP?.markupType  : "flat"
+                 subAgent.markup = subAgentMarkUP?.markup  ? subAgentMarkUP?.markup  : 0
                  
                  if (reseller?.markupType == 'percentage'){
 
                     console.log(activity.infantPrice,reseller.markup , "lll")
                     
-                    reseller.adultPrice  = ( activity.adultPrice* reseller?.markup) /100
-                    reseller.childPrice  = ( activity.childPrice* reseller?.markup) /100
-                    reseller.infantPrice  = ( activity.infantPrice* reseller?.markup) /100
+                    subAgent.adultPrice  = ( activity.adultPrice* subAgent?.markup) /100
+                    subAgent.childPrice  = ( activity.childPrice* subAgent?.markup) /100
+                    subAgent.infantPrice  = ( activity.infantPrice* subAgent?.markup) /100
 
 
                 }
                 
-                if( reseller?.markupType == "flat"){
+                if( subAgent?.markupType == "flat"){
 
-                    reseller.adultPrice  =  reseller.markup
-                    reseller.childPrice = reseller.markup
-                    reseller.infantPrice  = reseller.markup
+                    subAgent.adultPrice  =  subAgent.markup
+                    subAgent.childPrice = subAgent.markup
+                    
+                    if( activity.infantPrice == 0 ){
+
+                        subAgent.infantPrice  = 0
+                    }
+                    subAgent.infantPrice  = subAgent.markup
                     
                     
                 }
-                console.log(reseller.adultPrice , reseller.infantPrice , "reseller.adultPrice klklkl")
+                // console.log(reseller.adultPrice , reseller.infantPrice , "reseller.adultPrice klklkl")
            
                 
 
+           
+ 
+                 }
+
+                         
+                 let  resellerMarkUP = await B2BClientAttractionMarkup.findOne({
+ 
+                    resellerId : req.reseller._id,
+                    attraction : activity.attraction
+                   })
+
                    
-                    let  subAgentMarkUP = await B2BClientAttractionMarkup.findOne({
- 
-                     resellerId : req.reseller._id,
-                     attraction : activity.attraction
-                    })
+                   reseller.markupType = resellerMarkUP?.markupType ? resellerMarkUP?.markupType : "flat"
+                   reseller.markup= resellerMarkUP?.markup ? resellerMarkUP?.markup : 0
+                   
+                //    console.log(subAgentMarkUP , subAgent.markupType, subAgent.markup ,  "subAgentMarkUP")
+                 
+                if ( resellerMarkUP && reseller.markupType == 'percentage'){
+
+                   console.log(reseller.adultPrice , "reseller.adultPrice")
+                   
+                   reseller.adultPrice  = ( (activity.adultPrice + reseller.adultPrice) *  reseller.markup) /100
+
+                   reseller.childPrice  = ( (activity.childPrice + reseller.childPrice) * reseller.markup) /100
+                   reseller.infantPrice  = (  (activity.infantPrice + reseller.infantPrice) *  reseller.markup) /100
+
+
+               }
+                if( reseller?.markupType == "flat"){
+                    
+                    
+                   reseller.adultPrice  =  reseller?.markup
+                   reseller.childPrice =  reseller?.markup
+                   if( activity.infantPrice == 0 ){
+
+                        reseller.infantPrice  = 0
+                    }
+                    reseller.infantPrice =  reseller?.markup
 
                     
-                    subAgent.markupType = subAgentMarkUP?.markupType ? subAgentMarkUP?.markupType : "flat"
-                    subAgent.markup= subAgentMarkUP?.markup ? subAgentMarkUP?.markup : 0
-                    
-                    console.log(subAgentMarkUP , subAgent.markupType, subAgent.markup ,  "subAgentMarkUP")
-                  
-                 if ( subAgentMarkUP && subAgent.markupType == 'percentage'){
-
-                    console.log(reseller.adultPrice , "reseller.adultPrice")
-                    
-                    subAgent.adultPrice  = ( (activity.adultPrice + reseller.adultPrice) *  subAgent.markup) /100
-
-                    subAgent.childPrice  = ( (activity.childPrice + reseller.childPrice) * subAgent.markup) /100
-                    subAgent.infantPrice  = (  (activity.infantPrice + reseller.infantPrice) *  subAgent.markup) /100
-
-
+                   
                 }
-                 if( subAgent?.markupType == "flat"){
-                     
-                     
-                     subAgent.adultPrice  =  subAgent?.markup
-                     subAgent.childPrice =  subAgent?.markup
-                     subAgent.infantPrice =  subAgent?.markup
-                     
-                     console.log(subAgent.adultPrice , subAgent.infant , "reseller.adultPrice")
-
-                 }
- 
-                 }
-
+                
+                console.log(subAgent.adultPrice , subAgent.infant , "reseller.adultPrice")
 
                 if (selectedActivities[i]?.adultsCount && activity.adultPrice) {
                     price +=
@@ -444,7 +459,7 @@ module.exports = {
 
                 
            
-               
+                selectedActivities[i].amount = price;
                 selectedActivities[i].offerAmount = offer;
                 selectedActivities[i].status = "pending";
                 selectedActivities[i].bookingType = attraction.bookingType;
@@ -457,29 +472,51 @@ module.exports = {
                 totalOffer += offer;
                 resellertotalMarkupAmount += profitReseller
                 subAgenttotalMarkupAmount += profitSubAgent;
+
             }
             
 
 
             console.log(totalAmount,resellertotalMarkupAmount ,selectedActivities,"kkkk",  subAgenttotalMarkupAmount  )
            
+            const wallet = await B2BWallet.findOne({ reseller: req.reseller.id });
 
-            // let buyer = req.reseller || user;
 
-            // const newAttractionOrder = new AttractionOrder({
-            //     activities: selectedActivities,
-            //     totalAmount,
-            //     totalOffer,
-            //     reseller: buyer?._id,
-            //     country,
-            //     name,
-            //     email,
-            //     phoneNumber,
-            //     orderStatus: "pending",
-            // });
-            // await newAttractionOrder.save();
+           if ( wallet.balance > totalAmount) {
+            return sendErrorResponse(
+                res,
+                400,
+                `Insufficent Wallet Balance`
+            );
+           }
 
-            // res.status(200).json(result);
+           await B2BWallet.findByIdAndUpdate(
+            wallet._id,
+            {
+                $inc: { balance: amount },
+            },
+            { upsert: true, runValidators: true, new: true }
+        );
+
+            let buyer = req.reseller ;
+
+            const newB2BAttractionOrder = new B2BAttractionOrder({
+                activities: selectedActivities,
+                totalAmount,
+                totalOffer,
+                reseller: req.reseller?._id,
+                country  : req.reseller.country,
+                name : req.reseller.name ,
+                email : req.reseller.email,
+                phoneNumber : req.reseller.phoneNumber,
+                orderStatus: "paid",
+            });
+
+
+            await newB2BAttractionOrder.save();
+
+            res.status(200).json(result);
+
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
@@ -564,28 +601,28 @@ module.exports = {
     },
 
    
-    getSingleAttractionOrder: async (req, res) => {
-        try {
-            const { id } = req.params;
+    // getSingleAttractionOrder: async (req, res) => {
+    //     try {
+    //         const { id } = req.params;
 
-            if (!isValidObjectId(id)) {
-                return sendErrorResponse(res, 400, "Invalid attraction id");
-            }
+    //         if (!isValidObjectId(id)) {
+    //             return sendErrorResponse(res, 400, "Invalid attraction id");
+    //         }
 
-            const attractionOrder = await AttractionOrder.findById(id)
-                .populate("orders.activity")
-                .populate(
-                    "attraction",
-                    "title isOffer offerAmount offerAmountType"
-                )
-                .lean();
-            if (!attractionOrder) {
-                return sendErrorResponse(res, 400, "Attraction not found");
-            }
+    //         const attractionOrder = await AttractionOrder.findById(id)
+    //             .populate("orders.activity")
+    //             .populate(
+    //                 "attraction",
+    //                 "title isOffer offerAmount offerAmountType"
+    //             )
+    //             .lean();
+    //         if (!attractionOrder) {
+    //             return sendErrorResponse(res, 400, "Attraction not found");
+    //         }
 
-            res.status(200).json(attractionOrder);
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+    //         res.status(200).json(attractionOrder);
+    //     } catch (err) {
+    //         sendErrorResponse(res, 500, err);
+    //     }
+    // },
 };
