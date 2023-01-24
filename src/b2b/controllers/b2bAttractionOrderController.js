@@ -36,8 +36,6 @@ module.exports = {
 
             let totalAmount = 0;
             let totalOffer = 0;
-            let resellerMarkupAmount = 0;
-            let subAgentMarkupAmount = 0
             let  resellertotalMarkupAmount = 0
             let  subAgenttotalMarkupAmount = 0
 
@@ -386,9 +384,7 @@ module.exports = {
             
                 selectedActivities[i].profitReseller = profitReseller;
                 
-                console.log("hiiii" , profitReseller ,reseller.totalInfantPrice  ,                            
-                reseller.totalChildPrice  ,                          
-    reseller.totalAdultPrice , subAgent.totalInfantPrice  ,  subAgent.totalAdultPrice , subAgent.totalChildPrice )
+
                  profitSubAgent =
                     
                     (subAgent.totalInfantPrice +
@@ -457,7 +453,7 @@ module.exports = {
                     }
                 }
 
-                
+                                
            
                 selectedActivities[i].amount = price;
                 selectedActivities[i].offerAmount = offer;
@@ -473,32 +469,17 @@ module.exports = {
                 resellertotalMarkupAmount += profitReseller
                 subAgenttotalMarkupAmount += profitSubAgent;
 
+
             }
             
 
 
             console.log(totalAmount,resellertotalMarkupAmount ,selectedActivities,"kkkk",  subAgenttotalMarkupAmount  )
            
-            const wallet = await B2BWallet.findOne({ reseller: req.reseller.id });
 
 
-           if ( !wallet || wallet.balance < totalAmount) {
-            return sendErrorResponse(
-                res,
-                400,
-                `Insufficent Wallet Balance`
-            );
-           }
+       
 
-           await B2BWallet.findByIdAndUpdate(
-            wallet._id,
-            {
-                $inc: { balance: amount },
-            },
-            { upsert: true, runValidators: true, new: true }
-        );
-
-            let buyer = req.reseller ;
 
             const newB2BAttractionOrder = new B2BAttractionOrder({
                 activities: selectedActivities,
