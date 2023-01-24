@@ -19,20 +19,23 @@ module.exports = {
 
             
             
+            let result;
             const newTransation = new B2BTransaction({
                 reseller: req.reseller?._id,
                 transactionType: "deposit",
                 amount,
                 paymentProcessor,
                 status: "pending",
-                paymentId: response.result.id,
+                paymentId: result.id,
             });
             
             
-            let result;
             if (paymentProcessor === "paypal") {
                 const currency = "USD";
                 const response = await createOrder(amount, currency);
+               
+                result = response.result;
+
 
                 if (response.statusCode !== 201) {
                     newTransation.status = "failed";
@@ -45,7 +48,6 @@ module.exports = {
                     );
                 }
 
-                result = response.result;
             } else {
                 return sendErrorResponse(
                     res,
