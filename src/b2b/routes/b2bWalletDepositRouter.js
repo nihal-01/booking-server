@@ -7,6 +7,6 @@ const {
 const { b2bAuth } = require("../middlewares");
 
 router.post("/deposit",b2bAuth, walletDeposit);
-router.post('/capture/wallet' , captureWalletDeposit)
+router.post('/paypal/capture' , captureWalletDeposit)
 
 module.exports = router;
