@@ -20,7 +20,9 @@ module.exports = {
                 .lean();
  
 
-            const blogStatus = await HomeSettings.find({}).project({isBlogsEnabled : 1}).sort({ createdAt: -1 })
+            const blogStatus = await HomeSettings.find({}).sort({ createdAt: -1 }).project({isBlogsEnabled : 1})
+
+            console.log(blogStatus ,"blogStatus")
 
             res.status(200).json({
                 destinations,
