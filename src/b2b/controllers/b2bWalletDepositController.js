@@ -52,6 +52,9 @@ module.exports = {
                     );
                 }
 
+            }else if( paymentProcessor === "razorpay"){
+
+                
             } else {
                 return sendErrorResponse(
                     res,
