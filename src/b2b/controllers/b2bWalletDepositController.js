@@ -153,7 +153,7 @@ module.exports = {
                     await transaction.save();
 
                     await B2BWallet.updateOne({
-                        resellerId : req.reseller._id},
+                        reseller : req.reseller._id},
                         {
                             $inc: { balance: transaction.amount },
                         },
