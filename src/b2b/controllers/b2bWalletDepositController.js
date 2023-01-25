@@ -2,6 +2,7 @@ const { isValidObjectId } = require("mongoose");
 const { sendErrorResponse } = require("../../helpers");
 const { createOrder, fetchOrder, fetchPayment } = require("../../utils/paypal");
 const { B2BTransaction, B2BWallet } = require("../models");
+const { b2bAttractionOrderCaptureSchema } = require("../validations/b2bAttractionOrder.schema");
 
 
 
@@ -35,8 +36,9 @@ module.exports = {
                 const currency = "USD";
                 const response = await createOrder(amount, currency);
                
-                result = response.result.id;
+                newTransation.paymentId  = response.result.id;
                 resultFinal = response.result
+
 
 
                 if (response.statusCode !== 201) {
@@ -73,7 +75,7 @@ module.exports = {
         try {
             const { orderId, paymentId } = req.body;
 
-            const { _, error } = attractionOrderCaptureSchema.validate(
+            const { _, error } = b2bAttractionOrderCaptureSchema.validate(
                 req.body
             );
             if (error) {
