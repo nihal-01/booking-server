@@ -308,16 +308,7 @@ module.exports = {
 
           console.log("reached");
         }
-        console.log(price, "price");
-
-        console.log(
-          price,
-          reseller.totalInfantPrice,
-          subAgent.totalInfantPrice,
-          reseller.totalChildPrice,
-          reseller.infantPrice,
-          "kkljhsd"
-        );
+       
 
         let offer = 0;
         if (attraction?.isOffer) {
@@ -432,6 +423,8 @@ module.exports = {
         totalOffer += offer;
         resellertotalMarkupAmount += profitReseller;
         subAgenttotalMarkupAmount += profitSubAgent;
+
+
         
         pendingActivities.push({
            
@@ -457,7 +450,7 @@ module.exports = {
         name: req.reseller.name,
         email: req.reseller.email,
         phoneNumber: req.reseller.phoneNumber,
-        orderStatus: "paid",
+        orderStatus: "pending",
       });
 
       await newB2BAttractionOrder.save();
