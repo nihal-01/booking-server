@@ -34,7 +34,7 @@ const visaSchema = new Schema(
         },
         sampleVisa: {
             type: String,
-            required: true,
+            // required: true,
         },
         faqs: {
             type: [
@@ -67,7 +67,13 @@ const visaSchema = new Schema(
         keywords: {
             type: [{ type: String, required: true, lowercase: true }],
         },
+         isDeleted: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
     },
+    
     { timestamps: true }
 );
 

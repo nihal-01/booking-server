@@ -197,6 +197,7 @@ module.exports = {
           subAgent.markupType = subAgentMarkUP?.markupType
             ? subAgentMarkUP?.markupType
             : "flat";
+
           subAgent.markup = subAgentMarkUP?.markup ? subAgentMarkUP?.markup : 0;
 
           if (reseller?.markupType == "percentage") {
@@ -287,6 +288,8 @@ module.exports = {
           console.log("reached2");
           console.log(price, "price");
         }
+
+
         if (selectedActivities[i]?.infantCount && activity?.infantPrice) {
           console.log(
             activity.infantPrice,
@@ -330,12 +333,14 @@ module.exports = {
               (selectedActivities[i]?.adultsCount || 0) *
               (activity.adultCost || 0);
           }
+
           let totalChildPurchaseCost = 0;
           if (selectedActivities[i]?.childrenCount >= 1) {
             totalChildPurchaseCost =
               (selectedActivities[i]?.childrenCount || 0) *
               (activity.childCost || 0);
           }
+          
           let totalInfantPurchaseCost = 0;
           if (selectedActivities[i]?.infantCount >= 1) {
             totalInfantPurchaseCost =
@@ -419,27 +424,16 @@ module.exports = {
           selectedActivities[i].childCost = activity.childCost;
           selectedActivities[i].infantCost = activity.infantCost;
         }
+
         totalAmount += price;
         totalOffer += offer;
         resellertotalMarkupAmount += profitReseller;
         subAgenttotalMarkupAmount += profitSubAgent;
 
 
-        
-        pendingActivities.push({
-           
-
-        })
-
       }
 
-      console.log(
-        totalAmount,
-        resellertotalMarkupAmount,
-        selectedActivities,
-        "kkkk",
-        subAgenttotalMarkupAmount
-      );
+   
 
       const newB2BAttractionOrder = new B2BAttractionOrder({
         activities: selectedActivities,
