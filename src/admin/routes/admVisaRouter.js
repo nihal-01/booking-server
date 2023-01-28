@@ -1,9 +1,19 @@
 const router = require("express").Router();
 const path = require("path");
+const multer = require("multer");
+
 
 const {
-    createNewCountryVisa,
-    addNewVisa,
+    createNewVisa,
+    addNewVisaType,
+    listAllVisa,
+    listAllVisaType,
+    getSingleVisa,
+    getSingleVisaType,
+    updateVisa,
+    updateVisaType,
+    deleteVisa,
+    deleteVisaType
 } = require("../controllers/admVisaController");
 
 const storage = multer.diskStorage({
@@ -41,8 +51,20 @@ const upload = multer({
 router.post(
     "/country-visa/create",
     upload.single("sampleVisa"),
-    createNewCountryVisa
+    createNewVisa
 );
-router.post("/add", addNewVisa);
+router.post("/add", addNewVisaType);
+router.get('/all' , listAllVisa )
+router.get('/visa-type/all' , listAllVisaType )
+router.get('/:id' , getSingleVisa)
+router.get('/visa-type/:id' , getSingleVisaType)
+router.patch('/update/:id' ,upload.single("sampleVisa"),updateVisa)
+router.patch('/update/visa-type/:id' , updateVisaType)
+router.patch('/delete/:id' , deleteVisa)
+router.patch('/delete/visa-type/:id' , deleteVisaType)
+
+
+
+
 
 module.exports = router;
