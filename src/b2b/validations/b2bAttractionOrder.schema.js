@@ -21,8 +21,8 @@ const b2bAttractionOrderSchema = Joi.object({
 });
 
 const b2bAttractionOrderCaptureSchema = Joi.object({
-    orderId: Joi.string().required(),
-    paymentId: Joi.string().required(),
+    orderId: Joi.string().allow("", null),
+    paymentId: Joi.string().allow("", null),
 });
 
 module.exports = {

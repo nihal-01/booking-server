@@ -50,7 +50,7 @@ const b2bTransactionSchema = new Schema(
         status: {
             type: String,
             lowercase: true,
-            enum: ["pending", "success", "failed", "cancelled"],
+            enum: ["pending", "success", "failed"],
             required: true,
         },
         paymentOrderId: {

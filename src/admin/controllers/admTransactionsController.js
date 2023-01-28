@@ -65,7 +65,11 @@ module.exports = {
                         paymentProcessor: 1,
                         amount: 1,
                         status: 1,
+                        createdAt: 1,
                     },
+                },
+                {
+                    $sort: { createdAt: -1 },
                 },
                 {
                     $group: {

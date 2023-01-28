@@ -129,7 +129,7 @@ module.exports = {
                     );
                 } else {
                     transaction.status = "success";
-                    transaction.paymentDetails = paymentObject.result;
+                    transaction.paymentDetails = paymentObject?.result;
                     await transaction.save();
 
                     // do conversion
