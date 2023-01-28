@@ -48,6 +48,7 @@ const b2battractionOrderSchema = new Schema(
                         type: String,
                         lowercase: true,
                         enum: ["without", "private", "shared"],
+                        required: true,
                     },
                     offerAmount: { type: Number, required: true },
                     amount: { type: Number, required: true },
@@ -88,6 +89,9 @@ const b2battractionOrderSchema = new Schema(
                     },
                     subAgentMarkup: {
                         type: Number,
+                        required: function () {
+                            return this.orderedBy === "sub-agent";
+                        },
                     },
                     markups: {
                         type: [

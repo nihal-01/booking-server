@@ -14,7 +14,9 @@ const b2bAttractionOrderSchema = Joi.object({
             adultsCount: Joi.number().min(1).required(),
             childrenCount: Joi.number(),
             infantCount: Joi.number(),
-            transferType: Joi.string().valid("without", "shared", "private"),
+            transferType: Joi.string()
+                .valid("without", "shared", "private")
+                .required(),
         }),
 });
 

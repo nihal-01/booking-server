@@ -349,8 +349,8 @@ module.exports = {
                 selectedActivities[i].offerAmount = 0;
                 selectedActivities[i].status = "pending";
                 selectedActivities[i].bookingType = attraction.bookingType;
-                selectedActivities[i].totalMarkup =
-                    totalResellerMarkup + totalSubAgentMarkup;
+                selectedActivities[i].resellerMarkup = totalResellerMarkup;
+                selectedActivities[i].subAgentMarkup = totalSubAgentMarkup;
                 selectedActivities[i].markups = markups;
 
                 totalAmount += price;
@@ -373,6 +373,7 @@ module.exports = {
                 orderStatus: "pending",
                 otp,
                 referenceNumber: generateUniqueString("B2BATO"),
+                orderedBy: req.reseller.role,
             });
             await attractionOrder.save();
 
@@ -543,7 +544,8 @@ module.exports = {
                 attractionOrder.activities[i].profit =
                     attractionOrder.activities[i].amount -
                     (attractionOrder.activities[i].totalPurchaseCost +
-                        attractionOrder.activities[i].totalMarkup);
+                        (attractionOrder.activities[i].resellerMarkup || 0) +
+                        (attractionOrder.activities[i].subAgentMarkup || 0));
             }
 
             const transaction = new B2BTransaction({

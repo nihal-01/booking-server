@@ -152,8 +152,13 @@ module.exports = {
 
     getAllB2bOrders: async (req, res) => {
         try {
-            console.log("first");
-            const { skip = 0, limit = 10, bookingType, status } = req.query;
+            const {
+                skip = 0,
+                limit = 10,
+                bookingType,
+                status,
+                orderedBy,
+            } = req.query;
 
             const filters = {
                 "activities.status": {
@@ -167,6 +172,10 @@ module.exports = {
 
             if (status && status !== "") {
                 filters["activities.status"] = status;
+            }
+
+            if (orderedBy && orderedBy !== "") {
+                filters.orderedBy = orderedBy;
             }
 
             const orders = await B2BAttractionOrder.aggregate([
@@ -262,7 +271,7 @@ module.exports = {
                             driver: 1,
                             _id: 1,
                         },
-                        referenceNo: 1,
+                        referenceNumber: 1,
                     },
                 },
                 {
@@ -298,8 +307,13 @@ module.exports = {
 
     confirmBooking: async (req, res) => {
         try {
-            const { order, bookingId, bookingConfirmationNumber, driver } =
-                req.body;
+            const {
+                order,
+                bookingId,
+                bookingConfirmationNumber,
+                driver,
+                orderedBy,
+            } = req.body;
 
             if (!isValidObjectId(order)) {
                 return sendErrorResponse(res, 400, "Invalid order id");
@@ -309,12 +323,22 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid booking id");
             }
 
-            const orderDetails = await AttractionOrder.findOne(
-                {
-                    _id: order,
-                },
-                { activities: { $elemMatch: { _id: bookingId } } }
-            );
+            let orderDetails;
+            if (orderedBy === "b2c") {
+                orderDetails = await AttractionOrder.findOne(
+                    {
+                        _id: order,
+                    },
+                    { activities: { $elemMatch: { _id: bookingId } } }
+                );
+            } else {
+                orderDetails = await B2BAttractionOrder.findOne(
+                    {
+                        _id: order,
+                    },
+                    { activities: { $elemMatch: { _id: bookingId } } }
+                );
+            }
 
             if (!orderDetails || orderDetails?.activities[0]?.length < 1) {
                 return sendErrorResponse(res, 400, "Order not found");
@@ -389,7 +413,7 @@ module.exports = {
 
     cancelBooking: async (req, res) => {
         try {
-            const { orderId, bookingId } = req.body;
+            const { orderId, bookingId, orderedBy } = req.body;
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "Invalid order id");
@@ -399,12 +423,22 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid booking id");
             }
 
-            const orderDetails = await AttractionOrder.findOne(
-                {
-                    _id: orderId,
-                },
-                { activities: { $elemMatch: { _id: bookingId } } }
-            );
+            let orderDetails;
+            if (orderedBy === "b2c") {
+                orderDetails = await AttractionOrder.findOne(
+                    {
+                        _id: orderId,
+                    },
+                    { activities: { $elemMatch: { _id: bookingId } } }
+                );
+            } else {
+                orderDetails = await B2BAttractionOrder.findOne(
+                    {
+                        _id: orderId,
+                    },
+                    { activities: { $elemMatch: { _id: bookingId } } }
+                );
+            }
 
             if (!orderDetails || orderDetails?.activities?.length < 1) {
                 return sendErrorResponse(res, 400, "Order not found");
@@ -426,16 +460,29 @@ module.exports = {
                 );
             }
 
-            await AttractionOrder.findOneAndUpdate(
-                {
-                    _id: orderId,
-                    "activities._id": bookingId,
-                },
-                {
-                    "activities.$.status": "cancelled",
-                },
-                { runValidators: true }
-            );
+            if (orderedBy === "b2c") {
+                await AttractionOrder.findOneAndUpdate(
+                    {
+                        _id: orderId,
+                        "activities._id": bookingId,
+                    },
+                    {
+                        "activities.$.status": "cancelled",
+                    },
+                    { runValidators: true }
+                );
+            } else {
+                await B2BAttractionOrder.findOneAndUpdate(
+                    {
+                        _id: orderId,
+                        "activities._id": bookingId,
+                    },
+                    {
+                        "activities.$.status": "cancelled",
+                    },
+                    { runValidators: true }
+                );
+            }
 
             // send email and refund balance
 
@@ -449,7 +496,7 @@ module.exports = {
 
     updateDriverForOrder: async (req, res) => {
         try {
-            const { orderId, orderItemId, driver } = req.body;
+            const { orderId, orderItemId, driver, orderedBy } = req.body;
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "Invalid order id");
@@ -463,12 +510,22 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid Driver id");
             }
 
-            const orderDetails = await AttractionOrder.findOne(
-                {
-                    _id: orderId,
-                },
-                { activities: { $elemMatch: { _id: orderItemId } } }
-            );
+            let orderDetails;
+            if (orderedBy === "b2c") {
+                orderDetails = await AttractionOrder.findOne(
+                    {
+                        _id: orderId,
+                    },
+                    { activities: { $elemMatch: { _id: orderItemId } } }
+                );
+            } else {
+                orderDetails = await B2BAttractionOrder.findOne(
+                    {
+                        _id: orderId,
+                    },
+                    { activities: { $elemMatch: { _id: orderItemId } } }
+                );
+            }
 
             if (!orderDetails || orderDetails?.activities?.length < 1) {
                 return sendErrorResponse(res, 400, "Order not found");
@@ -498,16 +555,29 @@ module.exports = {
                 return sendErrorResponse(res, 404, "Driver not found");
             }
 
-            await AttractionOrder.findOneAndUpdate(
-                {
-                    _id: orderId,
-                    "activities._id": orderItemId,
-                },
-                {
-                    "activities.$.driver": driver,
-                },
-                { runValidators: true }
-            );
+            if (orderedBy === "b2c") {
+                await AttractionOrder.findOneAndUpdate(
+                    {
+                        _id: orderId,
+                        "activities._id": orderItemId,
+                    },
+                    {
+                        "activities.$.driver": driver,
+                    },
+                    { runValidators: true }
+                );
+            } else {
+                await B2BAttractionOrder.findOneAndUpdate(
+                    {
+                        _id: orderId,
+                        "activities._id": orderItemId,
+                    },
+                    {
+                        "activities.$.driver": driver,
+                    },
+                    { runValidators: true }
+                );
+            }
 
             // send mail here
 

@@ -7,26 +7,6 @@ const b2bWalletSchema = new Schema(
             required: true,
             default: 0,
         },
-        // pendingBalance: {
-        //     type: [
-        //         {
-        //             amount: {
-        //                 type: Number,
-        //                 required: true,
-        //             },
-        //             transactionId: {
-        //                 type: Schema.Types.ObjectId,
-        //                 ref: "B2BTransaction",
-        //                 required: true,
-        //             },
-        //             expiresIn: {
-        //                 type: Date,
-        //                 required: true,
-        //             },
-        //         },
-        //     ],
-        //     default: [],
-        // },
         reseller: {
             type: Schema.Types.ObjectId,
             ref: "Reseller",
