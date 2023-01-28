@@ -3,7 +3,11 @@ const { isValidObjectId } = require("mongoose");
 const {
     b2bAttractionOrderSchema,
 } = require("../validations/b2bAttractionOrder.schema");
-const { sendErrorResponse, sendMobileOtp } = require("../../helpers");
+const {
+    sendErrorResponse,
+    sendMobileOtp,
+    sendEmail,
+} = require("../../helpers");
 const {
     Attraction,
     AttractionActivity,
@@ -434,18 +438,18 @@ module.exports = {
                     _id: attractionOrder.activities[i].activity,
                 });
                 let totalPurchaseCost = 0;
-                if (activity.bookingType === "ticket") {
+                if (attractionOrder.activities[i].bookingType === "ticket") {
                     let adultTickets = [];
                     let childTickets = [];
 
                     for (
-                        let i = 0;
-                        i < attractionOrder.activities[i].adultsCount;
-                        i++
+                        let j = 0;
+                        j < attractionOrder.activities[i].adultsCount;
+                        j++
                     ) {
                         const ticket = await AttractionTicket.findOneAndUpdate(
                             {
-                                activity: activity.activity,
+                                activity: activity._id,
                                 status: "ok",
                                 ticketFor: "adult",
                                 $or: [
@@ -453,7 +457,9 @@ module.exports = {
                                         validity: true,
                                         validTill: {
                                             $gte: new Date(
-                                                activity.date
+                                                attractionOrder.activities[
+                                                    i
+                                                ].date
                                             ).toISOString(),
                                         },
                                     },
@@ -475,7 +481,7 @@ module.exports = {
                             lotNo: ticket?.lotNo,
                             ticketFor: ticket?.ticketFor,
                             validity: ticket.validity,
-                            validTill: ticket.validTill,
+                            validTill: ticket.validTill || undefined,
                             cost: ticket?.ticketCost,
                         });
 
@@ -483,13 +489,14 @@ module.exports = {
                     }
 
                     for (
-                        let i = 0;
-                        i < attractionOrder.activities[i].childrenCount;
-                        i++
+                        let j = 0;
+                        j < attractionOrder.activities[i].childrenCount;
+                        j++
                     ) {
                         const ticket = await AttractionTicket.findOneAndUpdate(
                             {
-                                activity: activity.activity,
+                                activity:
+                                    attractionOrder.activities[i].activity,
                                 status: "ok",
                                 ticketFor: "child",
                                 $or: [
@@ -497,7 +504,9 @@ module.exports = {
                                         validity: true,
                                         validTill: {
                                             $gte: new Date(
-                                                activity.date
+                                                attractionOrder.activities[
+                                                    i
+                                                ].date
                                             ).toISOString(),
                                         },
                                     },
@@ -519,7 +528,7 @@ module.exports = {
                             lotNo: ticket?.lotNo,
                             ticketFor: ticket?.ticketFor,
                             validity: ticket.validity,
-                            validTill: ticket.validTill,
+                            validTill: ticket.validTill || undefined,
                             cost: ticket?.ticketCost,
                         });
 
@@ -570,18 +579,37 @@ module.exports = {
             await attractionOrder.save();
 
             for (let i = 0; i < attractionOrder.activities?.length; i++) {
-                const activity = await AttractionActivity.findOne(
-                    attractionOrder.activities[i]?.activity
-                ).populate("attraction", "bookingType");
-
-                if (activity.attraction?.bookingType === "ticket") {
+                if (attractionOrder.activities[i].bookingType === "ticket") {
                     await handleAttractionOrderMarkup(
                         attractionOrder._id,
-                        attractionOrder.activities[i],
-                        req.reseller?._id
+                        attractionOrder.activities[i]
                     );
                 }
             }
+
+            sendEmail(
+                "lekhraj@hami.live",
+                "New Order placed",
+                `Reference No: ${attractionOrder.referenceNumber}
+Amount: ${attractionOrder.totalAmount}
+Activities: ${attractionOrder.activities.length}
+
+name: ${attractionOrder.name}
+email: ${attractionOrder.email}
+phoneNumber: ${attractionOrder.phoneNumber}`
+            );
+
+            sendEmail(
+                "experiences@travellerschoice.ae",
+                "New Order placed",
+                `Reference No: ${attractionOrder.referenceNumber}
+Amount: ${attractionOrder.totalAmount}
+Activities: ${attractionOrder.activities.length}
+
+name: ${attractionOrder.name}
+email: ${attractionOrder.email}
+phoneNumber: ${attractionOrder.phoneNumber}`
+            );
 
             res.status(200).json({
                 message: "order successfully placed",

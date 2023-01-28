@@ -1,11 +1,5 @@
 const { sendErrorResponse } = require("../../helpers");
-const {
-    Country,
-    Destination,
-    Driver,
-    Currency,
-    HomeSettings,
-} = require("../../models");
+const { Country, Destination, Driver, Currency } = require("../../models");
 
 module.exports = {
     getGeneralData: async (req, res) => {
@@ -30,7 +24,6 @@ module.exports = {
                 countries,
                 drivers,
                 currencies,
-                blogStatus,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);

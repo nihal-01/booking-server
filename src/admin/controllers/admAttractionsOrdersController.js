@@ -1,5 +1,8 @@
 const { isValidObjectId } = require("mongoose");
-const attractionOrderHelpers = require("../../b2b/helpers/attractionOrderHelpers");
+
+const {
+    handleAttractionOrderMarkup,
+} = require("../../b2b/helpers/attractionOrderHelpers");
 const { B2BAttractionOrder } = require("../../b2b/models");
 const { sendErrorResponse } = require("../../helpers");
 const { AttractionOrder, Driver } = require("../../models");
@@ -308,33 +311,33 @@ module.exports = {
     confirmBooking: async (req, res) => {
         try {
             const {
-                order,
+                orderId,
                 bookingId,
                 bookingConfirmationNumber,
                 driver,
                 orderedBy,
             } = req.body;
 
-            if (!isValidObjectId(order)) {
-                return sendErrorResponse(res, 400, "Invalid order id");
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "invalid order id");
             }
 
             if (!isValidObjectId(bookingId)) {
-                return sendErrorResponse(res, 400, "Invalid booking id");
+                return sendErrorResponse(res, 400, "invalid booking id");
             }
 
             let orderDetails;
             if (orderedBy === "b2c") {
                 orderDetails = await AttractionOrder.findOne(
                     {
-                        _id: order,
+                        _id: orderId,
                     },
                     { activities: { $elemMatch: { _id: bookingId } } }
                 );
             } else {
                 orderDetails = await B2BAttractionOrder.findOne(
                     {
-                        _id: order,
+                        _id: orderId,
                     },
                     { activities: { $elemMatch: { _id: bookingId } } }
                 );
@@ -382,24 +385,48 @@ module.exports = {
                 }
             }
 
-            await AttractionOrder.findOneAndUpdate(
-                {
-                    _id: order,
-                    "activities._id": bookingId,
-                },
-                {
-                    "activities.$.status": "confirmed",
-                    "activities.$.bookingConfirmationNumber":
-                        bookingConfirmationNumber,
-                    "activities.$.driver":
-                        orderDetails?.activities[0]?.transferType !== "without"
-                            ? driver
-                            : undefined,
-                },
-                { runValidators: true }
-            );
+            if (orderedBy === "b2c") {
+                await AttractionOrder.findOneAndUpdate(
+                    {
+                        _id: orderId,
+                        "activities._id": bookingId,
+                    },
+                    {
+                        "activities.$.status": "confirmed",
+                        "activities.$.bookingConfirmationNumber":
+                            bookingConfirmationNumber,
+                        "activities.$.driver":
+                            orderDetails?.activities[0]?.transferType !==
+                            "without"
+                                ? driver
+                                : undefined,
+                    },
+                    { runValidators: true }
+                );
+            } else {
+                await B2BAttractionOrder.findOneAndUpdate(
+                    {
+                        _id: orderId,
+                        "activities._id": bookingId,
+                    },
+                    {
+                        "activities.$.status": "confirmed",
+                        "activities.$.bookingConfirmationNumber":
+                            bookingConfirmationNumber,
+                        "activities.$.driver":
+                            orderDetails?.activities[0]?.transferType !==
+                            "without"
+                                ? driver
+                                : undefined,
+                    },
+                    { runValidators: true }
+                );
 
-            await attractionOrderHelpers(order, orderDetails?.activities[0]);
+                await handleAttractionOrderMarkup(
+                    orderId,
+                    orderDetails?.activities[0]
+                );
+            }
 
             res.status(200).json({
                 message: "Booking confirmed successfully",

@@ -1,3 +1,4 @@
+const { B2BTransaction } = require("../../b2b/models");
 const { sendErrorResponse } = require("../../helpers");
 const { B2CTransaction } = require("../../models");
 
@@ -20,6 +21,77 @@ module.exports = {
                 skip: Number(skip),
                 limit: Number(limit),
                 totalTransactions,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getAllB2bTransactions: async (req, res) => {
+        try {
+            const { skip = 0, limit = 10, b2bRole } = req.query;
+
+            const filters2 = {};
+
+            if (b2bRole && b2bRole !== "") {
+                filters2["reseller.role"] = b2bRole;
+            }
+
+            const transactions = await B2BTransaction.aggregate([
+                { $match: {} },
+                {
+                    $lookup: {
+                        from: "resellers",
+                        localField: "reseller",
+                        foreignField: "_id",
+                        as: "reseller",
+                    },
+                },
+                {
+                    $addFields: {
+                        reseller: { $arrayElemAt: ["$reseller", 0] },
+                    },
+                },
+                {
+                    $match: filters2,
+                },
+                {
+                    $project: {
+                        reseller: {
+                            companyName: 1,
+                            website: 1,
+                        },
+                        transactionType: 1,
+                        paymentProcessor: 1,
+                        amount: 1,
+                        status: 1,
+                    },
+                },
+                {
+                    $group: {
+                        _id: null,
+                        totalTransactions: { $sum: 1 },
+                        data: { $push: "$$ROOT" },
+                    },
+                },
+                {
+                    $project: {
+                        totalTransactions: 1,
+                        data: {
+                            $slice: [
+                                "$data",
+                                Number(limit) * Number(skip),
+                                Number(limit),
+                            ],
+                        },
+                    },
+                },
+            ]);
+
+            res.status(200).json({
+                result: transactions[0],
+                skip: Number(skip),
+                limit: Number(limit),
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
