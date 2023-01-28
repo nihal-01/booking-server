@@ -4,6 +4,7 @@ const { isValidObjectId } = require("mongoose");
 const {
     resellerStatusUpdateSchema,
 } = require("../validations/admResllers.schema");
+const { B2BWallet, B2BTransaction } = require("../../b2b/models");
 
 module.exports = {
     getAllResellers: async (req, res) => {
@@ -86,11 +87,55 @@ module.exports = {
             const reseller = await Reseller.findById(id)
                 .populate("country", "countryName flag phonecode")
                 .lean();
+
             if (!reseller) {
                 return sendErrorResponse(res, 404, "Reseller not found");
             }
 
-            res.status(200).json({ reseller });
+            const wallet = await B2BWallet.findOne({ reseller: reseller?._id });
+
+            let totalEarnings = [];
+            let pendingEarnings = [];
+            if (wallet) {
+                totalEarnings = await B2BTransaction.aggregate([
+                    {
+                        $match: {
+                            reseller: reseller?._id,
+                            status: "success",
+                            transactionType: "markup",
+                        },
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            total: { $sum: "$amount" },
+                        },
+                    },
+                ]);
+
+                pendingEarnings = await B2BTransaction.aggregate([
+                    {
+                        $match: {
+                            reseller: reseller?._id,
+                            status: "pending",
+                            transactionType: "markup",
+                        },
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            total: { $sum: "$amount" },
+                        },
+                    },
+                ]);
+            }
+
+            res.status(200).json({
+                reseller,
+                balance: wallet ? wallet.balance : 0,
+                totalEarnings: totalEarnings[0]?.total || 0,
+                pendingEarnings: pendingEarnings[0]?.total || 0,
+            });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
