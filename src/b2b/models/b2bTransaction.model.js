@@ -53,6 +53,9 @@ const b2bTransactionSchema = new Schema(
             enum: ["pending", "success", "failed", "cancelled"],
             required: true,
         },
+        paymentOrderId: {
+            type: String,
+        },
     },
     { timestamps: true }
 );
