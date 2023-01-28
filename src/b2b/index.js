@@ -14,7 +14,7 @@ const {
 router.use("/resellers/auth", b2bResellersAuthRouter);
 router.use("/resellers", b2bResellersRouter);
 router.use("/resellers/client/attraction", b2bClientAttractionRouter);
-router.use("/client/markup", b2bClientAttractionMarkupRouter);
+router.use("/resellers/client/markup", b2bClientAttractionMarkupRouter);
 router.use("/sub-agent/markup", b2bSubAgentAttractionMarkupRouter);
 router.use("/resellers/wallet", b2bWalletDepositRouter);
 router.use("/attractions/orders", b2bAttractionOrdersRouter);
