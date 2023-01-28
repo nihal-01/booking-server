@@ -3,6 +3,7 @@ const sendEmail = require("./sendEmail");
 const sendAdminPassword = require("./sendAdminPassword");
 const createQuotationPdf = require("./ticketInvoice");
 const getOtpSettings = require("./getOtpSettings");
+const sendMobileOtp = require("./sendMobileOtp");
 
 module.exports = {
     sendErrorResponse,
@@ -10,4 +11,5 @@ module.exports = {
     sendAdminPassword,
     createQuotationPdf,
     getOtpSettings,
+    sendMobileOtp,
 };

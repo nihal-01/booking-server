@@ -1,10 +1,10 @@
 const Joi = require("joi");
 
 const b2bAttractionOrderSchema = Joi.object({
-    // name: Joi.string().allow("", null),
-    // phoneNumber: Joi.number().allow("", null),
-    // country: Joi.string().allow("", null),
-    // email: Joi.string().email().allow("", null),
+    name: Joi.string().required(),
+    phoneNumber: Joi.number().required(),
+    country: Joi.string().required(),
+    email: Joi.string().email().required(),
     selectedActivities: Joi.array()
         .min(1)
         .required()
@@ -12,8 +12,8 @@ const b2bAttractionOrderSchema = Joi.object({
             activity: Joi.string().required(),
             date: Joi.date().required(),
             adultsCount: Joi.number().min(1).required(),
-            childrenCount: Joi.number().allow("", null),
-            infantCount: Joi.number().allow("", null),
+            childrenCount: Joi.number(),
+            infantCount: Joi.number(),
             transferType: Joi.string().valid("without", "shared", "private"),
         }),
 });

@@ -1,469 +1,590 @@
 const { isValidObjectId } = require("mongoose");
-const crypto = require("crypto");
+
 const {
-  b2bAttractionOrderSchema,
+    b2bAttractionOrderSchema,
 } = require("../validations/b2bAttractionOrder.schema");
-const { sendErrorResponse } = require("../../helpers");
-const { Attraction, AttractionActivity } = require("../../models");
+const { sendErrorResponse, sendMobileOtp } = require("../../helpers");
 const {
-  B2BClientAttractionMarkup,
-  B2BSubAgentAttractionMarkup,
-  B2BAttractionOrder,
-  B2BWallet,
+    Attraction,
+    AttractionActivity,
+    Country,
+    AttractionTicket,
+} = require("../../models");
+const {
+    B2BClientAttractionMarkup,
+    B2BSubAgentAttractionMarkup,
+    B2BAttractionOrder,
+    B2BWallet,
+    B2BTransaction,
 } = require("../models");
+const {
+    handleAttractionOrderMarkup,
+} = require("../helpers/attractionOrderHelpers");
 
 const dayNames = [
-  "sunday",
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
 ];
 
 module.exports = {
-  createAttractionOrder: async (req, res) => {
-    try {
-      const { selectedActivities } = req.body;
+    // TODO
+    // 1. VAT
+    // 2. Offer
+    createAttractionOrder: async (req, res) => {
+        try {
+            const { selectedActivities, country, name, email, phoneNumber } =
+                req.body;
 
-      const { _, error } = b2bAttractionOrderSchema.validate(req.body);
-      if (error) {
-        return sendErrorResponse(res, 400, error.details[0].message);
-      }
-      console.log(req.reseller, "reseller");
+            const { _, error } = b2bAttractionOrderSchema.validate(req.body);
+            if (error) {
+                return sendErrorResponse(res, 400, error.details[0].message);
+            }
 
-      let totalAmount = 0;
-      let totalOffer = 0;
-      let resellertotalMarkupAmount = 0;
-      let subAgenttotalMarkupAmount = 0;
+            if (!isValidObjectId(country)) {
+                return sendErrorResponse(res, 400, "invalid country id");
+            }
 
-      for (let i = 0; i < selectedActivities?.length; i++) {
-        if (!isValidObjectId(selectedActivities[i]?.activity)) {
-          return sendErrorResponse(res, 400, "Invalid activity id");
-        }
+            const countryDetail = await Country.findOne({
+                isDeleted: false,
+                _id: country,
+            });
+            if (!countryDetail) {
+                return sendErrorResponse(res, 404, "country not found");
+            }
 
-        const activity = await AttractionActivity.findOne({
-          _id: selectedActivities[i]?.activity,
-          isDeleted: false,
-        });
+            let totalAmount = 0;
+            let totalOffer = 0;
+            for (let i = 0; i < selectedActivities?.length; i++) {
+                if (!isValidObjectId(selectedActivities[i]?.activity)) {
+                    return sendErrorResponse(res, 400, "Invalid activity id");
+                }
 
-        console.log(activity, "activity");
+                const activity = await AttractionActivity.findOne({
+                    _id: selectedActivities[i]?.activity,
+                    isDeleted: false,
+                });
 
-        if (!activity) {
-          return sendErrorResponse(res, 400, "Activity not found!");
-        }
+                if (!activity) {
+                    return sendErrorResponse(res, 400, "Activity not found!");
+                }
 
-        const attraction = await Attraction.findOne({
-          _id: activity.attraction,
-          isDeleted: false,
-        });
-        if (!attraction) {
-          return sendErrorResponse(res, 500, "Attraction not found!");
-        }
+                const attraction = await Attraction.findOne({
+                    _id: activity.attraction,
+                    isDeleted: false,
+                });
+                if (!attraction) {
+                    return sendErrorResponse(res, 500, "Attraction not found!");
+                }
 
-        if (
-          attraction.isCustomDate === true &&
-          (new Date(selectedActivities[i]?.date) <
-            new Date(attraction?.startDate) ||
-            new Date(selectedActivities[i]?.date) >
-              new Date(attraction?.endDate))
-        ) {
-          return sendErrorResponse(
-            res,
-            400,
-            `${
-              activity?.name
-            } is not avaialble on your date. Please select a date between ${new Date(
-              attraction?.startDate
-            )?.toDateString()} and ${new Date(
-              attraction?.endDate
-            )?.toDateString()} `
-          );
-        }
+                if (
+                    attraction.isCustomDate === true &&
+                    (new Date(selectedActivities[i]?.date) <
+                        new Date(attraction?.startDate) ||
+                        new Date(selectedActivities[i]?.date) >
+                            new Date(attraction?.endDate))
+                ) {
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        `${
+                            activity?.name
+                        } is not avaialble on your date. Please select a date between ${new Date(
+                            attraction?.startDate
+                        )?.toDateString()} and ${new Date(
+                            attraction?.endDate
+                        )?.toDateString()} `
+                    );
+                }
 
-        const selectedDay =
-          dayNames[new Date(selectedActivities[i]?.date).getDay()];
+                const selectedDay =
+                    dayNames[new Date(selectedActivities[i]?.date).getDay()];
 
-        const objIndex = attraction.availability?.findIndex((item) => {
-          return item?.day?.toLowerCase() === selectedDay?.toLowerCase();
-        });
+                const objIndex = attraction.availability?.findIndex((item) => {
+                    return (
+                        item?.day?.toLowerCase() === selectedDay?.toLowerCase()
+                    );
+                });
 
-        if (
-          objIndex === -1 ||
-          attraction.availability[objIndex]?.isEnabled === false
-        ) {
-          return sendErrorResponse(
-            res,
-            400,
-            `Sorry, ${activity?.name} is off on ${selectedDay}`
-          );
-        }
+                if (
+                    objIndex === -1 ||
+                    attraction.availability[objIndex]?.isEnabled === false
+                ) {
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        `Sorry, ${activity?.name} is off on ${selectedDay}`
+                    );
+                }
 
-        for (let j = 0; j < attraction.offDates?.length; j++) {
-          const { from, to } = attraction.offDates[j];
-          if (
-            new Date(selectedActivities[i]?.date) >= new Date(from) &&
-            new Date(selectedActivities[i]?.date) <= new Date(to)
-          ) {
-            return sendErrorResponse(
-              res,
-              400,
-              `${activity?.name} is off between ${new Date(
-                from
-              )?.toDateString()} and ${new Date(to)?.toDateString()} `
+                for (let j = 0; j < attraction.offDates?.length; j++) {
+                    const { from, to } = attraction.offDates[j];
+                    if (
+                        new Date(selectedActivities[i]?.date) >=
+                            new Date(from) &&
+                        new Date(selectedActivities[i]?.date) <= new Date(to)
+                    ) {
+                        return sendErrorResponse(
+                            res,
+                            400,
+                            `${activity?.name} is off between ${new Date(
+                                from
+                            )?.toDateString()} and ${new Date(
+                                to
+                            )?.toDateString()} `
+                        );
+                    }
+                }
+
+                if (attraction.bookingType === "ticket") {
+                    let adultTicketError = false;
+                    let childTicketError = false;
+                    const adultTickets = await AttractionTicket.find({
+                        activity: activity._id,
+                        status: "ok",
+                        ticketFor: "adult",
+                        $or: [
+                            {
+                                validity: true,
+                                validTill: {
+                                    $gte: new Date(
+                                        selectedActivities[i]?.date
+                                    ).toISOString(),
+                                },
+                            },
+                            { validity: false },
+                        ],
+                    }).count();
+                    const childrenTickets = await AttractionTicket.find({
+                        activity: activity._id,
+                        status: "ok",
+                        ticketFor: "child",
+                        $or: [
+                            {
+                                validity: true,
+                                validTill: {
+                                    $gte: new Date(
+                                        selectedActivities[i]?.date
+                                    ).toISOString(),
+                                },
+                            },
+                            { validity: false },
+                        ],
+                    }).count();
+
+                    if (adultTickets < selectedActivities[i]?.adultsCount) {
+                        adultTicketError = true;
+                    }
+
+                    if (
+                        childrenTickets < selectedActivities[i]?.childrenCount
+                    ) {
+                        childTicketError = true;
+                    }
+
+                    if (adultTicketError || childTicketError) {
+                        return sendErrorResponse(
+                            res,
+                            500,
+                            `${adultTicketError ? "Adult Tickets" : ""}${
+                                adultTicketError && childTicketError
+                                    ? " and "
+                                    : ""
+                            }${
+                                childTicketError ? "Child Tickets" : ""
+                            } Sold Out`
+                        );
+                    }
+                }
+
+                let price = 0;
+                let totalResellerMarkup = 0;
+                let totalSubAgentMarkup = 0;
+                let markups = [];
+
+                let resellerToSubAgentMarkup;
+                let resellerToClientMarkup;
+                if (req.reseller.role === "sub-agent") {
+                    resellerToSubAgentMarkup =
+                        await B2BSubAgentAttractionMarkup.findOne({
+                            resellerId: req.reseller?.referredBy,
+                            attraction: activity?.attraction,
+                        });
+                }
+                resellerToClientMarkup =
+                    await B2BClientAttractionMarkup.findOne({
+                        resellerId: req.reseller?._id,
+                        attraction: activity?.attraction,
+                    });
+
+                if (
+                    selectedActivities[i]?.adultsCount > 0 &&
+                    activity.adultPrice
+                ) {
+                    let adultPrice = activity.adultPrice;
+                    if (resellerToSubAgentMarkup) {
+                        let markup = 0;
+                        if (resellerToSubAgentMarkup.markupType === "flat") {
+                            markup = resellerToSubAgentMarkup.markup;
+                        } else {
+                            markup =
+                                (resellerToSubAgentMarkup.markup *
+                                    activity.adultPrice) /
+                                100;
+                        }
+
+                        totalResellerMarkup +=
+                            markup * selectedActivities[i]?.adultsCount;
+                        adultPrice += markup;
+                    }
+
+                    if (resellerToClientMarkup) {
+                        let markup = 0;
+                        if (resellerToClientMarkup.markupType === "flat") {
+                            markup = resellerToClientMarkup.markup;
+                        } else {
+                            markup =
+                                (resellerToClientMarkup.markup * adultPrice) /
+                                100;
+                        }
+                        totalSubAgentMarkup +=
+                            markup * selectedActivities[i]?.adultsCount;
+                        adultPrice += markup;
+                    }
+
+                    price += adultPrice * selectedActivities[i]?.adultsCount;
+                }
+
+                if (
+                    selectedActivities[i]?.childrenCount > 0 &&
+                    activity.childPrice
+                ) {
+                    let childPrice = activity.childPrice;
+                    if (resellerToSubAgentMarkup) {
+                        let markup = 0;
+                        if (resellerToSubAgentMarkup.markupType === "flat") {
+                            markup = resellerToSubAgentMarkup.markup;
+                        } else {
+                            markup =
+                                (resellerToSubAgentMarkup.markup *
+                                    activity?.childPrice) /
+                                100;
+                        }
+                        totalResellerMarkup +=
+                            markup * selectedActivities[i]?.childrenCount;
+                        childPrice += markup;
+                    }
+
+                    if (resellerToClientMarkup) {
+                        let markup = 0;
+                        if (resellerToClientMarkup.markupType === "flat") {
+                            markup = resellerToClientMarkup.markup;
+                        } else {
+                            markup =
+                                (resellerToClientMarkup.markup * childPrice) /
+                                100;
+                        }
+                        totalSubAgentMarkup +=
+                            markup * selectedActivities[i]?.childrenCount;
+                        childPrice += markup;
+                    }
+
+                    price += childPrice * selectedActivities[i]?.childrenCount;
+                }
+
+                if (
+                    selectedActivities[i]?.infantCount > 0 &&
+                    activity.infantPrice
+                ) {
+                    let infantPrice = activity.infantPrice;
+                    if (resellerToSubAgentMarkup) {
+                        let markup = 0;
+                        if (resellerToSubAgentMarkup.markupType === "flat") {
+                            markup = resellerToSubAgentMarkup.markup;
+                        } else {
+                            markup =
+                                (resellerToSubAgentMarkup.markup *
+                                    selectedActivities[i]?.infantPrice) /
+                                100;
+                        }
+                        totalResellerMarkup +=
+                            markup * selectedActivities[i]?.infantCount;
+                        infantPrice += markup;
+                    }
+
+                    if (resellerToClientMarkup) {
+                        let markup = 0;
+                        if (resellerToClientMarkup.markupType === "flat") {
+                            markup = resellerToClientMarkup.markup;
+                        } else {
+                            markup =
+                                (resellerToClientMarkup.markup * infantPrice) /
+                                100;
+                        }
+                        totalSubAgentMarkup +=
+                            markup * selectedActivities[i]?.infantCount;
+                        infantPrice += markup;
+                    }
+
+                    price += infantPrice * selectedActivities[i]?.infantCount;
+                }
+
+                if (req.reseller.role === "sub-agent") {
+                    markups.push({
+                        to: req.reseller?.referredBy,
+                        amount: totalResellerMarkup,
+                    });
+                }
+                markups.push({
+                    to: req.reseller?._id,
+                    amount: totalSubAgentMarkup,
+                });
+
+                selectedActivities[i].amount = price;
+                selectedActivities[i].offerAmount = 0;
+                selectedActivities[i].status = "pending";
+                selectedActivities[i].bookingType = attraction.bookingType;
+                selectedActivities[i].totalMarkup =
+                    totalResellerMarkup + totalSubAgentMarkup;
+                selectedActivities[i].markups = markups;
+
+                totalAmount += price;
+            }
+
+            const otp = await sendMobileOtp(
+                countryDetail.phonecode,
+                phoneNumber
             );
-          }
+
+            const attractionOrder = new B2BAttractionOrder({
+                activities: selectedActivities,
+                totalAmount,
+                totalOffer,
+                reseller: req.reseller?._id,
+                country,
+                name,
+                email,
+                phoneNumber,
+                orderStatus: "pending",
+                otp,
+            });
+            await attractionOrder.save();
+
+            res.status(200).json(attractionOrder);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
         }
+    },
 
-        if (attraction.bookingType === "ticket") {
-          let adultTicketError = false;
-          let childTicketError = false;
-          const adultTickets = await AttractionTicket.find({
-            activity: activity._id,
-            status: "ok",
-            ticketFor: "adult",
-            $or: [
-              {
-                validity: true,
-                validTill: {
-                  $gte: new Date(selectedActivities[i]?.date).toISOString(),
-                },
-              },
-              { validity: false },
-            ],
-          }).count();
-          const childrenTickets = await AttractionTicket.find({
-            activity: activity._id,
-            status: "ok",
-            ticketFor: "child",
-            $or: [
-              {
-                validity: true,
-                validTill: {
-                  $gte: new Date(selectedActivities[i]?.date).toISOString(),
-                },
-              },
-              { validity: false },
-            ],
-          }).count();
+    completeAttractionOrder: async (req, res) => {
+        try {
+            const { orderId } = req.params;
+            const { otp } = req.body;
 
-          if (adultTickets < Number(selectedActivities[i]?.adultsCount)) {
-            adultTicketError = true;
-          }
-
-          if (childrenTickets < Number(selectedActivities[i]?.childrenCount)) {
-            childTicketError = true;
-          }
-
-          if (adultTicketError || childTicketError) {
-            return sendErrorResponse(
-              res,
-              500,
-              `${adultTicketError && "Adult Tickets"} ${
-                adultTicketError && childTicketError ? "and" : ""
-              } ${childTicketError && "Child Tickets"} Sold Out`
-            );
-          }
-        }
-
-        let price = 0;
-        let reseller = {};
-        let subAgent = {};
-        let profitReseller = 0;
-        let profitSubAgent = 0;
-        reseller.adultPrice = 0;
-        subAgent.adultPrice = 0;
-        reseller.childPrice = 0;
-        subAgent.childPrice = 0;
-        reseller.totalInfantPrice = 0;
-        subAgent.totalInfantPrice = 0;
-        reseller.totalAdultPrice = 0;
-        subAgent.totalAdultPrice = 0;
-        reseller.totalChildPrice = 0;
-        subAgent.totalChildPrice = 0;
-        reseller.infantPrice = 0;
-        subAgent.infantPrice = 0;
-
-        if (req.reseller.role == "sub-agent") {
-          // console.log(req.reseller.referredBy,activity.attraction , "hiii")
-
-          let subAgentMarkUP = await B2BSubAgentAttractionMarkup.findOne({
-            resellerId: req.reseller.referredBy,
-            attraction: activity.attraction,
-          });
-          //    console.log(resellerMarkUP , "resellerMarkUP")
-
-          subAgent.markupType = subAgentMarkUP?.markupType
-            ? subAgentMarkUP?.markupType
-            : "flat";
-          subAgent.markup = subAgentMarkUP?.markup ? subAgentMarkUP?.markup : 0;
-
-          if (reseller?.markupType == "percentage") {
-            console.log(activity.infantPrice, reseller.markup, "lll");
-
-            subAgent.adultPrice =
-              (activity.adultPrice * subAgent?.markup) / 100;
-            subAgent.childPrice =
-              (activity.childPrice * subAgent?.markup) / 100;
-            subAgent.infantPrice =
-              (activity.infantPrice * subAgent?.markup) / 100;
-          }
-
-          if (subAgent?.markupType == "flat") {
-            subAgent.adultPrice = subAgent.markup;
-            subAgent.childPrice = subAgent.markup;
-
-            if (activity.infantPrice == 0) {
-              subAgent.infantPrice = 0;
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "invalid order id");
             }
-            subAgent.infantPrice = subAgent.markup;
-          }
-          // console.log(reseller.adultPrice , reseller.infantPrice , "reseller.adultPrice klklkl")
-        }
 
-        let resellerMarkUP = await B2BClientAttractionMarkup.findOne({
-          resellerId: req.reseller._id,
-          attraction: activity.attraction,
-        });
-
-        reseller.markupType = resellerMarkUP?.markupType
-          ? resellerMarkUP?.markupType
-          : "flat";
-        reseller.markup = resellerMarkUP?.markup ? resellerMarkUP?.markup : 0;
-
-        //    console.log(subAgentMarkUP , subAgent.markupType, subAgent.markup ,  "subAgentMarkUP")
-
-        if (resellerMarkUP && reseller.markupType == "percentage") {
-          console.log(reseller.adultPrice, "reseller.adultPrice");
-
-          reseller.adultPrice =
-            ((activity.adultPrice + reseller.adultPrice) * reseller.markup) /
-            100;
-
-          reseller.childPrice =
-            ((activity.childPrice + reseller.childPrice) * reseller.markup) /
-            100;
-          reseller.infantPrice =
-            ((activity.infantPrice + reseller.infantPrice) * reseller.markup) /
-            100;
-        }
-        if (reseller?.markupType == "flat") {
-          reseller.adultPrice = reseller?.markup;
-          reseller.childPrice = reseller?.markup;
-          if (activity.infantPrice == 0) {
-            reseller.infantPrice = 0;
-          }
-          reseller.infantPrice = reseller?.markup;
-        }
-
-        console.log(
-          subAgent.adultPrice,
-          subAgent.infant,
-          "reseller.adultPrice"
-        );
-
-        if (selectedActivities[i]?.adultsCount && activity.adultPrice) {
-          price +=
-            Number(selectedActivities[i]?.adultsCount) *
-            (activity.adultPrice + subAgent?.adultPrice + reseller.adultPrice);
-
-          reseller.totalAdultPrice +=
-            Number(selectedActivities[i]?.adultsCount) * reseller.adultPrice;
-          subAgent.totalAdultPrice +=
-            Number(selectedActivities[i]?.adultsCount) * subAgent.adultPrice;
-        }
-        console.log(price, "price");
-        if (selectedActivities[i]?.childrenCount && activity?.childPrice) {
-          price +=
-            Number(selectedActivities[i]?.childrenCount) *
-            (activity.childPrice + subAgent.childPrice + reseller.childPrice);
-
-          reseller.totalChildPrice +=
-            Number(selectedActivities[i]?.adultsCount) * reseller.childPrice;
-          subAgent.totalChildPrice +=
-            Number(selectedActivities[i]?.adultsCount) * subAgent.childPrice;
-
-          console.log("reached2");
-          console.log(price, "price");
-        }
-        if (selectedActivities[i]?.infantCount && activity?.infantPrice) {
-          console.log(
-            activity.infantPrice,
-            subAgent.infantPrice,
-            reseller.infantPrice,
-            "infantPrice"
-          );
-
-          price +=
-            Number(selectedActivities[i]?.infantCount) *
-            (activity.infantPrice +
-              subAgent.infantPrice +
-              reseller.infantPrice);
-
-          reseller.totalInfantPrice +=
-            Number(selectedActivities[i]?.infantCount) * reseller.infantPrice;
-          subAgent.totalInfantPrice +=
-            Number(selectedActivities[i]?.infantCount) * subAgent.infantPrice;
-
-          console.log("reached");
-        }
-       
-
-        let offer = 0;
-        if (attraction?.isOffer) {
-          if (attraction.offerAmountType === "flat") {
-            offer = attraction.offerAmount;
-          } else {
-            offer = (price / 100) * attraction.offerAmount;
-          }
-        }
-        price -= offer;
-        if (price < 0) {
-          price = 0;
-        }
-
-        if (attraction.bookingType === "booking") {
-          let totalAdultPurchaseCost = 0;
-          if (selectedActivities[i]?.adultsCount >= 1) {
-            totalAdultPurchaseCost =
-              (selectedActivities[i]?.adultsCount || 0) *
-              (activity.adultCost || 0);
-          }
-          let totalChildPurchaseCost = 0;
-          if (selectedActivities[i]?.childrenCount >= 1) {
-            totalChildPurchaseCost =
-              (selectedActivities[i]?.childrenCount || 0) *
-              (activity.childCost || 0);
-          }
-          let totalInfantPurchaseCost = 0;
-          if (selectedActivities[i]?.infantCount >= 1) {
-            totalInfantPurchaseCost =
-              (selectedActivities[i]?.infantCount || 0) *
-              (activity.infantCost || 0);
-          }
-
-          profitReseller =
-            reseller.totalInfantPrice +
-            reseller.totalChildPrice +
-            reseller.totalAdultPrice;
-
-          selectedActivities[i].profitReseller = profitReseller;
-
-          profitSubAgent =
-            subAgent.totalInfantPrice +
-            subAgent.totalAdultPrice +
-            subAgent.totalChildPrice;
-
-          selectedActivities[i].profitSubAgent = profitSubAgent;
-
-          let profit =
-            price -
-            (totalAdultPurchaseCost +
-              totalChildPurchaseCost +
-              totalInfantPurchaseCost) -
-            profitSubAgent -
-            profitReseller;
-
-          selectedActivities[i].profit = profit;
-        }
-
-        if (selectedActivities[i]?.transferType === "private") {
-          if (activity.isTransferAvailable && activity.privateTransferPrice) {
-            if (selectedActivities[i]?.adultsCount) {
-              price +=
-                Number(selectedActivities[i]?.adultsCount) *
-                activity.privateTransferPrice;
+            const attractionOrder = await B2BAttractionOrder.findOne({
+                _id: orderId,
+                reseller: req.reseller._id,
+            });
+            if (!attractionOrder) {
+                return sendErrorResponse(
+                    res,
+                    404,
+                    "attraction order not found"
+                );
             }
-            if (selectedActivities[i]?.childrenCount) {
-              price +=
-                Number(selectedActivities[i]?.childrenCount) *
-                activity.privateTransferPrice;
+
+            if (attractionOrder.orderStatus === "paid") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, you have already completed this order!"
+                );
             }
-          } else {
-            return sendErrorResponse(
-              res,
-              400,
-              `Private transfer not available for ${activity?.name}`
-            );
-          }
-        }
 
-        if (selectedActivities[i]?.transferType === "shared") {
-          if (activity.isTransferAvailable && activity.sharedTransferPrice) {
-            if (selectedActivities[i]?.adultsCount) {
-              price +=
-                Number(selectedActivities[i]?.adultsCount) *
-                activity.sharedTransferPrice;
+            if (!attractionOrder.otp || attractionOrder.otp !== Number(otp)) {
+                return sendErrorResponse(res, 400, "incorrect otp!");
             }
-            if (selectedActivities[i]?.childrenCount) {
-              price +=
-                Number(selectedActivities[i]?.childrenCount) *
-                activity.sharedTransferPrice;
+
+            let totalAmount = attractionOrder.totalAmount;
+
+            let wallet = await B2BWallet.findOne({
+                reseller: req.reseller?._id,
+            });
+            if (!wallet || wallet.balance < totalAmount) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "insufficient balance. please reacharge and try again"
+                );
             }
-          } else {
-            return sendErrorResponse(
-              res,
-              400,
-              `Shared Transfer not available for ${activity?.name}`
-            );
-          }
+
+            for (let i = 0; i < attractionOrder.activities?.length; i++) {
+                const activity = await AttractionActivity.findOne({
+                    _id: attractionOrder.activities[i].activity,
+                });
+                let totalPurchaseCost = 0;
+                if (activity.bookingType === "ticket") {
+                    let adultTickets = [];
+                    let childTickets = [];
+
+                    for (
+                        let i = 0;
+                        i < attractionOrder.activities[i].adultsCount;
+                        i++
+                    ) {
+                        const ticket = await AttractionTicket.findOneAndUpdate(
+                            {
+                                activity: activity.activity,
+                                status: "ok",
+                                ticketFor: "adult",
+                                $or: [
+                                    {
+                                        validity: true,
+                                        validTill: {
+                                            $gte: new Date(
+                                                activity.date
+                                            ).toISOString(),
+                                        },
+                                    },
+                                    { validity: false },
+                                ],
+                            },
+                            { status: "used" }
+                        );
+                        if (!ticket) {
+                            return sendErrorResponse(
+                                res,
+                                400,
+                                "tickets sold out."
+                            );
+                        }
+                        adultTickets.push({
+                            ticketId: ticket._id,
+                            ticketNo: ticket?.ticketNo,
+                            lotNo: ticket?.lotNo,
+                            ticketFor: ticket?.ticketFor,
+                            validity: ticket.validity,
+                            validTill: ticket.validTill,
+                            cost: ticket?.ticketCost,
+                        });
+
+                        totalPurchaseCost += ticket.ticketCost;
+                    }
+
+                    for (
+                        let i = 0;
+                        i < attractionOrder.activities[i].childrenCount;
+                        i++
+                    ) {
+                        const ticket = await AttractionTicket.findOneAndUpdate(
+                            {
+                                activity: activity.activity,
+                                status: "ok",
+                                ticketFor: "child",
+                                $or: [
+                                    {
+                                        validity: true,
+                                        validTill: {
+                                            $gte: new Date(
+                                                activity.date
+                                            ).toISOString(),
+                                        },
+                                    },
+                                    { validity: false },
+                                ],
+                            },
+                            { status: "used" }
+                        );
+                        if (!ticket) {
+                            return sendErrorResponse(
+                                res,
+                                404,
+                                "Ooh. sorry, We know you already paid. But tickets sold out. We are trying maximum to provide tickets for you. Otherwise amount will be refunded within 24hrs"
+                            );
+                        }
+                        childTickets.push({
+                            ticketId: ticket._id,
+                            ticketNo: ticket?.ticketNo,
+                            lotNo: ticket?.lotNo,
+                            ticketFor: ticket?.ticketFor,
+                            validity: ticket.validity,
+                            validTill: ticket.validTill,
+                            cost: ticket?.ticketCost,
+                        });
+
+                        totalPurchaseCost += ticket.ticketCost;
+                    }
+
+                    attractionOrder.activities[i].adultTickets = adultTickets;
+                    attractionOrder.activities[i].childTickets = childTickets;
+                    attractionOrder.activities[i].status = "confirmed";
+                } else {
+                    totalPurchaseCost =
+                        activity.adultCost *
+                            attractionOrder.activities[i].adultsCount +
+                        (activity.childCost *
+                            attractionOrder.activities[i].childrenCount || 0) +
+                        (activity.infantCost *
+                            attractionOrder.activities[i].childrenCount || 0);
+                    attractionOrder.activities[i].status = "booked";
+                }
+                attractionOrder.activities[i].totalPurchaseCost =
+                    totalPurchaseCost;
+                attractionOrder.activities[i].profit =
+                    attractionOrder.activities[i].amount -
+                    (attractionOrder.activities[i].totalPurchaseCost +
+                        attractionOrder.activities[i].totalMarkup);
+            }
+
+            const transaction = new B2BTransaction({
+                reseller: req.reseller?._id,
+                transactionType: "deduct",
+                status: "pending",
+                paymentProcessor: "wallet",
+                amount: totalAmount,
+                order: orderId,
+            });
+            await transaction.save();
+
+            wallet.balance -= totalAmount;
+            await wallet.save();
+
+            transaction.status = "success";
+            await transaction.save();
+
+            attractionOrder.phoneNumberVerified = true;
+            attractionOrder.otp = "";
+            attractionOrder.orderStatus = "paid";
+            await attractionOrder.save();
+
+            for (let i = 0; i < attractionOrder.activities?.length; i++) {
+                const activity = await AttractionActivity.findOne(
+                    attractionOrder.activities[i]?.activity
+                ).populate("attraction", "bookingType");
+
+                if (activity.attraction?.bookingType === "ticket") {
+                    await handleAttractionOrderMarkup(
+                        attractionOrder._id,
+                        attractionOrder.activities[i],
+                        req.reseller?._id
+                    );
+                }
+            }
+
+            res.status(200).json({
+                message: "order successfully placed",
+                referenceNumber: attractionOrder.referenceNumber,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 400, err);
         }
-
-        selectedActivities[i].amount = price;
-        selectedActivities[i].offerAmount = offer;
-        selectedActivities[i].status = "pending";
-        selectedActivities[i].bookingType = attraction.bookingType;
-        if (attraction.bookingType === "booking") {
-          selectedActivities[i].adultCost = activity.adultCost;
-          selectedActivities[i].childCost = activity.childCost;
-          selectedActivities[i].infantCost = activity.infantCost;
-        }
-        totalAmount += price;
-        totalOffer += offer;
-        resellertotalMarkupAmount += profitReseller;
-        subAgenttotalMarkupAmount += profitSubAgent;
-
-
-        
-        pendingActivities.push({
-           
-
-        })
-
-      }
-
-      console.log(
-        totalAmount,
-        resellertotalMarkupAmount,
-        selectedActivities,
-        "kkkk",
-        subAgenttotalMarkupAmount
-      );
-
-      const newB2BAttractionOrder = new B2BAttractionOrder({
-        activities: selectedActivities,
-        totalAmount,
-        totalOffer,
-        reseller: req.reseller?._id,
-        country: req.reseller.country,
-        name: req.reseller.name,
-        email: req.reseller.email,
-        phoneNumber: req.reseller.phoneNumber,
-        orderStatus: "pending",
-      });
-
-      await newB2BAttractionOrder.save();
-
-      res.status(200).json(result);
-    } catch (err) {
-      sendErrorResponse(res, 500, err);
-    }
-  },
-
-  // initiateAttractionOrderPayment: async (req, res) => {
-  
-  // },
-
-
+    },
 };

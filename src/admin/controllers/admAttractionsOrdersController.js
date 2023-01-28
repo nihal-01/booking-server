@@ -1,4 +1,5 @@
 const { isValidObjectId } = require("mongoose");
+const attractionOrderHelpers = require("../../b2b/helpers/attractionOrderHelpers");
 const { sendErrorResponse } = require("../../helpers");
 const { AttractionOrder, Driver } = require("../../models");
 
@@ -226,6 +227,8 @@ module.exports = {
                 },
                 { runValidators: true }
             );
+
+            await attractionOrderHelpers(order, orderDetails?.activities[0]);
 
             res.status(200).json({
                 message: "Booking confirmed successfully",

@@ -2,24 +2,21 @@ const { isValidObjectId } = require("mongoose");
 const { sendErrorResponse } = require("../../helpers");
 const { createOrder, fetchOrder, fetchPayment } = require("../../utils/paypal");
 const { B2BTransaction, B2BWallet } = require("../models");
-const { b2bAttractionOrderCaptureSchema } = require("../validations/b2bAttractionOrder.schema");
-
-
+const {
+    b2bAttractionOrderCaptureSchema,
+} = require("../validations/b2bAttractionOrder.schema");
 
 module.exports = {
-    
     walletDeposit: async (req, res) => {
         try {
             const { paymentProcessor, amount } = req.body;
-            
-            const reseller = req.reseller
-            console.log(reseller , "reseller")
+
+            const reseller = req.reseller;
+            console.log(reseller, "reseller");
             if (!isValidObjectId(reseller)) {
                 return sendErrorResponse(res, 400, "Invalid category id");
             }
 
-            
-            
             let result;
             let resultFinal;
             const newTransation = new B2BTransaction({
@@ -30,16 +27,13 @@ module.exports = {
                 status: "pending",
                 paymentId: result,
             });
-            
-            
+
             if (paymentProcessor === "paypal") {
                 const currency = "USD";
                 const response = await createOrder(amount, currency);
-               
-                newTransation.paymentId  = response.result.id;
-                resultFinal = response.result
 
-
+                newTransation.paymentId = response.result.id;
+                resultFinal = response.result;
 
                 if (response.statusCode !== 201) {
                     newTransation.status = "failed";
@@ -51,10 +45,7 @@ module.exports = {
                         "Something went wrong while fetching order! Please try again later"
                     );
                 }
-
-            }else if( paymentProcessor === "razorpay"){
-
-                
+            } else if (paymentProcessor === "razorpay") {
             } else {
                 return sendErrorResponse(
                     res,
@@ -63,7 +54,7 @@ module.exports = {
                 );
             }
 
-            console.log(newTransation , "newTransation") 
+            console.log(newTransation, "newTransation");
 
             await newTransation.save();
             res.status(200).json(resultFinal);
@@ -72,7 +63,6 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
-
 
     captureWalletDeposit: async (req, res) => {
         try {
@@ -155,8 +145,10 @@ module.exports = {
                     transaction.paymentDetails = paymentObject.result;
                     await transaction.save();
 
-                    await B2BWallet.updateOne({
-                        reseller : req.reseller._id},
+                    await B2BWallet.updateOne(
+                        {
+                            reseller: req.reseller._id,
+                        },
                         {
                             $inc: { balance: transaction.amount },
                         },

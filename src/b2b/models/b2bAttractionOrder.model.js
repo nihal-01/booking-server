@@ -24,15 +24,15 @@ const b2battractionOrderSchema = new Schema(
                     },
                     adultsCount: {
                         type: Number,
-                        required: true,
                     },
                     childrenCount: {
                         type: Number,
-                        required: true,
                     },
                     infantCount: {
                         type: Number,
-                        required: true,
+                    },
+                    totalPurchaseCost: {
+                        type: Number,
                     },
                     profit: {
                         type: Number,
@@ -75,6 +75,25 @@ const b2battractionOrderSchema = new Schema(
                         required: true,
                         default: false,
                     },
+                    totalMarkup: {
+                        type: Number,
+                        required: true,
+                    },
+                    markups: {
+                        type: [
+                            {
+                                to: {
+                                    type: Schema.Types.ObjectId,
+                                    ref: "Reseller",
+                                    required: true,
+                                },
+                                amount: {
+                                    type: Number,
+                                    required: true,
+                                },
+                            },
+                        ],
+                    },
                 },
             ],
         },
@@ -90,12 +109,12 @@ const b2battractionOrderSchema = new Schema(
             type: String,
             required: true,
             lowercase: true,
-            enum: ["pending", "paid", "failed"]
+            enum: ["pending", "paid", "failed"],
         },
         paymentOrderId: {
             type: String,
         },
-        reseller : {
+        reseller: {
             type: Schema.Types.ObjectId,
             ref: "Reseller",
             required: true,
@@ -117,6 +136,9 @@ const b2battractionOrderSchema = new Schema(
             ref: "Country",
             required: true,
         },
+        otp: {
+            type: Number,
+        },
         referenceNumber: {
             type: Number,
         },
@@ -129,6 +151,9 @@ b2battractionOrderSchema.plugin(AutoIncrement, {
     start_seq: 10000,
 });
 
-const B2BAttractionOrder = model("B2BAttractionOrder", b2battractionOrderSchema);
+const B2BAttractionOrder = model(
+    "B2BAttractionOrder",
+    b2battractionOrderSchema
+);
 
 module.exports = B2BAttractionOrder;

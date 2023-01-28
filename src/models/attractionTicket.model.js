@@ -47,6 +47,12 @@ const attractionTicketSchema = new Schema(
             required: true,
             default: false,
         },
+        reservationEnds: {
+            type: Date,
+            required: function () {
+                return this.isReserved === true;
+            },
+        },
         ticketCost: {
             type: Number,
             required: true,

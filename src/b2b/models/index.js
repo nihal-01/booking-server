@@ -1,7 +1,7 @@
 const Reseller = require("./reseller.model");
 const B2BClientAttractionMarkup = require('./b2bClientAttraction.model')
 const  B2BSubAgentAttractionMarkup = require('./b2bSubAgentAttractionMarkup')
-const B2BTransaction = require('./b2bTransation.model')
+const B2BTransaction = require('./b2bTransaction.model')
 const B2BWallet = require('./b2bWallet.model')
 const B2BAttractionOrder = require('./b2bAttractionOrder.model')
 

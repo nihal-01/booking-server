@@ -390,7 +390,7 @@ module.exports = {
                 );
             }
 
-            if (attractionOrder.otp !== otp) {
+            if (!attractionOrder.otp || attractionOrder.otp !== otp) {
                 return sendErrorResponse(res, 400, "Incorrect otp!");
             }
 
