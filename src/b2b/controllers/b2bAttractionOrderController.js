@@ -20,6 +20,7 @@ const {
 const {
     handleAttractionOrderMarkup,
 } = require("../helpers/attractionOrderHelpers");
+const { generateUniqueString } = require("../../utils");
 
 const dayNames = [
     "sunday",
@@ -371,6 +372,7 @@ module.exports = {
                 phoneNumber,
                 orderStatus: "pending",
                 otp,
+                referenceNumber: generateUniqueString("B2BATO"),
             });
             await attractionOrder.save();
 

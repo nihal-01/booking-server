@@ -17,13 +17,12 @@ module.exports = {
                 details,
                 keywords,
             } = req.body;
-            
-            
+
             const { _, error } = visaSchema.validate(req.body);
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
             }
-            
+
             if (!isValidObjectId(country)) {
                 return sendErrorResponse(res, 400, "Invalid country id");
             }
@@ -39,13 +38,13 @@ module.exports = {
             if (!req.file?.path) {
                 return sendErrorResponse(res, 400, "Sample visa is required");
             }
-            
+
             let sampleVisa;
             if (req.file?.path) {
                 sampleVisa = "/" + req.file.path.replace(/\\/g, "/");
             }
 
-            console.log(req.body , "body ")
+            console.log(req.body, "body ");
             const newVisa = new Visa({
                 country,
                 name,
@@ -120,111 +119,80 @@ module.exports = {
         }
     },
 
-    listAllVisa : async(req,res)=>{
-        try{
-           
+    listAllVisa: async (req, res) => {
+        try {
+            const visaList = await Visa.find({ isDeleted: false });
 
-            const visaList = await Visa.find({isDeleted : false});
-
-            if(!visaList){
-                sendErrorResponse(res, 400,  "Visa not found" );
-
+            if (!visaList) {
+                sendErrorResponse(res, 400, "Visa not found");
             }
-            
+
             res.status(200).json(visaList);
-
-        }catch(error){
-
+        } catch (error) {
             sendErrorResponse(res, 500, err);
-
-
         }
-    } , 
-    
+    },
 
-    listAllVisaType : async(req,res)=>{
+    listAllVisaType: async (req, res) => {
+        try {
+            const visaTypeList = await VisaType.find({ isDeleted: false });
 
-        try{
-
-            const visaTypeList = await VisaType.find({ isDeleted : false });
-
-            if(!visaTypeList){
-                sendErrorResponse(res, 400,  "visaType not found" );
-
+            if (!visaTypeList) {
+                sendErrorResponse(res, 400, "visaType not found");
             }
 
             res.status(200).json(visaTypeList);
-
-        }catch(error){
-
+        } catch (error) {
             sendErrorResponse(res, 500, err);
-
         }
     },
-    
-    getSingleVisa : async(req,res)=>{
 
-        try{
-           
+    getSingleVisa: async (req, res) => {
+        try {
             const { visaId } = req.params;
-
 
             if (!isValidObjectId(visaId)) {
                 return sendErrorResponse(res, 400, "Invalid Visa id");
             }
 
-            const visa = await Visa.find({_id : id , isDeleted : false });
+            const visa = await Visa.find({ _id: id, isDeleted: false });
 
-            if(!visa){
-                sendErrorResponse(res, 400,  "Visa not found" );
-
+            if (!visa) {
+                sendErrorResponse(res, 400, "Visa not found");
             }
-            
+
             res.status(200).json(visa);
-
-        }catch(err){
-
+        } catch (err) {
             sendErrorResponse(res, 500, err);
-
-
         }
-    } , 
+    },
 
-    getSingleVisaType : async(req,res)=>{
-
-        try{
-
+    getSingleVisaType: async (req, res) => {
+        try {
             const { id } = req.params;
-
 
             if (!isValidObjectId(id)) {
                 return sendErrorResponse(res, 400, "Invalid VisaType id");
             }
 
-            const visaType = await VisaType.findOne({_id : id , isDeleted : false });
+            const visaType = await VisaType.findOne({
+                _id: id,
+                isDeleted: false,
+            });
 
-            if(!visaType){
-                sendErrorResponse(res, 400,  "visaType not found" );
-
+            if (!visaType) {
+                sendErrorResponse(res, 400, "visaType not found");
             }
 
             res.status(200).json(visaType);
-
-        }catch(err){
-
+        } catch (err) {
             sendErrorResponse(res, 500, err);
-
         }
-
     },
 
-    updateVisa : async(req,res)=>{
-
-        try{
-             
+    updateVisa: async (req, res) => {
+        try {
             const { id } = req.params;
-
-           
 
             const {
                 country,
@@ -235,15 +203,13 @@ module.exports = {
                 faqs,
                 details,
                 keywords,
-                sampleVisa
-
+                sampleVisa,
             } = req.body;
 
             if (!isValidObjectId(id)) {
                 return sendErrorResponse(res, 400, "Invalid visa id");
             }
 
-           
             if (!isValidObjectId(country)) {
                 return sendErrorResponse(res, 400, "Invalid country id");
             }
@@ -256,45 +222,35 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Country not found");
             }
 
-            
-
             if (req.file?.path) {
                 sampleVisa = "/" + req.file.path.replace(/\\/g, "/");
             }
-            
+
             const updatedVisa = await Visa.findByIdAndUpdate(
                 id,
                 {
-                country,
-                name,
-                documents,
-                inclusions,
-                description,
-                faqs,
-                details,
-                keywords,
-                sampleVisa,
+                    country,
+                    name,
+                    documents,
+                    inclusions,
+                    description,
+                    faqs,
+                    details,
+                    keywords,
+                    sampleVisa,
                 },
                 { runValidators: true, new: true }
             );
 
             res.status(200).json(updatedVisa);
-
-
-
-        }catch(err){
+        } catch (err) {
             sendErrorResponse(res, 500, err);
-
-
         }
     },
 
-    updateVisaType : async(req,res)=>{
-
-        try{
-
+    updateVisaType: async (req, res) => {
+        try {
             const { id } = req.params;
-
 
             const {
                 visa,
@@ -312,13 +268,9 @@ module.exports = {
                 ageTo,
             } = req.body;
 
-
-            
             if (!isValidObjectId(id)) {
                 return sendErrorResponse(res, 400, "Invalid VisaType id");
             }
-
-          
 
             if (!isValidObjectId(visa)) {
                 return sendErrorResponse(res, 400, "Invalid country visa id");
@@ -328,39 +280,30 @@ module.exports = {
             if (!visaDetails) {
                 return sendErrorResponse(res, 404, "Country Visa not found");
             }
-            
 
             const updatedVisaType = await VisaType.findByIdAndUpdate(
                 id,
                 {
-                visa,
-                visaName,
-                processingTimeFormat,
-                processingTime,
-                stayPeriodFormat,
-                stayPeriod,
-                validityTimeFormat,
-                validity,
-                entryType,
-                embassyCharge,
-                serviceCharge,
-                ageFrom,
-                ageTo,
+                    visa,
+                    visaName,
+                    processingTimeFormat,
+                    processingTime,
+                    stayPeriodFormat,
+                    stayPeriod,
+                    validityTimeFormat,
+                    validity,
+                    entryType,
+                    embassyCharge,
+                    serviceCharge,
+                    ageFrom,
+                    ageTo,
                 },
                 { runValidators: true, new: true }
             );
 
             res.status(200).json(updatedVisaType);
-
-
-
-
-
-        }catch(err){
-
+        } catch (err) {
             sendErrorResponse(res, 500, err);
-
-
         }
     },
 
@@ -389,8 +332,7 @@ module.exports = {
         }
     },
 
-    deleteVisa : async(req,res)=>{
-
+    deleteVisa: async (req, res) => {
         try {
             const { id } = req.params;
 
@@ -401,7 +343,7 @@ module.exports = {
             const visaType = await Visa.findByIdAndUpdate(id, {
                 isDeleted: true,
             });
-            
+
             if (!visaType) {
                 return sendErrorResponse(res, 400, "Visa not found");
             }
@@ -413,10 +355,5 @@ module.exports = {
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
-
-
-    }
-
-
-
+    },
 };

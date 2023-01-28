@@ -18,6 +18,6 @@ router.use("/client/markup", b2bClientAttractionMarkupRouter);
 router.use("/sub-agent/markup", b2bSubAgentAttractionMarkupRouter);
 router.use("/resellers/wallet", b2bWalletDepositRouter);
 router.use("/attractions/orders", b2bAttractionOrdersRouter);
-router.use("/resellers/transaction", b2bTransactionRouter);
+router.use("/transactions", b2bTransactionRouter);
 
 module.exports = router;

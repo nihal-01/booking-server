@@ -1,10 +1,17 @@
-const mongoose = require("mongoose");
-const AutoIncrement = require("mongoose-sequence")(mongoose);
-
-const { Schema, model } = mongoose;
+const { Schema, model } = require("mongoose");
 
 const b2battractionOrderSchema = new Schema(
     {
+        reseller: {
+            type: Schema.Types.ObjectId,
+            ref: "Reseller",
+            required: true,
+        },
+        orderedBy: {
+            type: String,
+            required: true,
+            enum: ["reseller", "sub-agent"],
+        },
         activities: {
             type: [
                 {
@@ -75,9 +82,12 @@ const b2battractionOrderSchema = new Schema(
                         required: true,
                         default: false,
                     },
-                    totalMarkup: {
+                    resellerMarkup: {
                         type: Number,
                         required: true,
+                    },
+                    subAgentMarkup: {
+                        type: Number,
                     },
                     markups: {
                         type: [
@@ -114,11 +124,6 @@ const b2battractionOrderSchema = new Schema(
         paymentOrderId: {
             type: String,
         },
-        reseller: {
-            type: Schema.Types.ObjectId,
-            ref: "Reseller",
-            required: true,
-        },
         name: {
             type: String,
             required: true,
@@ -140,16 +145,12 @@ const b2battractionOrderSchema = new Schema(
             type: Number,
         },
         referenceNumber: {
-            type: Number,
+            type: String,
+            required: true,
         },
     },
     { timestamps: true }
 );
-
-b2battractionOrderSchema.plugin(AutoIncrement, {
-    inc_field: "referenceNumber",
-    start_seq: 10000,
-});
 
 const B2BAttractionOrder = model(
     "B2BAttractionOrder",
