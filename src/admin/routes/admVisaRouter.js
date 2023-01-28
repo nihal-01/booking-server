@@ -50,16 +50,16 @@ const upload = multer({
 
 router.post(
     "/country-visa/create",
-    upload.single("sampleVisa"),
+    upload.single("image"),
     createNewVisa
 );
 router.post("/add", addNewVisaType);
 router.get('/all' , listAllVisa )
 router.get('/visa-type/all' , listAllVisaType )
 router.get('/:id' , getSingleVisa)
-router.get('/visa-type/:id' , getSingleVisaType)
+router.get('/:id/visa-type' , getSingleVisaType)
 router.patch('/update/:id' ,upload.single("sampleVisa"),updateVisa)
-router.patch('/update/visa-type/:id' , updateVisaType)
+router.patch('/update/:id/visa-type' , updateVisaType)
 router.patch('/delete/:id' , deleteVisa)
 router.patch('/delete/visa-type/:id' , deleteVisaType)
 

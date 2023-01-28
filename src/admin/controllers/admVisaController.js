@@ -15,11 +15,18 @@ module.exports = {
                 description,
                 faqs,
                 details,
-                keywords,
             } = req.body;
             
+            console.log(req.body)
             
-            const { _, error } = visaSchema.validate(req.body);
+       console.log( inclusions ? JSON.parse(inclusions) : [] , "kkkk")
+            
+            const { _, error } = visaSchema.validate( {...req.body ,
+                inclusions: inclusions ? JSON.parse(inclusions) : [],
+                faqs: faqs ? JSON.parse(faqs) : [],
+                details: details ? JSON.parse(details) : []});
+
+
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
             }
@@ -35,6 +42,7 @@ module.exports = {
             if (!countryDetails) {
                 return sendErrorResponse(res, 400, "Country not found");
             }
+            console.log(req.body , "body ")
 
             if (!req.file?.path) {
                 return sendErrorResponse(res, 400, "Sample visa is required");
@@ -45,16 +53,30 @@ module.exports = {
                 sampleVisa = "/" + req.file.path.replace(/\\/g, "/");
             }
 
-            console.log(req.body , "body ")
+            let parsedInclusion;
+            if (inclusions) {
+                parsedInclusion = JSON.parse(inclusions);
+            }
+
+            let parsedFaqs;
+            if (faqs) {
+                parsedFaqs = JSON.parse(faqs);
+            }
+
+            let parsedDetails;
+            if (details) {
+                parsedDetails = JSON.parse(details);
+            }
+
             const newVisa = new Visa({
                 country,
                 name,
-                documents,
-                inclusions,
+                // documents,
+                inclusions : parsedInclusion ,
                 description,
-                faqs,
-                details,
-                keywords,
+                faqs : parsedFaqs,
+                details : parsedDetails,
+                // keywords,
                 sampleVisa,
             });
             await newVisa.save();
@@ -77,17 +99,21 @@ module.exports = {
                 validityTimeFormat,
                 validity,
                 entryType,
-                embassyCharge,
                 serviceCharge,
                 ageFrom,
                 ageTo,
+                visaPrice,
+                tax,
+                purchaseCost ,
             } = req.body;
+             
 
+            console.log(req.body , "req.body")
             const { _, error } = visaTypeSchema.validate(req.body);
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
             }
-
+ 
             if (!isValidObjectId(visa)) {
                 return sendErrorResponse(res, 400, "Invalid country visa id");
             }
@@ -107,15 +133,22 @@ module.exports = {
                 validityTimeFormat,
                 validity,
                 entryType,
-                embassyCharge,
                 serviceCharge,
                 ageFrom,
                 ageTo,
+                visaPrice,
+                tax,
+                purchaseCost ,
+            
             });
             await newVisaType.save();
+            
 
+            console.log(newVisaType , "newVisaType")
             res.status(200).json(newVisaType);
         } catch (err) {
+
+            console.log(err)
             sendErrorResponse(res, 500, err);
         }
     },
@@ -124,13 +157,14 @@ module.exports = {
         try{
            
 
-            const visaList = await Visa.find({isDeleted : false});
+            const visaList = await Visa.find({isDeleted : false}).populate("country")
 
             if(!visaList){
                 sendErrorResponse(res, 400,  "Visa not found" );
 
             }
             
+            console.log(visaList , "visaList")
             res.status(200).json(visaList);
 
         }catch(error){
@@ -146,7 +180,7 @@ module.exports = {
 
         try{
 
-            const visaTypeList = await VisaType.find({ isDeleted : false });
+            const visaTypeList = await VisaType.find({ isDeleted : false }).populate({path: 'visa', populate: {path: 'country'}})
 
             if(!visaTypeList){
                 sendErrorResponse(res, 400,  "visaType not found" );
@@ -166,14 +200,14 @@ module.exports = {
 
         try{
            
-            const { visaId } = req.params;
+            const { id } = req.params;
 
 
-            if (!isValidObjectId(visaId)) {
+            if (!isValidObjectId(id)) {
                 return sendErrorResponse(res, 400, "Invalid Visa id");
             }
 
-            const visa = await Visa.find({_id : id , isDeleted : false });
+            const visa = await Visa.findOne({_id : id , isDeleted : false });
 
             if(!visa){
                 sendErrorResponse(res, 400,  "Visa not found" );
@@ -306,12 +340,19 @@ module.exports = {
                 validityTimeFormat,
                 validity,
                 entryType,
-                embassyCharge,
                 serviceCharge,
                 ageFrom,
                 ageTo,
+                visaPrice,
+                tax,
+                purchaseCost ,
             } = req.body;
 
+            console.log(req.body , "req.body")
+            const { _, error } = visaTypeSchema.validate(req.body);
+            if (error) {
+                return sendErrorResponse(res, 400, error.details[0].message);
+            }            
 
             
             if (!isValidObjectId(id)) {
@@ -333,19 +374,21 @@ module.exports = {
             const updatedVisaType = await VisaType.findByIdAndUpdate(
                 id,
                 {
-                visa,
-                visaName,
-                processingTimeFormat,
-                processingTime,
-                stayPeriodFormat,
-                stayPeriod,
-                validityTimeFormat,
-                validity,
-                entryType,
-                embassyCharge,
-                serviceCharge,
-                ageFrom,
-                ageTo,
+                    visa,
+                    visaName,
+                    processingTimeFormat,
+                    processingTime,
+                    stayPeriodFormat,
+                    stayPeriod,
+                    validityTimeFormat,
+                    validity,
+                    entryType,
+                    serviceCharge,
+                    ageFrom,
+                    ageTo,
+                    visaPrice,
+                    tax,
+                    purchaseCost ,
                 },
                 { runValidators: true, new: true }
             );

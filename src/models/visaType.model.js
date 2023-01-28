@@ -47,7 +47,7 @@ const visaTypeSchema = new Schema(
             lowercase: true,
             enum: ["single", "multiple"],
         },
-        embassyCharge: {
+        tax: {
             type: Number,
             required: true,
         },
@@ -55,7 +55,11 @@ const visaTypeSchema = new Schema(
             type: Number,
             required: true,
         },
-        totalCharge: {
+        purchaseCost: {
+            type: Number,
+            required: true,
+        },
+        visaPrice: {
             type: Number,
             required: true,
         },

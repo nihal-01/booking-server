@@ -3,13 +3,13 @@ const Joi = require("joi");
 const visaSchema = Joi.object({
     country: Joi.string().required(),
     name: Joi.string().required(),
-    documents: Joi.array()
-        .min(1)
-        .items({
-            title: Joi.string().required(),
-            body: Joi.string().required(),
-        })
-        .required(),
+    // documents: Joi.array()
+    //     .min(1)
+    //     .items({
+    //         title: Joi.string().required(),
+    //         body: Joi.string().required(),
+    //     })
+    //     .required(),
     inclusions: Joi.array().min(1).required(),
     description: Joi.string().required(),
     faqs: Joi.array()
@@ -26,7 +26,7 @@ const visaSchema = Joi.object({
             body: Joi.string().required(),
         })
         .required(),
-    keywords: Joi.array(),
+    // keywords: Joi.array(),
 });
 
 const visaTypeSchema = Joi.object({
@@ -47,8 +47,10 @@ const visaTypeSchema = Joi.object({
     entryType: Joi.string()
         .valid(...["single", "multiple"])
         .required(),
-    embassyCharge: Joi.number().required(),
+    tax: Joi.number().required(),
     serviceCharge: Joi.number().required(),
+    purchaseCost: Joi.number().required(),
+    visaPrice: Joi.number().required(),
     ageFrom: Joi.number().required(),
     ageTo: Joi.number().required(),
 });

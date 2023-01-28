@@ -11,20 +11,20 @@ const visaSchema = new Schema(
             type: String,
             required: true,
         },
-        documents: {
-            type: [
-                {
-                    title: {
-                        type: String,
-                        required: true,
-                    },
-                    body: {
-                        type: String,
-                        required: true,
-                    },
-                },
-            ],
-        },
+        // documents: {
+        //     type: [
+        //         {
+        //             title: {
+        //                 type: String,
+        //                 required: true,
+        //             },
+        //             body: {
+        //                 type: String,
+        //                 required: true,
+        //             },
+        //         },
+        //     ],
+        // },
         inclusions: {
             type: [{ type: String, required: true }],
         },
@@ -64,9 +64,9 @@ const visaSchema = new Schema(
                 },
             ],
         },
-        keywords: {
-            type: [{ type: String, required: true, lowercase: true }],
-        },
+        // keywords: {
+        //     type: [{ type: String, required: true, lowercase: true }],
+        // },
          isDeleted: {
             type: Boolean,
             required: true,

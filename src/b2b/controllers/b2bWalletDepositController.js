@@ -14,8 +14,8 @@ module.exports = {
             
             const reseller = req.reseller
             console.log(reseller , "reseller")
-            if (!isValidObjectId(reseller)) {
-                return sendErrorResponse(res, 400, "Invalid category id");
+            if (!isValidObjectId(reseller._id)) {
+                return sendErrorResponse(res, 400, "Invalid reseller id");
             }
 
             
@@ -98,7 +98,6 @@ module.exports = {
             }
 
             if (transaction.status === "success") {
-                transaction.status = "failed";
                 await transaction.save();
 
                 return sendErrorResponse(
