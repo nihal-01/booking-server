@@ -1,6 +1,6 @@
 const { Schema, model } = require("mongoose");
 
-const b2bClentAttractionMarkupSchema = new Schema(
+const b2bClientAttractionMarkupSchema = new Schema(
     {
         markupType: {
             type: String,
@@ -28,7 +28,7 @@ const b2bClentAttractionMarkupSchema = new Schema(
 
 const B2BClientAttractionMarkup = model(
     "B2BClientAttractionMarkup",
-    b2bClentAttractionMarkupSchema
+    b2bClientAttractionMarkupSchema
 );
 
 module.exports = B2BClientAttractionMarkup;

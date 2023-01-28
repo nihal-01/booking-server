@@ -2,7 +2,6 @@ const { hash } = require("bcryptjs");
 const crypto = require("crypto");
 const { isValidObjectId, Types } = require("mongoose");
 
-
 const { sendErrorResponse } = require("../../helpers");
 const { sendSubAgentPassword } = require("../helpers");
 const { Reseller } = require("../models");
@@ -80,22 +79,19 @@ module.exports = {
         }
     },
 
-    listResellers : async(req,res)=>{
+    listResellers: async (req, res) => {
+        try {
+            const resellerList = await Reseller.find({
+                referredBy: req.reseller.id,
+            });
 
-        try{
-
-            const resellerList = await Reseller.find({referredBy : req.reseller.id})
-
-            if(!resellerList){
+            if (!resellerList) {
                 sendErrorResponse(res, 500, "No Resellers Found");
-
             }
 
             res.status(200).json(resellerList);
-        }catch(error){
-
+        } catch (error) {
             sendErrorResponse(res, 500, err);
-
         }
     },
 

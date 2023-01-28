@@ -1,18 +1,20 @@
-const { isValidObjectId , Types } = require("mongoose");
+const { isValidObjectId, Types } = require("mongoose");
 const { sendErrorResponse } = require("../../helpers");
 const { Attraction } = require("../../models");
 const { B2BClientAttractionMarkup } = require("../models");
-const { b2bClientAttractionMarkupSchema } = require("../validations/b2bClientAttractionMarkupSchema");
-
+const {
+    b2bClientAttractionMarkupSchema,
+} = require("../validations/b2bClientAttractionMarkupSchema");
 
 module.exports = {
     upsertB2bClientAttractionMarkup: async (req, res) => {
         try {
             const { markupType, markup, attraction } = req.body;
 
-            const { _, error } = b2bClientAttractionMarkupSchema.validate(req.body);
+            const { _, error } = b2bClientAttractionMarkupSchema.validate(
+                req.body
+            );
             if (error) {
-                consolr.log(error , "error")
                 return sendErrorResponse(res, 400, error.details[0]?.message);
             }
 
@@ -25,7 +27,7 @@ module.exports = {
                 isDeleted: false,
             });
             if (!attractionDetail) {
-                return sendErrorResponse(res ,  400, "Attraction Not Found" );
+                return sendErrorResponse(res, 400, "Attraction Not Found");
             }
 
             const b2bClientAttractionMarkups =
@@ -33,7 +35,12 @@ module.exports = {
                     {
                         attraction,
                     },
-                    { attraction, markupType, markup , resellerId : req.reseller._id },
+                    {
+                        attraction,
+                        markupType,
+                        markup,
+                        resellerId: req.reseller._id,
+                    },
                     { upsert: true, new: true, runValidators: true }
                 );
 
@@ -75,6 +82,4 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
-
-    
 };

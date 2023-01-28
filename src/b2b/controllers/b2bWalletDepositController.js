@@ -1,45 +1,32 @@
-const { isValidObjectId } = require("mongoose");
 const { sendErrorResponse } = require("../../helpers");
 const { createOrder, fetchOrder, fetchPayment } = require("../../utils/paypal");
 const { B2BTransaction, B2BWallet } = require("../models");
-const { b2bAttractionOrderCaptureSchema } = require("../validations/b2bAttractionOrder.schema");
-
-
+const {
+    b2bAttractionOrderCaptureSchema,
+} = require("../validations/b2bAttractionOrder.schema");
 
 module.exports = {
-    
+    // TODO
+    // 1. Currency conversions
     walletDeposit: async (req, res) => {
         try {
             const { paymentProcessor, amount } = req.body;
-            
-            const reseller = req.reseller
-            console.log(reseller , "reseller")
-            if (!isValidObjectId(reseller._id)) {
-                return sendErrorResponse(res, 400, "Invalid reseller id");
-            }
 
-            
-            
-            let result;
-            let resultFinal;
             const newTransation = new B2BTransaction({
                 reseller: req.reseller?._id,
                 transactionType: "deposit",
                 amount,
                 paymentProcessor,
                 status: "pending",
-                paymentId: result,
             });
-            
-            
+
+            let resultFinal;
             if (paymentProcessor === "paypal") {
                 const currency = "USD";
                 const response = await createOrder(amount, currency);
-               
-                newTransation.paymentId  = response.result.id;
-                resultFinal = response.result
 
-
+                newTransation.paymentOrderId = response.result.id;
+                resultFinal = response.result;
 
                 if (response.statusCode !== 201) {
                     newTransation.status = "failed";
@@ -51,10 +38,7 @@ module.exports = {
                         "Something went wrong while fetching order! Please try again later"
                     );
                 }
-
-            }else if( paymentProcessor === "razorpay"){
-
-                
+            } else if (paymentProcessor === "razorpay") {
             } else {
                 return sendErrorResponse(
                     res,
@@ -63,8 +47,6 @@ module.exports = {
                 );
             }
 
-            console.log(newTransation , "newTransation") 
-
             await newTransation.save();
             res.status(200).json(resultFinal);
         } catch (err) {
@@ -72,7 +54,6 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
-
 
     captureWalletDeposit: async (req, res) => {
         try {
@@ -86,24 +67,22 @@ module.exports = {
             }
 
             const transaction = await B2BTransaction.findOne({
-                paymentId: orderId,
+                paymentOrderId: orderId,
             });
 
             if (!transaction) {
                 return sendErrorResponse(
                     res,
                     400,
-                    " Transation not found!. Check with XYZ team if amount is debited from your bank!"
+                    "transation not found!. check with the team if amount is debited from your bank!"
                 );
             }
 
             if (transaction.status === "success") {
-                await transaction.save();
-
                 return sendErrorResponse(
                     res,
                     400,
-                    "This transaction already completed, Thank you"
+                    "this transaction already completed, Thank you"
                 );
             }
 
@@ -150,12 +129,15 @@ module.exports = {
                     );
                 } else {
                     transaction.status = "success";
-                    transaction.paymentId = paymentId;
-                    transaction.paymentDetails = paymentObject.result;
+                    transaction.paymentDetails = paymentObject?.result;
                     await transaction.save();
 
-                    await B2BWallet.updateOne({
-                        reseller : req.reseller._id},
+                    // do conversion
+
+                    await B2BWallet.updateOne(
+                        {
+                            reseller: req.reseller._id,
+                        },
                         {
                             $inc: { balance: transaction.amount },
                         },

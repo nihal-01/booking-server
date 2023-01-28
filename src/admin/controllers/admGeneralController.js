@@ -1,5 +1,5 @@
 const { sendErrorResponse } = require("../../helpers");
-const { Country, Destination, Driver, Currency, HomeSettings } = require("../../models");
+const { Country, Destination, Driver, Currency } = require("../../models");
 
 module.exports = {
     getGeneralData: async (req, res) => {
@@ -18,18 +18,12 @@ module.exports = {
                 .populate("country", "countryName flag")
                 .sort({ createdAt: -1 })
                 .lean();
- 
-
-            const blogStatus = await HomeSettings.findOne({}).sort({ createdAt: -1 }).select({isBlogsEnabled : 1})
-
-            console.log(blogStatus ,"blogStatus")
 
             res.status(200).json({
                 destinations,
                 countries,
                 drivers,
                 currencies,
-                blogStatus
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);

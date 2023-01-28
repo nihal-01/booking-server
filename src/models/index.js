@@ -24,6 +24,9 @@ const B2CWallet = require("./b2cWallet.model");
 const PaymentService = require("./paymentService.model");
 const OtpSettings = require("./otpSettings.model");
 const EmailSettings = require("./emailSettings.model");
+const Hotel = require("./hotel.model");
+const HotelContract = require("./hotelContract.model");
+const RoomType = require("./roomType.model");
 
 module.exports = {
     HomeSettings,
@@ -53,4 +56,7 @@ module.exports = {
     PaymentService,
     OtpSettings,
     EmailSettings,
+    Hotel,
+    RoomType,
+    HotelContract,
 };

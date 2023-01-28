@@ -1,10 +1,17 @@
-const mongoose = require("mongoose");
-const AutoIncrement = require("mongoose-sequence")(mongoose);
-
-const { Schema, model } = mongoose;
+const { Schema, model } = require("mongoose");
 
 const b2battractionOrderSchema = new Schema(
     {
+        reseller: {
+            type: Schema.Types.ObjectId,
+            ref: "Reseller",
+            required: true,
+        },
+        orderedBy: {
+            type: String,
+            required: true,
+            enum: ["reseller", "sub-agent"],
+        },
         activities: {
             type: [
                 {
@@ -24,15 +31,15 @@ const b2battractionOrderSchema = new Schema(
                     },
                     adultsCount: {
                         type: Number,
-                        required: true,
                     },
                     childrenCount: {
                         type: Number,
-                        required: true,
                     },
                     infantCount: {
                         type: Number,
-                        required: true,
+                    },
+                    totalPurchaseCost: {
+                        type: Number,
                     },
                     profit: {
                         type: Number,
@@ -41,6 +48,7 @@ const b2battractionOrderSchema = new Schema(
                         type: String,
                         lowercase: true,
                         enum: ["without", "private", "shared"],
+                        required: true,
                     },
                     offerAmount: { type: Number, required: true },
                     amount: { type: Number, required: true },
@@ -75,6 +83,31 @@ const b2battractionOrderSchema = new Schema(
                         required: true,
                         default: false,
                     },
+                    resellerMarkup: {
+                        type: Number,
+                        required: true,
+                    },
+                    subAgentMarkup: {
+                        type: Number,
+                        required: function () {
+                            return this.orderedBy === "sub-agent";
+                        },
+                    },
+                    markups: {
+                        type: [
+                            {
+                                to: {
+                                    type: Schema.Types.ObjectId,
+                                    ref: "Reseller",
+                                    required: true,
+                                },
+                                amount: {
+                                    type: Number,
+                                    required: true,
+                                },
+                            },
+                        ],
+                    },
                 },
             ],
         },
@@ -90,15 +123,10 @@ const b2battractionOrderSchema = new Schema(
             type: String,
             required: true,
             lowercase: true,
-            enum: ["pending", "paid", "failed"]
+            enum: ["pending", "paid", "failed"],
         },
         paymentOrderId: {
             type: String,
-        },
-        reseller : {
-            type: Schema.Types.ObjectId,
-            ref: "Reseller",
-            required: true,
         },
         name: {
             type: String,
@@ -117,18 +145,20 @@ const b2battractionOrderSchema = new Schema(
             ref: "Country",
             required: true,
         },
-        referenceNumber: {
+        otp: {
             type: Number,
+        },
+        referenceNumber: {
+            type: String,
+            required: true,
         },
     },
     { timestamps: true }
 );
 
-b2battractionOrderSchema.plugin(AutoIncrement, {
-    inc_field: "referenceNumber",
-    start_seq: 10000,
-});
-
-const B2BAttractionOrder = model("B2BAttractionOrder", b2battractionOrderSchema);
+const B2BAttractionOrder = model(
+    "B2BAttractionOrder",
+    b2battractionOrderSchema
+);
 
 module.exports = B2BAttractionOrder;

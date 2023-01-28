@@ -6,32 +6,30 @@ const Reseller = require("../models/reseller.model");
 const b2bResellerAuth = async (req, res, next) => {
     try {
         const token = req.headers.authorization?.split(" ")[1];
-        if (token) {
-            const decode = jwt.verify(token, process.env.JWT_SECRET);
-            const reseller = await Reseller.findOne({
-                _id: decode._id,
-                jwtToken: token,
-            });
-
-            console.log(reseller , "reseller")
-
-            if (!reseller) {
-                return sendErrorResponse(res, 401, "Invalid Token");
-            }
-
-            if (reseller.role !== "reseller") {
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "Access denied. You should login as a reseller"
-                );
-            }
-
-            req.reseller = reseller;
-            next();
-        } else {
-            return sendErrorResponse(res, 401, "Notoken Token");
+        if (!token) {
+            return sendErrorResponse(res, 401, "token not found");
         }
+
+        const decode = jwt.verify(token, process.env.JWT_SECRET);
+        const reseller = await Reseller.findOne({
+            _id: decode._id,
+            jwtToken: token,
+        });
+
+        if (!reseller) {
+            return sendErrorResponse(res, 401, "invalid token");
+        }
+
+        if (reseller.role !== "reseller") {
+            return sendErrorResponse(
+                res,
+                400,
+                "access denied. you should login as a reseller"
+            );
+        }
+
+        req.reseller = reseller;
+        next();
     } catch (err) {
         sendErrorResponse(res, 401, err);
     }
