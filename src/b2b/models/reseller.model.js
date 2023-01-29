@@ -32,7 +32,6 @@ const resellerSchema = new Schema(
         },
         zipCode: {
             type: Number,
-            required: true,
         },
         designation: {
             type: String,
