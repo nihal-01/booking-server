@@ -126,15 +126,38 @@ module.exports = {
                 as: "markupClient",
               },
             },
+            {
+                $lookup: {
+                  from: "b2bsubagentvisamarkups",
+                  let: {
+                    visaType: "$_id",
+                  },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: {
+                          $and: [
+                            { $eq: ["$resellerId", req.reseller.referred] },
+                            { $eq: ["$visaType", "$$visaType"] },
+                          ],
+                        },
+                      },
+                    },
+                  ],
+                  as: "markupSubAgent",
+                },
+              },
   
             {
               $set: {
                 markupClient: { $arrayElemAt: ["$markupClient", 0] },
+                markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
+
               },
             },
             {
               $addFields: {
-                totalPrice: {
+                totalPriceSubAgent: {
                   $cond: [
                     {
                       $eq: ["$markupClient.markupType", "percentage"],
@@ -161,6 +184,35 @@ module.exports = {
                 },
               },
             },
+            {
+                $addFields: {
+                  totalPrice: {
+                    $cond: [
+                      {
+                        $eq: ["$markupSubAgent.markupType", "percentage"],
+                      },
+    
+                      {
+                        $sum: [
+                          "$visaPrice",
+                          {
+                            $divide: [
+                              {
+                                $multiply: ["$markupClient.markup", "$visaPrice"],
+                              },
+                              100,
+                            ],
+                          },
+                        ],
+                      },
+    
+                      {
+                        $sum: ["$visaPrice", "$markupClient.markup"],
+                      },
+                    ],
+                  },
+                },
+              },
           ]);
   
           console.log(visaType, "visaType");

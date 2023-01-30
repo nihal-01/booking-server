@@ -72,9 +72,18 @@ module.exports = {
                 status: "pending",
             });
 
-            await newReseller.save();
-            res.status(200).json({
-                message: "Your requeset has been successfully submitted",
+            await newReseller.save((error, reseller) => {
+                if (error) {
+                    return res.status(400).json({
+                        message: error.message,
+                    });
+                }
+                return res.status(200).json({
+                    message: "Reseller created successfully.",
+                    data: {
+                        agentCode: reseller.agentCode,
+                    },
+                });
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
