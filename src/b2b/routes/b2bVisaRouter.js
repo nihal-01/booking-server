@@ -1,12 +1,12 @@
 const router = require("express").Router();
 
 
-const { getSingleVisa } = require("../controllers/b2bVisaController");
+const { getSingleVisa , getAllVisa} = require("../controllers/b2bVisaController");
 const { b2bAuth } = require("../middlewares");
 
 router.get("/single/:id", b2bAuth, getSingleVisa);
-// router.get("/all", b2bAuth , getAllAttractions);
-// router.get("/listall", b2bAuth , listAllAttractions);
+router.get("/all", b2bAuth , getAllVisa);
+router.post("/apply", b2bAuth , applyVisa);
 
 
 module.exports = router;

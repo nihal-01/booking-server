@@ -15,22 +15,14 @@ const visaApplicationSchema = new Schema(
             type: Number,
             required: true,
         },
-        isDetailsAdded: {
-            type: Boolean,
-            required: true,
-            default: false,
-        },
+      
         onwardDate: {
             type: Date,
-            required: function () {
-                return this.isDetailsAdded === true;
-            },
+            required:true,
         },
         returnDate: {
             type: Date,
-            required: function () {
-                return this.isDetailsAdded === true;
-            },
+            required:true,
         },
         noOfTravellers: {
             type: Number,
@@ -84,6 +76,18 @@ const visaApplicationSchema = new Schema(
                         type: Number,
                         required: true,
                     },
+                    isDocumentUplaoded: {
+                        type: Boolean,
+                        required: true,
+                        default: false,
+                    },
+                    documents: {
+                        type: Schema.Types.ObjectId,
+                        ref: "VisaDocument",
+                        required: function () {
+                            return this.isDocumentUplaoded === true;
+                        },
+                    },
                 },
             ],
         },
@@ -92,18 +96,8 @@ const visaApplicationSchema = new Schema(
             required: true,
             default: false,
         },
-        isDocumentUplaoded: {
-            type: Boolean,
-            required: true,
-            default: false,
-        },
-        documents: {
-            type: Schema.Types.ObjectId,
-            ref: "VisaDocument",
-            required: function () {
-                return this.isDocumentUplaoded === true;
-            },
-        },
+        
+     
         status: {
             type: String,
             required: true,
