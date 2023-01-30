@@ -258,7 +258,6 @@ module.exports = {
              
             const { id } = req.params;
 
-           
 
             const {
                 country,
@@ -269,15 +268,24 @@ module.exports = {
                 faqs,
                 details,
                 keywords,
-                sampleVisa
 
             } = req.body;
 
-            if (!isValidObjectId(id)) {
-                return sendErrorResponse(res, 400, "Invalid visa id");
-            }
+            console.log(req.body,id , "body")
 
-           
+            console.log("hiii")
+
+
+            // const { _, error } = visaSchema.validate( {...req.body ,
+            //     inclusions: inclusions ? JSON.parse(inclusions) : [],
+            //     faqs: faqs ? JSON.parse(faqs) : [],
+            //     details: details ? JSON.parse(details) : []});
+
+
+            // if (error) {
+            //     return sendErrorResponse(res, 400, error.details[0].message);
+            // }
+            
             if (!isValidObjectId(country)) {
                 return sendErrorResponse(res, 400, "Invalid country id");
             }
@@ -289,25 +297,41 @@ module.exports = {
             if (!countryDetails) {
                 return sendErrorResponse(res, 400, "Country not found");
             }
+            console.log(req.body , "body ")
 
+          
             
-
+            let sampleVisa
             if (req.file?.path) {
                 sampleVisa = "/" + req.file.path.replace(/\\/g, "/");
             }
-            
+
+            let parsedInclusion;
+            if (inclusions) {
+                parsedInclusion = JSON.parse(inclusions);
+            }
+
+            let parsedFaqs;
+            if (faqs) {
+                parsedFaqs = JSON.parse(faqs);
+            }
+
+            let parsedDetails;
+            if (details) {
+                parsedDetails = JSON.parse(details);
+            }
             const updatedVisa = await Visa.findByIdAndUpdate(
                 id,
                 {
-                country,
-                name,
-                documents,
-                inclusions,
-                description,
-                faqs,
-                details,
-                keywords,
-                sampleVisa,
+                    country,
+                    name,
+                    // documents,
+                    inclusions : parsedInclusion ,
+                    description,
+                    faqs : parsedFaqs,
+                    details : parsedDetails,
+                    // keywords,
+                    sampleVisa ,
                 },
                 { runValidators: true, new: true }
             );

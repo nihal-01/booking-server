@@ -6,6 +6,9 @@ const b2bSubAgentAttractionMarkupRouter = require("./b2bSubAgentAttractionMarkup
 const b2bWalletDepositRouter = require('./b2bWalletDepositRouter')
 const b2bAttractionOrdersRouter = require('./b2bAttractionOrdersRoute')
 const b2bTransactionRouter = require('./b2bTransactionsRouter')
+const b2bSubAgentVisaMarkupRouter = require('./b2bSubAgentVisaMarkupRouter')
+const b2bClientVisaMarkupRouter = require('./b2bClientVisaMarkRouter')
+const b2bVisaRouter = require("./b2bVisaRouter");
 
 module.exports = {
   b2bResellersAuthRouter,
@@ -15,6 +18,10 @@ module.exports = {
   b2bSubAgentAttractionMarkupRouter,
   b2bWalletDepositRouter,
   b2bAttractionOrdersRouter,
-  b2bTransactionRouter
+  b2bTransactionRouter,
+  b2bClientVisaMarkupRouter,
+  b2bSubAgentVisaMarkupRouter,
+  b2bVisaRouter
+
   
 };

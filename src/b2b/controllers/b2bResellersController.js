@@ -70,10 +70,21 @@ module.exports = {
                 status: "pending",
             });
 
-            await newSubAgent.save();
-            res.status(200).json({
-                message: "Your requeset has been successfully submitted",
+            await newSubAgent.save((error, subAgent) => {
+                if (error) {
+                    return res.status(400).json({
+                        message: error.message,
+                    });
+                }
+                return res.status(200).json({
+                    message: "Sub-agent created successfully.",
+                    data: {
+                        agentCode: subAgent.agentCode,
+                    },
+                });
             });
+
+            
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

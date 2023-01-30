@@ -1021,7 +1021,7 @@ module.exports = {
           },
           {
             $addFields: {
-              activitiesss: {
+              activity: {
                 $map: {
                   input: "$activitiesSubAgent",
                   as: "activity",
@@ -1084,7 +1084,7 @@ module.exports = {
               },
               images: 1,
               bookingType: 1,
-              activitiesss :1,
+              activity :1,
               // activity: {
               //   adultPrice: {
               //     $cond: [
