@@ -516,7 +516,7 @@ module.exports = {
 
           {
             $set: {
-              visa : { $arrayElemAt: ["$visa", 0]},
+              visa : { $arrayElemAt: ["$visa.country", 0]},
               markupClient: { $arrayElemAt: ["$markupClient.markup", 0] },
               markupSubAgent: { $arrayElemAt: ["$markupSubAgent.markup", 0] },
 
