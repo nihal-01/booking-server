@@ -513,17 +513,32 @@ module.exports = {
                 as: "markupSubAgent",
               },
             },
+            {
+              $lookup: {
+                from: "countries",
+                localField: "visa.country",
+                foreignField: "_id",
+                as: "country",
+              },
+            },
 
           {
             $set: {
-              visa : { $arrayElemAt: ["$visa.country", 0]},
+              visa : { $arrayElemAt: ["$country.countryName", 0]},
               markupClient: { $arrayElemAt: ["$markupClient.markup", 0] },
               markupSubAgent: { $arrayElemAt: ["$markupSubAgent.markup", 0] },
 
             },
           },
+
           
         ]);
+
+       
+
+        // const countryDetails = await Country.findById(country);
+
+
 
         console.log(visaType, "visaType");
 
@@ -837,7 +852,7 @@ module.exports = {
 
 
             res.status(200).json({
-              message: "order successfully placed",
+              message: "Amount Paided successfully ",
               VisaApplicationOrder
           });
 
@@ -861,16 +876,16 @@ module.exports = {
         return sendErrorResponse(res, 400, "invalid order id");
     }
 
-  //   const VisaApplication = await VisaApplication.findOne({
-  //     _id: orderId,
-  //     reseller: req.reseller._id,
-  // });
+    const VisaApplication = await VisaApplication.findOne({
+      _id: orderId,
+      reseller: req.reseller._id,
+  });
 
 
-  // if ( document.lenght !== VisaApplication.noOfTravellers){
-  //   return sendErrorResponse(res, 400, "invalid order id");
+  if ( document.lenght !== VisaApplication.noOfTravellers){
+    return sendErrorResponse(res, 400, "invalid order id");
 
-  // }
+  }
   
 
   let images = [];

@@ -9,6 +9,7 @@ const b2bTransactionRouter = require('./b2bTransactionsRouter')
 const b2bSubAgentVisaMarkupRouter = require('./b2bSubAgentVisaMarkupRouter')
 const b2bClientVisaMarkupRouter = require('./b2bClientVisaMarkRouter')
 const b2bVisaRouter = require("./b2bVisaRouter");
+const b2bVisaApplicationStatusRouter = require('./b2bVisaApplicationStatusRouter')
 
 module.exports = {
   b2bResellersAuthRouter,
@@ -21,7 +22,8 @@ module.exports = {
   b2bTransactionRouter,
   b2bClientVisaMarkupRouter,
   b2bSubAgentVisaMarkupRouter,
-  b2bVisaRouter
+  b2bVisaRouter,
+  b2bVisaApplicationStatusRouter
 
   
 };
