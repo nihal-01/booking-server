@@ -38,6 +38,10 @@ const visaApplicationSchema = new Schema(
             type: Date,
             required:true,
         },
+        otp : {
+            type: Number,
+            required: true,
+        },
         returnDate: {
             type: Date,
             required:true,

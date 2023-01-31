@@ -224,7 +224,7 @@ module.exports = {
   
           console.log(visaType, "visaType");
   
-          res.status(200).json(visaType);
+          res.status(200).json(visaType[0]);
 
       }
     } catch (err) {
@@ -237,83 +237,83 @@ module.exports = {
     try {
     
 
-      if (req.reseller.role == "reseller") {
-        const visaType = await VisaType.aggregate([
-          {
-            $match: {
-              isDeleted: false,
-            },
-          },
-          {
-            $lookup: {
-              from: "visas",
-              localField: "visa",
-              foreignField: "_id",
-              as: "visa",
-            },
-          },
-          {
-            $lookup: {
-              from: "b2bclientvisamarkups",
-              let: {
-                visaType: "$_id",
-              },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: ["$resellerId", req.reseller._id] },
-                        { $eq: ["$visaType", "$$visaType"] },
-                      ],
-                    },
-                  },
-                },
-              ],
-              as: "markupClient",
-            },
-          },
+      // if (req.reseller.role == "reseller") {
+      //   const visaType = await VisaType.aggregate([
+      //     {
+      //       $match: {
+      //         isDeleted: false,
+      //       },
+      //     },
+      //     {
+      //       $lookup: {
+      //         from: "visas",
+      //         localField: "visa",
+      //         foreignField: "_id",
+      //         as: "visa",
+      //       },
+      //     },
+      //     {
+      //       $lookup: {
+      //         from: "b2bclientvisamarkups",
+      //         let: {
+      //           visaType: "$_id",
+      //         },
+      //         pipeline: [
+      //           {
+      //             $match: {
+      //               $expr: {
+      //                 $and: [
+      //                   { $eq: ["$resellerId", req.reseller._id] },
+      //                   { $eq: ["$visaType", "$$visaType"] },
+      //                 ],
+      //               },
+      //             },
+      //           },
+      //         ],
+      //         as: "markupClient",
+      //       },
+      //     },
 
-          {
-            $set: {
-              markupClient: { $arrayElemAt: ["$markupClient", 0] },
-            },
-          },
-          {
-            $addFields: {
-              totalPrice: {
-                $cond: [
-                  {
-                    $eq: ["$markupClient.markupType", "percentage"],
-                  },
+      //     {
+      //       $set: {
+      //         markupClient: { $arrayElemAt: ["$markupClient", 0] },
+      //       },
+      //     },
+      //     {
+      //       $addFields: {
+      //         totalPrice: {
+      //           $cond: [
+      //             {
+      //               $eq: ["$markupClient.markupType", "percentage"],
+      //             },
 
-                  {
-                    $sum: [
-                      "$visaPrice",
-                      {
-                        $divide: [
-                          {
-                            $multiply: ["$markupClient.markup", "$visaPrice"],
-                          },
-                          100,
-                        ],
-                      },
-                    ],
-                  },
+      //             {
+      //               $sum: [
+      //                 "$visaPrice",
+      //                 {
+      //                   $divide: [
+      //                     {
+      //                       $multiply: ["$markupClient.markup", "$visaPrice"],
+      //                     },
+      //                     100,
+      //                   ],
+      //                 },
+      //               ],
+      //             },
 
-                  {
-                    $sum: ["$visaPrice", "$markupClient.markup"],
-                  },
-                ],
-              },
-            },
-          },
-        ]);
+      //             {
+      //               $sum: ["$visaPrice", "$markupClient.markup"],
+      //             },
+      //           ],
+      //         },
+      //       },
+      //     },
+      //   ]);
 
-        console.log(visaType, "visaType");
+      //   console.log(visaType, "visaType");
 
-        res.status(200).json(visaType);
-      }else{
+      //   res.status(200).json(visaType);
+      // }else{
         
 
         console.log(req.reseller , "reseller")
@@ -445,7 +445,90 @@ module.exports = {
   
           res.status(200).json(visaType);
 
-      }
+      // }
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
+
+
+  listAll : async(req,res)=>{
+
+    try{
+
+      console.log(req.reseller , "reseller")
+      const visaType = await VisaType.aggregate([
+          {
+            $match: {
+              isDeleted: false,
+            },
+          },
+          {
+            $lookup: {
+              from: "visas",
+              localField: "visa",
+              foreignField: "_id",
+              as: "visa",
+            },
+          },
+          {
+            $lookup: {
+              from: "b2bclientvisamarkups",
+              let: {
+                visaType: "$_id",
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$resellerId", req.reseller._id] },
+                        { $eq: ["$visaType", "$$visaType"] },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "markupClient",
+            },
+          },
+          {
+              $lookup: {
+                from: "b2bsubagentvisamarkups",
+                let: {
+                  visaType: "$_id",
+                },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $and: [
+                          { $eq: ["$resellerId", req.reseller._id] },
+                          { $eq: ["$visaType", "$$visaType"] },
+                        ],
+                      },
+                    },
+                  },
+                ],
+                as: "markupSubAgent",
+              },
+            },
+
+          {
+            $set: {
+              visa : { $arrayElemAt: ["$visa", 0]},
+              markupClient: { $arrayElemAt: ["$markupClient.markup", 0] },
+              markupSubAgent: { $arrayElemAt: ["$markupSubAgent.markup", 0] },
+
+            },
+          },
+          
+        ]);
+
+        console.log(visaType, "visaType");
+
+        res.status(200).json(visaType);
+
     } catch (err) {
       sendErrorResponse(res, 500, err);
     }
@@ -485,12 +568,13 @@ module.exports = {
             _id: visaType,
             isDeleted: false,
         });
- 
+
+        
         if (!visaTypeDetails) {
             return sendErrorResponse(res, 400, "VisaType Not Found");
-        }
+          }
          
-        const countryDetail = await Country.findOne({
+          const countryDetail = await Country.findOne({
             isDeleted: false,
             _id: country,
         });
@@ -499,13 +583,14 @@ module.exports = {
         }
 
         if ( noOfTravellers !==  travellers.length ){
-            return sendErrorResponse(res, 400, "PassengerDetails Not Added ");
-
+          return sendErrorResponse(res, 400, "PassengerDetails Not Added ");
+          
         }
+        console.log(visaTypeDetails._id ,visaType ,"visaTypeDetails")
         const visaTypeList = await VisaType.aggregate([
           {
             $match: {
-              _id: visaType,
+              _id: visaTypeDetails._id,
               isDeleted: false,
             },
           },
@@ -645,8 +730,8 @@ module.exports = {
 
         const newVisaApplication = new VisaApplication({
             visaType,
-            visaPrice : visaTypeList.singleVisaPrice,
-            totalAmount : visaTypeList.totalAmount,
+            visaPrice : visaTypeList[0].singleVisaPrice,
+            totalAmount : visaTypeList[0].totalAmount,
             email,
             contactNo,
             onwardDate,
@@ -662,6 +747,8 @@ module.exports = {
         })
 
         await newVisaApplication.save()
+
+        res.status(200).json(newVisaApplication)
         
 
     }catch(err){
@@ -682,11 +769,11 @@ module.exports = {
           return sendErrorResponse(res, 400, "invalid order id");
       }
 
-      const VisaApplication = await VisaApplication.findOne({
+      const VisaApplicationOrder = await VisaApplication.findOne({
           _id: orderId,
           reseller: req.reseller._id,
       });
-      if (!VisaApplication) {
+      if (!VisaApplicationOrder) {
           return sendErrorResponse(
               res,
               404,
@@ -694,19 +781,27 @@ module.exports = {
           );
       }
 
-      if (VisaApplication.orderStatus === "paid") {
-          return sendErrorResponse(
-              res,
-              400,
-              "sorry, you have already completed this order!"
-          );
-      }
+      // if (VisaApplicationOrder.onwardDate <= new Date) {
+      //     return sendErrorResponse(
+      //         res,
+      //         400,
+      //         "sorry, visa onward date if experied!"
+      //     );
+      // }
 
-      if (!VisaApplication.otp || VisaApplication.otp !== Number(otp)) {
+      if (VisaApplicationOrder.isPayed === true) {
+        return sendErrorResponse(
+            res,
+            400,
+            "sorry, you have already completed this order!"
+        );
+    }
+
+      if (!VisaApplicationOrder.otp || VisaApplicationOrder.otp !== Number(otp)) {
           return sendErrorResponse(res, 400, "incorrect otp!");
       }
 
-      let totalAmount = VisaApplication.totalPrice;
+      let totalAmount = VisaApplicationOrder.totalAmount;
 
             let wallet = await B2BWallet.findOne({
                 reseller: req.reseller?._id,
@@ -728,6 +823,8 @@ module.exports = {
             amount: totalAmount,
             order: orderId,
         });
+         
+        console.log(totalAmount , "totalAmount")
 
         wallet.balance -= totalAmount;
             await wallet.save();
@@ -735,13 +832,13 @@ module.exports = {
             transaction.status = "success";
             await transaction.save();
 
-            VisaApplication.isPayed = true 
-            await VisaApplication.save();
+            VisaApplicationOrder.isPayed = true 
+            await VisaApplicationOrder.save();
 
 
             res.status(200).json({
               message: "order successfully placed",
-               VisaApplication
+              VisaApplicationOrder
           });
 
 
