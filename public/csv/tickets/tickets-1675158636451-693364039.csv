@@ -1,0 +1,8 @@
+ticketNo,lotNo,validity,validTill,details,ticketFor,cost
+345435,A1,y,27-12-2022,some details,adult,100
+345437,A2,n,,some details,adult,100
+345438,A1,n,,,adult,100
+345449,A1,n,,,child,100
+345459,A1,n,,,child,100
+345479,A1,n,,,child,100
+345489,A1,n,,,adult,100
