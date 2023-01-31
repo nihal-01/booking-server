@@ -83,7 +83,15 @@ module.exports = {
                     isDeleted: false,
                 });
                 if (!attraction) {
-                    return sendErrorResponse(res, 500, "Attraction not found!");
+                    return sendErrorResponse(res, 500, "attraction not found!");
+                }
+
+                if (new Date(selectedActivities[i]?.date) < new Date()) {
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        `"selectedActivities[${i}].date" must be a valid date`
+                    );
                 }
 
                 if (
@@ -122,7 +130,7 @@ module.exports = {
                     return sendErrorResponse(
                         res,
                         400,
-                        `Sorry, ${activity?.name} is off on ${selectedDay}`
+                        `sorry, ${activity?.name} is off on ${selectedDay}`
                     );
                 }
 
@@ -338,15 +346,22 @@ module.exports = {
                     price += infantPrice * selectedActivities[i]?.infantCount;
                 }
 
+                let isExpiry = false;
+                if (attraction.cancellationType !== "nonRefundable") {
+                    isExpiry = true;
+                }
+
                 if (req.reseller.role === "sub-agent") {
                     markups.push({
                         to: req.reseller?.referredBy,
                         amount: totalResellerMarkup,
+                        isExpiry,
                     });
                 }
                 markups.push({
                     to: req.reseller?._id,
                     amount: totalSubAgentMarkup,
+                    isExpiry,
                 });
 
                 selectedActivities[i].amount = price;
@@ -441,6 +456,7 @@ module.exports = {
                 if (attractionOrder.activities[i].bookingType === "ticket") {
                     let adultTickets = [];
                     let childTickets = [];
+                    let infantTickets = [];
 
                     for (
                         let j = 0;
@@ -535,8 +551,60 @@ module.exports = {
                         totalPurchaseCost += ticket.ticketCost;
                     }
 
+                    if (activity.infantPrice > 0) {
+                        for (
+                            let j = 0;
+                            j < attractionOrder.activities[i].childrenCount;
+                            j++
+                        ) {
+                            const ticket =
+                                await AttractionTicket.findOneAndUpdate(
+                                    {
+                                        activity:
+                                            attractionOrder.activities[i]
+                                                .activity,
+                                        status: "ok",
+                                        ticketFor: "infant",
+                                        $or: [
+                                            {
+                                                validity: true,
+                                                validTill: {
+                                                    $gte: new Date(
+                                                        attractionOrder.activities[
+                                                            i
+                                                        ].date
+                                                    ).toISOString(),
+                                                },
+                                            },
+                                            { validity: false },
+                                        ],
+                                    },
+                                    { status: "used" }
+                                );
+                            if (!ticket) {
+                                return sendErrorResponse(
+                                    res,
+                                    404,
+                                    "Ooh. sorry, We know you already paid. But tickets sold out. We are trying maximum to provide tickets for you. Otherwise amount will be refunded within 24hrs"
+                                );
+                            }
+                            infantTickets.push({
+                                ticketId: ticket._id,
+                                ticketNo: ticket?.ticketNo,
+                                lotNo: ticket?.lotNo,
+                                ticketFor: ticket?.ticketFor,
+                                validity: ticket.validity,
+                                validTill: ticket.validTill || undefined,
+                                cost: ticket?.ticketCost,
+                            });
+
+                            totalPurchaseCost += ticket.ticketCost;
+                        }
+                    }
+
                     attractionOrder.activities[i].adultTickets = adultTickets;
                     attractionOrder.activities[i].childTickets = childTickets;
+                    attractionOrder.activities[i].infantTickets = infantTickets;
                     attractionOrder.activities[i].status = "confirmed";
                 } else {
                     totalPurchaseCost =
@@ -587,30 +655,6 @@ module.exports = {
                 }
             }
 
-            sendEmail(
-                "lekhraj@hami.live",
-                "New Order placed",
-                `Reference No: ${attractionOrder.referenceNumber}
-Amount: ${attractionOrder.totalAmount}
-Activities: ${attractionOrder.activities.length}
-
-name: ${attractionOrder.name}
-email: ${attractionOrder.email}
-phoneNumber: ${attractionOrder.phoneNumber}`
-            );
-
-            sendEmail(
-                "experiences@travellerschoice.ae",
-                "New Order placed",
-                `Reference No: ${attractionOrder.referenceNumber}
-Amount: ${attractionOrder.totalAmount}
-Activities: ${attractionOrder.activities.length}
-
-name: ${attractionOrder.name}
-email: ${attractionOrder.email}
-phoneNumber: ${attractionOrder.phoneNumber}`
-            );
-
             res.status(200).json({
                 message: "order successfully placed",
                 referenceNumber: attractionOrder.referenceNumber,
@@ -620,3 +664,27 @@ phoneNumber: ${attractionOrder.phoneNumber}`
         }
     },
 };
+
+//             sendEmail(
+//                 "lekhraj@hami.live",
+//                 "New Order placed",
+//                 `Reference No: ${attractionOrder.referenceNumber}
+// Amount: ${attractionOrder.totalAmount}
+// Activities: ${attractionOrder.activities.length}
+
+// name: ${attractionOrder.name}
+// email: ${attractionOrder.email}
+// phoneNumber: ${attractionOrder.phoneNumber}`
+//             );
+
+//             sendEmail(
+//                 "experiences@travellerschoice.ae",
+//                 "New Order placed",
+//                 `Reference No: ${attractionOrder.referenceNumber}
+// Amount: ${attractionOrder.totalAmount}
+// Activities: ${attractionOrder.activities.length}
+
+// name: ${attractionOrder.name}
+// email: ${attractionOrder.email}
+// phoneNumber: ${attractionOrder.phoneNumber}`
+//             );

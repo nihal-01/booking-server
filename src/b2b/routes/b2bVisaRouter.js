@@ -6,7 +6,7 @@ const { b2bAuth } = require("../middlewares");
 
 router.get("/single/:id", b2bAuth, getSingleVisa);
 router.get("/all", b2bAuth , getAllVisa);
-router.post("/apply", b2bAuth , applyVisa);
+// router.post("/apply", b2bAuth , applyVisa);
 
 
 module.exports = router;
