@@ -525,8 +525,8 @@ module.exports = {
           {
             $set: {
               visa : { $arrayElemAt: ["$country.countryName", 0]},
-              markupClient: { $arrayElemAt: ["$markupClient.markup", 0] },
-              markupSubAgent: { $arrayElemAt: ["$markupSubAgent.markup", 0] },
+              markupClient: { $arrayElemAt: ["$markupClient", 0] },
+              markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
 
             },
           },
@@ -734,7 +734,6 @@ module.exports = {
             },
         ]);
 
-        console.log(visaTypeList)
         
 
         const otp = await sendMobileOtp(
