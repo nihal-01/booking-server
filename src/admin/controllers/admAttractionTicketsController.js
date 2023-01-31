@@ -64,12 +64,22 @@ module.exports = {
                             activity,
                         });
                         if (!ticket) {
+                            let dateString;
+                            if (ticketsList[i]?.validity === true) {
+                                var parts =
+                                    ticketsList[i]?.validTill?.split("-");
+                                dateString = new Date(
+                                    parts[2],
+                                    parts[1] - 1,
+                                    parts[0]
+                                ).toDateString();
+                            }
                             const newTicket = new AttractionTicket({
                                 ticketNo: ticketsList[i]?.ticketNo,
                                 lotNo: ticketsList[i]?.lotNo,
                                 activity: ticketsList[i]?.activity,
                                 validity: ticketsList[i]?.validity,
-                                validTill: ticketsList[i]?.validTill,
+                                validTill: dateString,
                                 details: ticketsList[i]?.details,
                                 ticketFor: ticketsList[i]?.ticketFor,
                                 ticketCost: ticketsList[i]?.ticketCost,
@@ -78,6 +88,7 @@ module.exports = {
                             newTickets.push(Object(newTicket));
                         }
                     } catch (err) {
+                        console.log(err);
                         errorTickets.push(ticketsList[i]?.ticketNo);
                     }
                 }

@@ -54,6 +54,7 @@ const b2battractionOrderSchema = new Schema(
                     amount: { type: Number, required: true },
                     adultTickets: { type: [] },
                     childTickets: { type: [] },
+                    infantTickets: { type: [] },
                     status: {
                         type: String,
                         lowercase: true,
@@ -103,6 +104,10 @@ const b2battractionOrderSchema = new Schema(
                                 },
                                 amount: {
                                     type: Number,
+                                    required: true,
+                                },
+                                isExpiry: {
+                                    type: Boolean,
                                     required: true,
                                 },
                             },

@@ -48,7 +48,7 @@ module.exports = {
             const transactions = await B2BTransaction.find({
                 reseller: req.reseller._id,
                 isPendingExpiry: true,
-                pendingExpiry: { $lte: new Date() },
+                pendingExpiry: { $lt: new Date() },
             }).lean();
             for (let i = 0; i < transactions.length; i++) {
                 const transaction = await B2BTransaction.findOneAndUpdate(
@@ -66,7 +66,13 @@ module.exports = {
             }
 
             const pendingBalance = await B2BTransaction.aggregate([
-                { $match: { isPendingExpiry: true, status: "pending" } },
+                {
+                    $match: {
+                        isPendingExpiry: true,
+                        status: "pending",
+                        reseller: req.reseller?._id,
+                    },
+                },
                 {
                     $group: {
                         _id: null,
@@ -77,7 +83,9 @@ module.exports = {
 
             res.status(200).json({
                 balance: wallet.balance,
-                pendingBalance: pendingBalance[0].totalAmount,
+                pendingBalance: pendingBalance[0]
+                    ? pendingBalance[0].totalAmount
+                    : 0,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
