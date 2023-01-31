@@ -18,6 +18,7 @@ const {
     deleteAttractionReview,
 } = require("../controllers/admAttractionsController");
 
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, "public/images/attractions");

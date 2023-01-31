@@ -24,8 +24,8 @@ router.use("/resellers/subagent/markup", b2bSubAgentAttractionMarkupRouter);
 router.use("/resellers/wallet", b2bWalletDepositRouter);
 router.use("/attractions/orders", b2bAttractionOrdersRouter);
 router.use("/transactions", b2bTransactionRouter);
-router.use("/resellers/subagent/visa/markup", b2bSubAgentVisaMarkupRouter);
-router.use("/resellers/client/visa/markup", b2bClientVisaMarkupRouter);
-router.use('/resellers/visa' , b2bVisaRouter)
+router.use("/subagent/visa/markup", b2bSubAgentVisaMarkupRouter);
+router.use("/client/visa/markup", b2bClientVisaMarkupRouter);
+router.use('/visa' , b2bVisaRouter)
 
 module.exports = router;

@@ -24,6 +24,8 @@ const visaApplicationSchema = Joi.object({
        
       })
     ).required(),
+    country: Joi.string().required(),
+
   });
 
   module.exports = { visaApplicationSchema };

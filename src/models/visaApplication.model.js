@@ -7,6 +7,24 @@ const visaApplicationSchema = new Schema(
             ref: "VisaType",
             required: true,
         },
+        visaPrice : {
+            type: Number,
+            required: true,
+        },
+        totalAmount:{
+            type: Number,
+            required: true,
+        },
+        reseller : {
+            type: Schema.Types.ObjectId,
+            ref: "reseller",
+            required: true,
+        },
+        orderedBy : {
+            type: String,
+            required: true,
+        },
+
         email: {
             type: String,
             required: true,
@@ -73,14 +91,10 @@ const visaApplicationSchema = new Schema(
                         required: true,
                     },
                     email: {
-                        type: Number,
+                        type: String,
                         required: true,
                     },
-                    isDocumentUplaoded: {
-                        type: Boolean,
-                        required: true,
-                        default: false,
-                    },
+                    
                     documents: {
                         type: Schema.Types.ObjectId,
                         ref: "VisaDocument",
@@ -96,6 +110,11 @@ const visaApplicationSchema = new Schema(
             required: true,
             default: false,
         },
+        isDocumentUplaoded: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
         
      
         status: {
@@ -105,6 +124,10 @@ const visaApplicationSchema = new Schema(
             enum: ["initiated", "submitted", "approved", "cancelled"],
             default: "initiated",
         },
+        referenceNumber : {
+            type: String,
+            required: true,
+        }
     },
     { timestamps: true }
 );
