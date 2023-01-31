@@ -6,6 +6,7 @@ const visaDocumentSchema = new Schema(
             type: String,
             required: true,
         },
+       
         passportLastPagePhoto: {
             type: String,
             required: true,
