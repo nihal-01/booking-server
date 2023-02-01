@@ -1,6 +1,6 @@
 const { sendEmail } = require("../../helpers");
 
-const sendSubAgentPassword = ({ email, password }) => {
+const sendSubAgentPassword = ({ email, password , agentCode }) => {
     try {
         sendEmail(
             email,
@@ -9,6 +9,7 @@ const sendSubAgentPassword = ({ email, password }) => {
     
 Email - ${email}
 password - ${password}
+AgentCode - ${agentCode}
     
 Please update your password after login.
             `

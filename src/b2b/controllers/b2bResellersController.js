@@ -46,7 +46,6 @@ module.exports = {
             const password = crypto.randomBytes(6).toString("hex");
             const hashedPassowrd = await hash(password, 8);
 
-            sendSubAgentPassword({ email, password });
 
             const newSubAgent = new Reseller({
                 email,
@@ -76,6 +75,9 @@ module.exports = {
                         message: error.message,
                     });
                 }
+
+                sendSubAgentPassword({ email, password , agentCode :  subAgent.agentCode });
+
                 return res.status(200).json({
                     message: "Sub-agent created successfully.",
                     data: {
@@ -92,15 +94,24 @@ module.exports = {
 
     listResellers: async (req, res) => {
         try {
-            const resellerList = await Reseller.find({
+
+            const { search} = req.query
+
+            const filter = {
                 referredBy: req.reseller.id,
-            });
+            }
+
+            if (search && search !== "") {
+                filter.name = { $regex: search, $options: "i" };
+            }        
+                const resellerList = await Reseller.find(filter);
 
             if (!resellerList) {
                 sendErrorResponse(res, 500, "No Resellers Found");
             }
 
             res.status(200).json(resellerList);
+
         } catch (error) {
             sendErrorResponse(res, 500, err);
         }

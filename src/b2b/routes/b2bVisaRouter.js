@@ -4,7 +4,7 @@ const path = require('path')
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, "public/images/attractions");
+        cb(null, "public/images/visadocuments");
     },
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
@@ -35,15 +35,14 @@ const upload = multer({
 });
 
 
+
+
 const { getSingleVisa,listAll, applyVisa , getAllVisa ,completeVisaPaymentOrder , completeVisaDocumentOrder} = require("../controllers/b2bVisaController");
 const { b2bAuth } = require("../middlewares");
 
-router.get("/single/:id", b2bAuth, getSingleVisa);
-router.get("/all", b2bAuth , getAllVisa);
-router.get("/list" ,b2bAuth , listAll  )
+
 router.post("/create", b2bAuth , applyVisa);
 router.post("/payment/:orderId", b2bAuth , completeVisaPaymentOrder);
-
 router.post('/document/:orderId' ,b2bAuth , upload.array("images") ,  completeVisaDocumentOrder )
 
 
