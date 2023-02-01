@@ -12,7 +12,8 @@ const {
     b2bClientVisaMarkupRouter,
     b2bSubAgentVisaMarkupRouter,
     b2bVisaRouter,
-    b2bVisaApplicationStatusRouter
+    b2bVisaApplicationStatusRouter,
+    b2bVisaListRouter
 } = require("./routes");
 
 router.use("/resellers/auth", b2bResellersAuthRouter);
@@ -27,7 +28,8 @@ router.use("/attractions/orders", b2bAttractionOrdersRouter);
 router.use("/transactions", b2bTransactionRouter);
 router.use("/subagent/visa/markup", b2bSubAgentVisaMarkupRouter);
 router.use("/client/visa/markup", b2bClientVisaMarkupRouter);
-router.use('/visa' , b2bVisaRouter)
+router.use('/visa' , b2bVisaListRouter)
+router.use('/visa/application' , b2bVisaRouter)
 router.use('/visa/status', b2bVisaApplicationStatusRouter)
 
 module.exports = router;
