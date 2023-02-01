@@ -104,14 +104,14 @@ module.exports = {
             if (search && search !== "") {
                 filter.name = { $regex: search, $options: "i" };
             }        
-                const resellerList = await Reseller.find();
+                const resellerList = await Reseller.find(filter);
 
             if (!resellerList) {
                 sendErrorResponse(res, 500, "No Resellers Found");
             }
 
             res.status(200).json(resellerList);
-            
+
         } catch (error) {
             sendErrorResponse(res, 500, err);
         }

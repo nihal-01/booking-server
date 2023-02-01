@@ -273,18 +273,17 @@ module.exports = {
 
             console.log(req.body,id , "body")
 
-            console.log("hiii")
 
 
-            const { _, error } = visaSchema.validate( {...req.body ,
-                inclusions: inclusions ? JSON.parse(inclusions) : [],
-                faqs: faqs ? JSON.parse(faqs) : [],
-                details: details ? JSON.parse(details) : []});
+            // const { _, error } = visaSchema.validate( {...req.body ,
+            //     inclusions: inclusions ? JSON.parse(inclusions) : [],
+            //     faqs: faqs ? JSON.parse(faqs) : [],
+            //     details: details ? JSON.parse(details) : []});
 
 
-            if (error) {
-                return sendErrorResponse(res, 400, error.details[0].message);
-            }
+            // if (error) {
+            //     return sendErrorResponse(res, 400, error.details[0].message);
+            // }
             
             if (!isValidObjectId(country)) {
                 return sendErrorResponse(res, 400, "Invalid country id");
