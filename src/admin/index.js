@@ -55,6 +55,6 @@ router.use("/transactions", admTransactionsRouter);
 router.use("/payment-services", admPaymentServicesRouter);
 router.use("/email-settings", admEmailSettingsRouter);
 router.use("/otp-settings", admOtpSettingsRouter);
-router.use('/visa' , admVisaRouter)
+router.use("/visa" , admVisaRouter)
 
 module.exports = router;

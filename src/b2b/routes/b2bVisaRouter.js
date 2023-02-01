@@ -35,6 +35,8 @@ const upload = multer({
 });
 
 
+
+
 const { getSingleVisa,listAll, applyVisa , getAllVisa ,completeVisaPaymentOrder , completeVisaDocumentOrder} = require("../controllers/b2bVisaController");
 const { b2bAuth } = require("../middlewares");
 
@@ -43,7 +45,7 @@ router.get("/all", b2bAuth , getAllVisa);
 router.get("/list" ,b2bAuth , listAll  )
 router.post("/create", b2bAuth , applyVisa);
 router.post("/payment/:orderId", b2bAuth , completeVisaPaymentOrder);
-router.post('/document/:orderId' ,b2bAuth , upload.array("images") ,  completeVisaDocumentOrder )
+router.post('/document/:orderId' ,b2bAuth , upload.array("files") ,  completeVisaDocumentOrder )
 
 
 module.exports = router;

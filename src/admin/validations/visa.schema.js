@@ -29,6 +29,8 @@ const visaSchema = Joi.object({
     // keywords: Joi.array(),
 });
 
+
+
 const visaTypeSchema = Joi.object({
     visa: Joi.string().required(),
     visaName: Joi.string().required(),
@@ -55,4 +57,4 @@ const visaTypeSchema = Joi.object({
     ageTo: Joi.number().required(),
 });
 
-module.exports = { visaSchema, visaTypeSchema };
+module.exports = { visaSchema, visaTypeSchema  };

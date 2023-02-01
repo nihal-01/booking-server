@@ -875,25 +875,29 @@ module.exports = {
         return sendErrorResponse(res, 400, "invalid order id");
     }
 
-    const VisaApplication = await VisaApplication.findOne({
-      _id: orderId,
-      reseller: req.reseller._id,
-  });
+  //   const VisaApplication = await VisaApplication.findOne({
+  //     _id: orderId,
+  //     reseller: req.reseller._id,
+  // });
 
 
-  if ( document.lenght !== VisaApplication.noOfTravellers){
-    return sendErrorResponse(res, 400, "invalid order id");
+  // if ( document.lenght !== VisaApplication.noOfTravellers){
+  //   return sendErrorResponse(res, 400, "invalid order id");
 
-  }
-  
+  // }
 
-  let images = [];
-  for (let i = 0; i < req.files?.length; i++) {
-      const passportFistPagePhoto = "/" + req.files[i]?.path?.replace(/\\/g, "/");
-      const passportLastPagePhoto = "/" + req.files[i]?.path?.replace(/\\/g, "/");
 
-      images.push({passportFistPagePhoto ,passportLastPagePhoto });
-  }
+   
+
+  console.log(req.files  , "req.files")
+
+  // let images = [];
+  // for (let i = 0; i < req.files?.fieldName1.length; i++) {
+  //     const passportFistPagePhoto = "/" + req.files[i]?.fieldName1.path?.replace(/\\/g, "/");
+  //     const passportLastPagePhoto = "/" + req.files[i]?.fieldName1.path?.replace(/\\/g, "/");
+
+  //     images.push({passportFistPagePhoto ,passportLastPagePhoto });
+  // }
   
   res.status(200).json({
     VisaApplication,

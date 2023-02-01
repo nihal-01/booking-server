@@ -1,7 +1,7 @@
 const { isValidObjectId } = require("mongoose");
 
 const { sendErrorResponse } = require("../../helpers");
-const { Country, VisaType, Visa } = require("../../models");
+const { Country, VisaType, Visa, VisaApplication } = require("../../models");
 const { visaSchema, visaTypeSchema } = require("../validations/visa.schema");
 
 module.exports = {
@@ -276,15 +276,15 @@ module.exports = {
             console.log("hiii")
 
 
-            // const { _, error } = visaSchema.validate( {...req.body ,
-            //     inclusions: inclusions ? JSON.parse(inclusions) : [],
-            //     faqs: faqs ? JSON.parse(faqs) : [],
-            //     details: details ? JSON.parse(details) : []});
+            const { _, error } = visaSchema.validate( {...req.body ,
+                inclusions: inclusions ? JSON.parse(inclusions) : [],
+                faqs: faqs ? JSON.parse(faqs) : [],
+                details: details ? JSON.parse(details) : []});
 
 
-            // if (error) {
-            //     return sendErrorResponse(res, 400, error.details[0].message);
-            // }
+            if (error) {
+                return sendErrorResponse(res, 400, error.details[0].message);
+            }
             
             if (!isValidObjectId(country)) {
                 return sendErrorResponse(res, 400, "Invalid country id");
@@ -465,11 +465,11 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid Visa id");
             }
 
-            const visaType = await Visa.findByIdAndUpdate(id, {
+            const visa = await Visa.findByIdAndUpdate(id, {
                 isDeleted: true,
             });
             
-            if (!visaType) {
+            if (!visa) {
                 return sendErrorResponse(res, 400, "Visa not found");
             }
 
@@ -482,7 +482,77 @@ module.exports = {
         }
 
 
+    },
+
+    listAllVisaApplication : async(req,res)=>{
+
+        try {
+            const { skip = 0, limit = 10, status } = req.query;
+
+            let query = { };
+
+            if (status && status !== "all") {
+                query.status = status;
+            }
+
+            const visaApplications = await VisaApplication.find(query)
+                .sort({
+                    createdAt: -1,
+                })
+                .limit(limit)
+                .skip(limit * skip);
+
+                if (!visaApplications) {
+                    return sendErrorResponse(res, 400, "VisaApplication Not Found ");
+                }
+    
+                res.status(200).json(visaApplications);
+
+            const totalVisaApplications = await VisaApplication.find(query).count();
+
+            res.status(200).json({
+                visaApplications,
+                skip: Number(skip),
+                limit: Number(limit),
+                totalVisaApplications,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    listSingleVisaApplication : async(req,res)=>{
+
+        try{ 
+
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid VisaApplication id");
+            }
+
+            let query = { _id : id};
+
+
+
+            const visaApplication = await VisaApplication.findOne(query).populate("reseller documents")
+            
+
+            if (!visaApplication) {
+                return sendErrorResponse(res, 400, "VisaApplication Not Found ");
+            }
+
+            res.status(200).json(visaApplication);
+
+
+        }catch(error){
+
+            sendErrorResponse(res, 500, err);
+
+        }
     }
+
+
 
 
 

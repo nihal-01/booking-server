@@ -60,8 +60,8 @@ router.get('/:id' , getSingleVisa)
 router.get('/:id/visa-type' , getSingleVisaType)
 router.patch('/update/:id' ,upload.single("image"),updateVisa)
 router.patch('/update/:id/visa-type' , updateVisaType)
-router.patch('/delete/:id' , deleteVisa)
-router.patch('/delete/visa-type/:id' , deleteVisaType)
+router.delete('/country/:id/delete' , deleteVisa)
+router.delete('/delete/:id/visa-type' , deleteVisaType)
 
 
 
