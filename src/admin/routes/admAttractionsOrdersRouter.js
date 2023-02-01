@@ -7,10 +7,12 @@ const {
     cancelBooking,
     updateDriverForOrder,
     getSingleResellerAttractionOrders,
+    getB2bAllOrdersSheet,
 } = require("../controllers/admAttractionsOrdersController");
 
 router.get("/b2c/all", getAllB2cOrders);
 router.get("/b2b/all", getAllB2bOrders);
+router.get("/b2b/all/sheet", getB2bAllOrdersSheet);
 router.get("/b2b/reseller/:resellerId/all", getSingleResellerAttractionOrders);
 router.patch("/bookings/confirm", confirmBooking);
 router.patch("/bookings/cancel", cancelBooking);

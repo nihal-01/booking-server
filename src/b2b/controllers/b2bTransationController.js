@@ -49,13 +49,13 @@ module.exports = {
                 reseller: req.reseller._id,
                 isPendingExpiry: true,
                 pendingExpiry: { $lt: new Date() },
+                status: "pending",
+                transactionType: "markup",
             }).lean();
             for (let i = 0; i < transactions.length; i++) {
                 const transaction = await B2BTransaction.findOneAndUpdate(
                     {
-                        reseller: req.reseller._id,
                         _id: transactions[0]?._id,
-                        transactionType: "markup",
                     },
                     {
                         status: "success",

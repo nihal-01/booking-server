@@ -86,7 +86,10 @@ module.exports = {
                     return sendErrorResponse(res, 500, "attraction not found!");
                 }
 
-                if (new Date(selectedActivities[i]?.date) < new Date()) {
+                if (
+                    new Date(selectedActivities[i]?.date) <
+                    new Date(new Date().setDate(new Date().getDate() + 2))
+                ) {
                     return sendErrorResponse(
                         res,
                         400,

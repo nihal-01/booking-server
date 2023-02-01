@@ -1,5 +1,5 @@
-const { Schema, model } = require("mongoose");
 const mongoose = require("mongoose");
+const { Schema, model } = mongoose;
 const jwt = require("jsonwebtoken");
 
 const AutoIncrement = require("mongoose-sequence")(mongoose);

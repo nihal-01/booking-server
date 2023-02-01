@@ -1,4 +1,7 @@
-const { Schema, model } = require("mongoose");
+const mongoose = require("mongoose");
+const { Schema, model } = mongoose;
+
+const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const b2bTransactionSchema = new Schema(
     {
@@ -56,9 +59,17 @@ const b2bTransactionSchema = new Schema(
         paymentOrderId: {
             type: String,
         },
+        transactionNo: {
+            type: Number,
+        },
     },
     { timestamps: true }
 );
+
+b2bTransactionSchema.plugin(AutoIncrement, {
+    inc_field: "transactionNo",
+    start_seq: 10000,
+});
 
 const B2BTransaction = model("B2BTransaction", b2bTransactionSchema);
 
