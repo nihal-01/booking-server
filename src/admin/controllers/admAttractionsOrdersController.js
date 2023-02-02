@@ -1,4 +1,5 @@
 const { isValidObjectId, Types } = require("mongoose");
+const xl = require("excel4node");
 
 const {
     handleAttractionOrderMarkup,
@@ -6,6 +7,10 @@ const {
 const { B2BAttractionOrder } = require("../../b2b/models");
 const { sendErrorResponse } = require("../../helpers");
 const { AttractionOrder, Driver } = require("../../models");
+const {
+    getB2bOrders,
+    generateB2bOrdersSheet,
+} = require("../helpers/b2bOrdersHelper");
 
 module.exports = {
     getAllB2cOrders: async (req, res) => {
@@ -155,154 +160,11 @@ module.exports = {
 
     getAllB2bOrders: async (req, res) => {
         try {
-            const {
-                skip = 0,
-                limit = 10,
-                bookingType,
-                status,
-                orderedBy,
-            } = req.query;
-
-            const filters = {
-                "activities.status": {
-                    $in: ["pending", "booked", "confirmed", "cancelled"],
-                },
-            };
-
-            if (bookingType && bookingType != "") {
-                filters["activities.bookingType"] = bookingType;
-            }
-
-            if (status && status !== "") {
-                filters["activities.status"] = status;
-            }
-
-            if (orderedBy && orderedBy !== "") {
-                filters.orderedBy = orderedBy;
-            }
-
-            const orders = await B2BAttractionOrder.aggregate([
-                {
-                    $unwind: "$activities",
-                },
-                { $match: filters },
-                {
-                    $lookup: {
-                        from: "attractionactivities",
-                        localField: "activities.activity",
-                        foreignField: "_id",
-                        as: "activities.activity",
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "attractions",
-                        localField: "activities.activity.attraction",
-                        foreignField: "_id",
-                        as: "attraction",
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "countries",
-                        localField: "country",
-                        foreignField: "_id",
-                        as: "country",
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "drivers",
-                        localField: "activities.driver",
-                        foreignField: "_id",
-                        as: "activities.driver",
-                    },
-                },
-                {
-                    $set: {
-                        "activities.activity": {
-                            $arrayElemAt: ["$activities.activity", 0],
-                        },
-                        attraction: {
-                            $arrayElemAt: ["$attraction", 0],
-                        },
-                        country: { $arrayElemAt: ["$country", 0] },
-                        "activities.driver": {
-                            $arrayElemAt: ["$activities.driver", 0],
-                        },
-                    },
-                },
-                { $sort: { createdAt: -1 } },
-                {
-                    $project: {
-                        totalOffer: 1,
-                        totalAmount: 1,
-                        name: 1,
-                        email: 1,
-                        phoneNumber: 1,
-                        country: 1,
-                        orderStatus: 1,
-                        merchant: 1,
-                        paymentStatus: 1,
-                        paymentOrderId: 1,
-                        createdAt: 1,
-                        updatedAt: 1,
-                        attraction: {
-                            title: 1,
-                            images: 1,
-                        },
-                        activities: {
-                            activity: {
-                                name: 1,
-                            },
-                            bookingType: 1,
-                            date: 1,
-                            adultsCount: 1,
-                            childrenCount: 1,
-                            infantCount: 1,
-                            adultCost: 1,
-                            childCost: 1,
-                            transferType: 1,
-                            offerAmount: 1,
-                            amount: 1,
-                            adultTickets: 1,
-                            childTickets: 1,
-                            status: 1,
-                            isRefunded: 1,
-                            profit: 1,
-                            bookingConfirmationNumber: 1,
-                            driver: 1,
-                            _id: 1,
-                        },
-                        referenceNumber: 1,
-                    },
-                },
-                {
-                    $group: {
-                        _id: null,
-                        totalOrders: { $sum: 1 },
-                        data: { $push: "$$ROOT" },
-                    },
-                },
-                {
-                    $project: {
-                        totalOrders: 1,
-                        data: {
-                            $slice: [
-                                "$data",
-                                Number(limit) * Number(skip),
-                                Number(limit),
-                            ],
-                        },
-                    },
-                },
-            ]);
-
-            res.status(200).json({
-                result: orders[0],
-                skip: Number(skip),
-                limit: Number(limit),
+            const { result, skip, limit } = await getB2bOrders({
+                ...req.query,
             });
+
+            res.status(200).json({ result, skip, limit });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
@@ -616,152 +478,28 @@ module.exports = {
 
     getSingleResellerAttractionOrders: async (req, res) => {
         try {
-            const { skip = 0, limit = 10, bookingType, status } = req.query;
             const { resellerId } = req.params;
 
             if (!isValidObjectId(resellerId)) {
                 return sendErrorResponse(res, 400, "invalid reseller id");
             }
 
-            const filters = {
-                "activities.status": {
-                    $in: ["pending", "booked", "confirmed", "cancelled"],
-                },
-                reseller: Types.ObjectId(resellerId),
-            };
-
-            if (bookingType && bookingType != "") {
-                filters["activities.bookingType"] = bookingType;
-            }
-
-            if (status && status !== "") {
-                filters["activities.status"] = status;
-            }
-
-            const orders = await B2BAttractionOrder.aggregate([
-                {
-                    $unwind: "$activities",
-                },
-                { $match: filters },
-                {
-                    $lookup: {
-                        from: "attractionactivities",
-                        localField: "activities.activity",
-                        foreignField: "_id",
-                        as: "activities.activity",
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "attractions",
-                        localField: "activities.activity.attraction",
-                        foreignField: "_id",
-                        as: "attraction",
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "countries",
-                        localField: "country",
-                        foreignField: "_id",
-                        as: "country",
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "drivers",
-                        localField: "activities.driver",
-                        foreignField: "_id",
-                        as: "activities.driver",
-                    },
-                },
-                {
-                    $set: {
-                        "activities.activity": {
-                            $arrayElemAt: ["$activities.activity", 0],
-                        },
-                        attraction: {
-                            $arrayElemAt: ["$attraction", 0],
-                        },
-                        country: { $arrayElemAt: ["$country", 0] },
-                        "activities.driver": {
-                            $arrayElemAt: ["$activities.driver", 0],
-                        },
-                    },
-                },
-                { $sort: { createdAt: -1 } },
-                {
-                    $project: {
-                        totalOffer: 1,
-                        totalAmount: 1,
-                        name: 1,
-                        email: 1,
-                        phoneNumber: 1,
-                        country: 1,
-                        orderStatus: 1,
-                        merchant: 1,
-                        paymentStatus: 1,
-                        paymentOrderId: 1,
-                        createdAt: 1,
-                        updatedAt: 1,
-                        attraction: {
-                            title: 1,
-                            images: 1,
-                        },
-                        activities: {
-                            activity: {
-                                name: 1,
-                            },
-                            bookingType: 1,
-                            date: 1,
-                            adultsCount: 1,
-                            childrenCount: 1,
-                            infantCount: 1,
-                            adultCost: 1,
-                            childCost: 1,
-                            transferType: 1,
-                            offerAmount: 1,
-                            amount: 1,
-                            adultTickets: 1,
-                            childTickets: 1,
-                            status: 1,
-                            isRefunded: 1,
-                            profit: 1,
-                            bookingConfirmationNumber: 1,
-                            driver: 1,
-                            _id: 1,
-                        },
-                        referenceNumber: 1,
-                    },
-                },
-                {
-                    $group: {
-                        _id: null,
-                        totalOrders: { $sum: 1 },
-                        data: { $push: "$$ROOT" },
-                    },
-                },
-                {
-                    $project: {
-                        totalOrders: 1,
-                        data: {
-                            $slice: [
-                                "$data",
-                                Number(limit) * Number(skip),
-                                Number(limit),
-                            ],
-                        },
-                    },
-                },
-            ]);
-
-            res.status(200).json({
-                result: orders[0],
-                skip: Number(skip),
-                limit: Number(limit),
+            const { result, skip, limit } = await getB2bOrders({
+                ...req.query,
+                resellerId,
             });
+
+            res.status(200).json({ result, skip, limit });
         } catch (err) {
             sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getB2bAllOrdersSheet: async (req, res) => {
+        try {
+            await generateB2bOrdersSheet({ ...req.query, res });
+        } catch (err) {
+            sendErrorResponse(res, 400, err);
         }
     },
 };

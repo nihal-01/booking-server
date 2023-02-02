@@ -9,12 +9,19 @@ const { B2BWallet, B2BTransaction } = require("../../b2b/models");
 module.exports = {
     getAllResellers: async (req, res) => {
         try {
-            const { skip = 0, limit = 10, status } = req.query;
+            const { skip = 0, limit = 10, status, companyName } = req.query;
 
-            const filters = {};
+            const filters = { role: "reseller" };
 
             if (status && status !== "") {
                 filters.status = status;
+            }
+
+            if (companyName && companyName !== "") {
+                filters.companyName = {
+                    $regex: companyName,
+                    $options: "i",
+                };
             }
 
             const resellers = await Reseller.find(filters)
@@ -135,6 +142,41 @@ module.exports = {
                 balance: wallet ? wallet.balance : 0,
                 totalEarnings: totalEarnings[0]?.total || 0,
                 pendingEarnings: pendingEarnings[0]?.total || 0,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSingleResellersSubagents: async (req, res) => {
+        try {
+            const { resellerId } = req.params;
+            const { skip = 0, limit = 10 } = req.params;
+
+            if (!isValidObjectId(resellerId)) {
+                return sendErrorResponse(res, 400, "invalid reseller id");
+            }
+
+            const reseller = await Reseller.findById(resellerId);
+            if (!reseller) {
+                return sendErrorResponse(res, 404, "reseller not found");
+            }
+
+            const subAgents = await Reseller.find({ referredBy: resellerId })
+                .populate("country", "flag phonecode countryName")
+                .sort({ createdAt: -1 })
+                .limit(limit)
+                .skip(limit * skip)
+                .lean();
+            const totalSubAgents = await Reseller.find({
+                referredBy: resellerId,
+            }).count();
+
+            res.status(200).json({
+                subAgents,
+                totalSubAgents,
+                skip: Number(skip),
+                limit: Number(limit),
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
