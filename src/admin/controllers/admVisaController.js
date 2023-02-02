@@ -177,7 +177,8 @@ module.exports = {
 
   listAllVisaType: async (req, res) => {
     try {
-        const { skip = 0, limit = 10,  searchInput} = req.query;
+      const { skip = 0, limit = 10,  searchInput} = req.query;
+      console.log(skip, "search");
 
       const filter = { isDeleted: false };
 
@@ -185,7 +186,6 @@ module.exports = {
         filter.visaName = { $regex: searchInput, $options: "i" };
       }
 
-      console.log(filter, req.query, "search");
 
       const visaTypeList = await VisaType.find(filter).populate({
         path: "visa",
@@ -455,63 +455,5 @@ module.exports = {
     }
   },
 
-  listAllVisaApplication: async (req, res) => {
-    try {
-      const { skip = 0, limit = 10, status } = req.query;
-
-      let query = {};
-
-      if (status && status !== "all") {
-        query.status = status;
-      }
-
-      const visaApplications = await VisaApplication.find(query)
-        .sort({
-          createdAt: -1,
-        })
-        .limit(limit)
-        .skip(limit * skip);
-
-      if (!visaApplications) {
-        return sendErrorResponse(res, 400, "VisaApplication Not Found ");
-      }
-
-      res.status(200).json(visaApplications);
-
-      const totalVisaApplications = await VisaApplication.find(query).count();
-
-      res.status(200).json({
-        visaApplications,
-        skip: Number(skip),
-        limit: Number(limit),
-        totalVisaApplications,
-      });
-    } catch (err) {
-      sendErrorResponse(res, 500, err);
-    }
-  },
-
-  listSingleVisaApplication: async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      if (!isValidObjectId(id)) {
-        return sendErrorResponse(res, 400, "Invalid VisaApplication id");
-      }
-
-      let query = { _id: id };
-
-      const visaApplication = await VisaApplication.findOne(query).populate(
-        "reseller documents"
-      );
-
-      if (!visaApplication) {
-        return sendErrorResponse(res, 400, "VisaApplication Not Found ");
-      }
-
-      res.status(200).json(visaApplication);
-    } catch (error) {
-      sendErrorResponse(res, 500, err);
-    }
-  },
+ 
 };

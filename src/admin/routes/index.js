@@ -23,6 +23,7 @@ const admPaymentServicesRouter = require("./admPaymentServicesRouter");
 const admEmailSettingsRouter = require("./admEmailSettingsRouter");
 const admOtpSettingsRouter = require("./admOtpSettingsRouter");
 const admVisaRouter = require('./admVisaRouter')
+const admVisaApplicationRouter = require('./adminVisaApplicationRouter')
 
 module.exports = {
     admAuthRouter,
@@ -49,5 +50,6 @@ module.exports = {
     admPaymentServicesRouter,
     admEmailSettingsRouter,
     admOtpSettingsRouter,
+    admVisaApplicationRouter,
     admVisaRouter
 };

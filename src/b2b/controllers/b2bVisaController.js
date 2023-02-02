@@ -13,8 +13,6 @@ const {
 } = require("../validations/b2bVisaApplication.schema");
 
 module.exports = {
-  
-
   applyVisa: async (req, res) => {
     try {
       const {
@@ -194,14 +192,79 @@ module.exports = {
             },
           },
         },
+        {
+          $addFields: {
+            subAgentMarkup: {
+              $cond: [
+                {
+                  $eq: ["$markupSubAgent.markupType", "percentage"],
+                },
+                {
+                  $multiply: [
+                    {
+                      $divide: [
+                        {
+                          $multiply: ["$markupSubAgent.markup", "$visaPrice"],
+                        },
+                        100,
+                      ],
+                    },
+                    noOfTravellers,
+                  ],
+                },
+                {
+                  $multiply: ["$markupSubAgent.markup", noOfTravellers],
+                },
+              ],
+            },
+          },
+        },
+        {
+          $addFields: {
+            resellerMarkup: {
+              $cond: [
+                {
+                  $eq: ["$markupClient.markupType", "percentage"],
+                },
+                {
+                  $multiply: [
+                    {
+                      $divide: [
+                        {
+                          $multiply: [
+                            "$markupClient.markup",
+                            "$totalPriceSubAgent",
+                          ],
+                        },
+                        100,
+                      ],
+                    },
+                    noOfTravellers,
+                  ],
+                },
+                {
+                  $multiply: ["$markupClient.markup", noOfTravellers],
+                },
+              ],
+            },
+          },
+        },
+     
       ]);
+
+      let profit = (visaTypeList[0].visaPrice - visaTypeList[0].purchaseCost ) * noOfTravellers
+
+      console.log(visaTypeList[0], "visaTypeList[0]");
 
       const otp = await sendMobileOtp(countryDetail.phonecode, contactNo);
 
       const newVisaApplication = new VisaApplication({
         visaType,
-        visaPrice: visaTypeList[0].singleVisaPrice,
-        totalAmount: visaTypeList[0].totalAmount,
+        visaPrice: visaTypeList[0].singleVisaPrice || 0,
+        totalAmount: visaTypeList[0].totalAmount || 0,
+        profit ,
+        resellerMarkup : visaTypeList[0].resellerMarkup || 0 ,
+        subAgentMarkup :visaTypeList[0].subAgentMarkup || 0 ,
         email,
         contactNo,
         onwardDate,
@@ -318,19 +381,27 @@ module.exports = {
         reseller: req.reseller._id,
       });
 
+      if (visaApplication.status === "submitted") {
+        return sendErrorResponse(
+          res,
+          404,
+          "Visa Application Already Submitted"
+        );
+      }
+
       if (!visaApplication) {
         return sendErrorResponse(res, 404, "visa application  not found");
       }
-      console.log(visaApplication ,"VisaApplication")
-      
+      console.log(visaApplication, "VisaApplication");
+
       if (req.files.length / 3 !== visaApplication.noOfTravellers) {
         return sendErrorResponse(res, 400, "Please Upload all Documents ");
       }
 
-
       async function insertPhotos(numPersons, numPhotos) {
         let persons = [];
         let startIndex = 0;
+        let promises = [];
         for (let i = 0; i < numPersons; i++) {
           let person = {};
           for (let j = 0; j < numPhotos; j++) {
@@ -338,33 +409,42 @@ module.exports = {
             person[`photo${j + 1}`] =
               "/" + req.files[photoIndex]?.path?.replace(/\\/g, "/");
           }
-          
-          console.log(person , "person")
+
+          console.log(person, "person");
           const visaDocument = new VisaDocument({
             passportFistPagePhoto: person.photo1,
             passportLastPagePhoto: person.photo2,
             passportSizePhoto: person.photo3,
           });
 
-          await visaDocument.save((error, document) => {
-            if (error) {
-              return res.status(400).json({
-                message: error.message,
-              });
-            }
+          promises.push(
+            new Promise((resolve, reject) => {
+              visaDocument.save((error, document) => {
+                if (error) {
+                  return reject(error);
+                }
 
-            visaDocument.travellers[i].documents = document._id;
-          });
+                console.log(document, "document");
+
+                visaApplication.travellers[i].documents = document._id;
+                resolve();
+              });
+            })
+          );
 
           persons.push(person);
           startIndex += numPhotos;
         }
+
+        await Promise.all(promises);
         return persons;
       }
 
-      let persons = insertPhotos(visaApplication.noOfTravellers, 3);
-      
-      visaApplication.isDocumentUplaoded = true
+      let persons = await insertPhotos(visaApplication.noOfTravellers, 3);
+
+      console.log(visaApplication, "visaApplication");
+
+      visaApplication.isDocumentUplaoded = true;
       visaApplication.status = "submitted";
       await visaApplication.save();
 
