@@ -17,9 +17,7 @@ module.exports = {
         details,
       } = req.body;
 
-      console.log(req.body);
 
-      console.log(inclusions ? JSON.parse(inclusions) : [], "kkkk");
 
       const { _, error } = visaSchema.validate({
         ...req.body,
@@ -43,7 +41,6 @@ module.exports = {
       if (!countryDetails) {
         return sendErrorResponse(res, 400, "Country not found");
       }
-      console.log(req.body, "body ");
 
       if (!req.file?.path) {
         return sendErrorResponse(res, 400, "Sample visa is required");
@@ -108,7 +105,6 @@ module.exports = {
         purchaseCost,
       } = req.body;
 
-      console.log(req.body, "req.body");
       const { _, error } = visaTypeSchema.validate(req.body);
       if (error) {
         return sendErrorResponse(res, 400, error.details[0].message);
@@ -142,10 +138,8 @@ module.exports = {
       });
       await newVisaType.save();
 
-      console.log(newVisaType, "newVisaType");
       res.status(200).json(newVisaType);
     } catch (err) {
-      console.log(err);
       sendErrorResponse(res, 500, err);
     }
   },
@@ -160,7 +154,6 @@ module.exports = {
         filter.name = { $regex: search, $options: "i" };
       }
 
-      console.log(filter, req.query, "search");
 
       const visaList = await Visa.find(filter).populate("country");
 
@@ -168,7 +161,6 @@ module.exports = {
         sendErrorResponse(res, 400, "Visa not found");
       }
 
-      console.log(visaList, "visaList");
       res.status(200).json(visaList);
     } catch (err) {
       sendErrorResponse(res, 500, err);
@@ -178,7 +170,6 @@ module.exports = {
   listAllVisaType: async (req, res) => {
     try {
       const { skip = 0, limit = 10,  searchInput} = req.query;
-      console.log(skip, "search");
 
       const filter = { isDeleted: false };
 
@@ -211,7 +202,6 @@ module.exports = {
         });
 
     } catch (err) {
-      console.log(err, "err");
       sendErrorResponse(res, 500, err);
     }
   },
@@ -271,7 +261,6 @@ module.exports = {
         keywords,
       } = req.body;
 
-      console.log(req.body, id, "body");
 
       // const { _, error } = visaSchema.validate( {...req.body ,
       //     inclusions: inclusions ? JSON.parse(inclusions) : [],
@@ -293,7 +282,6 @@ module.exports = {
       if (!countryDetails) {
         return sendErrorResponse(res, 400, "Country not found");
       }
-      console.log(req.body, "body ");
 
       let sampleVisa;
       if (req.file?.path) {
@@ -358,7 +346,6 @@ module.exports = {
         purchaseCost,
       } = req.body;
 
-      console.log(req.body, "req.body");
       const { _, error } = visaTypeSchema.validate(req.body);
       if (error) {
         return sendErrorResponse(res, 400, error.details[0].message);

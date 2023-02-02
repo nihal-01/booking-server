@@ -249,10 +249,11 @@ module.exports = {
             },
           },
         },
-     
       ]);
 
-      let profit = (visaTypeList[0].visaPrice - visaTypeList[0].purchaseCost ) * noOfTravellers
+      let profit =
+        (visaTypeList[0].visaPrice - visaTypeList[0].purchaseCost) *
+        noOfTravellers;
 
       console.log(visaTypeList[0], "visaTypeList[0]");
 
@@ -262,9 +263,9 @@ module.exports = {
         visaType,
         visaPrice: visaTypeList[0].singleVisaPrice || 0,
         totalAmount: visaTypeList[0].totalAmount || 0,
-        profit ,
-        resellerMarkup : visaTypeList[0].resellerMarkup || 0 ,
-        subAgentMarkup :visaTypeList[0].subAgentMarkup || 0 ,
+        profit,
+        resellerMarkup: visaTypeList[0].resellerMarkup || 0,
+        subAgentMarkup: visaTypeList[0].subAgentMarkup || 0,
         email,
         contactNo,
         onwardDate,
@@ -392,55 +393,101 @@ module.exports = {
       if (!visaApplication) {
         return sendErrorResponse(res, 404, "visa application  not found");
       }
-      console.log(visaApplication, "VisaApplication");
+      console.log(visaApplication,req.files["passportFistPagePhoto"].length , "VisaApplication");
 
-      if (req.files.length / 3 !== visaApplication.noOfTravellers) {
+      if (req.files["passportFistPagePhoto"].length  !== visaApplication.noOfTravellers) {
         return sendErrorResponse(res, 400, "Please Upload all Documents ");
       }
 
-      async function insertPhotos(numPersons, numPhotos) {
-        let persons = [];
-        let startIndex = 0;
-        let promises = [];
-        for (let i = 0; i < numPersons; i++) {
-          let person = {};
-          for (let j = 0; j < numPhotos; j++) {
-            let photoIndex = startIndex + j;
-            person[`photo${j + 1}`] =
-              "/" + req.files[photoIndex]?.path?.replace(/\\/g, "/");
-          }
+      // async function insertPhotos(numPersons, numPhotos) {
+      //   let persons = [];
+      //   let startIndex = 0;
+      //   let promises = [];
+      //   for (let i = 0; i < numPersons; i++) {
+      //     let person = {};
+      //     for (let j = 0; j < numPhotos; j++) {
+      //       let photoIndex = startIndex + j;
+      //       person[`photo${j + 1}`] =
+      //         "/" + req.files[photoIndex]?.path?.replace(/\\/g, "/");
+      //     }
 
-          console.log(person, "person");
-          const visaDocument = new VisaDocument({
-            passportFistPagePhoto: person.photo1,
-            passportLastPagePhoto: person.photo2,
-            passportSizePhoto: person.photo3,
-          });
+      //     console.log(person, "person");
+      //     const visaDocument = new VisaDocument({
+      //       passportFistPagePhoto: person.photo1,
+      //       passportLastPagePhoto: person.photo2,
+      //       passportSizePhoto: person.photo3,
+      //     });
 
-          promises.push(
-            new Promise((resolve, reject) => {
-              visaDocument.save((error, document) => {
-                if (error) {
-                  return reject(error);
-                }
+      //     promises.push(
+      //       new Promise((resolve, reject) => {
+      //         visaDocument.save((error, document) => {
+      //           if (error) {
+      //             return reject(error);
+      //           }
 
-                console.log(document, "document");
+      //           console.log(document, "document");
 
-                visaApplication.travellers[i].documents = document._id;
-                resolve();
-              });
-            })
-          );
+      //           visaApplication.travellers[i].documents = document._id;
+      //           resolve();
+      //         });
+      //       })
+      //     );
 
-          persons.push(person);
-          startIndex += numPhotos;
-        }
+      //     persons.push(person);
+      //     startIndex += numPhotos;
+      //   }
 
-        await Promise.all(promises);
-        return persons;
+      //   await Promise.all(promises);
+      //   return persons;
+      // }
+
+      // let persons = await insertPhotos(visaApplication.noOfTravellers, 3);
+
+      const passportFirstPagePhotos = req.files["passportFistPagePhoto"];
+      const passportLastPagePhotos = req.files["passportLastPagePhoto"];
+      const passportSizePhotos = req.files["passportSizePhoto"];
+      const supportiveDoc1s = req.files["supportiveDoc1"]
+      const supportiveDoc2s = req.files["supportiveDoc2"]
+
+
+      const photos = [];
+      let promises = [];
+
+
+      for (let i = 0; i < passportFirstPagePhotos.length; i++) {
+        const visaDocument = new VisaDocument({
+          passportFistPagePhoto:
+            "/" + passportFirstPagePhotos[i]?.path?.replace(/\\/g, "/"),
+          passportLastPagePhoto:
+            "/" + passportLastPagePhotos[i]?.path?.replace(/\\/g, "/"),
+          passportSizePhoto:
+            "/" + passportSizePhotos[i]?.path?.replace(/\\/g, "/"),
+            supportiveDoc1:
+            "/" + supportiveDoc1s[i]?.path?.replace(/\\/g, "/"),
+            supportiveDoc2:
+            "/" + supportiveDoc2s[i]?.path?.replace(/\\/g, "/"),
+        });
+
+        promises.push(
+          new Promise((resolve, reject) => {
+            visaDocument.save((error, document) => {
+              if (error) {
+                return reject(error);
+              }
+
+              console.log(document, "document");
+
+              visaApplication.travellers[i].documents = document._id;
+              resolve();
+            });
+          })
+        );
+
+        
       }
 
-      let persons = await insertPhotos(visaApplication.noOfTravellers, 3);
+      await Promise.all(promises);
+
 
       console.log(visaApplication, "visaApplication");
 
@@ -451,6 +498,8 @@ module.exports = {
       res.status(200).json({
         visaApplication,
       });
+
+
     } catch (err) {
       sendErrorResponse(res, 500, err);
     }

@@ -29,7 +29,7 @@ const visaApplicationSchema = new Schema(
         },
         reseller : {
             type: Schema.Types.ObjectId,
-            ref: "reseller",
+            ref: "Reseller",
             required: true,
         },
         orderedBy : {

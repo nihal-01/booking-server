@@ -15,6 +15,16 @@ const visaDocumentSchema = new Schema(
             type: String,
             required: true,
         },
+        supportiveDoc1: {
+            type: String,
+            required: true,
+        },
+        supportiveDoc2: {
+            type: String,
+            required: true,
+        },
+
+
     },
     { timestamps: true }
 );

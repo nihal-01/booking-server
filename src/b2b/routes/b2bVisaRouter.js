@@ -32,7 +32,16 @@ const upload = multer({
         cb(undefined, true);
     },
     storage: storage,
-});
+}).fields([
+    { name: 'passportFistPagePhoto', maxCount: 8 },
+    { name: 'passportLastPagePhoto', maxCount: 8 },
+    { name: 'passportSizePhoto', maxCount: 8 },
+    { name: 'supportiveDoc1', maxCount: 8 },
+    { name: 'supportiveDoc2', maxCount: 8 },
+
+
+
+  ]);
 
 
 
@@ -43,7 +52,7 @@ const { b2bAuth } = require("../middlewares");
 
 router.post("/create", b2bAuth , applyVisa);
 router.post("/payment/:orderId", b2bAuth , completeVisaPaymentOrder);
-router.post('/document/:orderId' ,b2bAuth , upload.array("images") ,  completeVisaDocumentOrder )
+router.post('/document/:orderId' ,b2bAuth , upload ,  completeVisaDocumentOrder )
 
 
 module.exports = router;
