@@ -554,8 +554,54 @@ module.exports={
 
 
         }catch(err){
+          sendErrorResponse(res, 500, err);
+
     
         }
+    },
+
+    listVisaType : async(req,res)=>{
+
+      try{
+
+        const {id} = req.params
+
+        if (!isValidObjectId(id)) {
+          return sendErrorResponse(res, 400, "Invalid VisaType id");
+        }
+
+        let visa =  await Visa.findOne({ _id : id ,             isDeleted: false
+        }).populate('country')
+
+          
+        if (!visa) {
+          return sendErrorResponse(res, 400, "No Visa ");
+        }
+         let visaType =  await VisaType.find(
+          { 
+            visa :id ,  
+            isDeleted: false
+          }
+        )
+
+        if (!visaType) {
+          return sendErrorResponse(res, 400, "No visaType ");
+        }
+
+
+        res.status(200).json({
+          visa,
+          visaType
+
+        })
+
+
+
+      }catch(err){
+        sendErrorResponse(res, 500, err);
+
+
+      }
     }
 
 }

@@ -15,9 +15,21 @@ const visaApplicationSchema = new Schema(
             type: Number,
             required: true,
         },
+        subAgentMarkup:{
+            type: Number,
+            required: true,
+        },
+        resellerMarkup:{
+            type: Number,
+            required: true,
+        },
+        profit:{
+            type: Number,
+            required: true,
+        },
         reseller : {
             type: Schema.Types.ObjectId,
-            ref: "reseller",
+            ref: "Reseller",
             required: true,
         },
         orderedBy : {

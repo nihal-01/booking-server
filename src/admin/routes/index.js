@@ -27,6 +27,7 @@ const admHotelFacilitiesRouter = require("./admHotelFacilitiesRouter");
 const admHotelsRouter = require("./admHotelsRouter");
 const admRoomTypesRouter = require("./admRoomTypesRouter");
 const admHotelContractsRouter = require("./admHotelContractsRouter");
+const admVisaApplicationRouter = require("./admVisaApplicationRouter");
 
 module.exports = {
     admAuthRouter,
@@ -58,4 +59,5 @@ module.exports = {
     admHotelsRouter,
     admRoomTypesRouter,
     admHotelContractsRouter,
+    admVisaApplicationRouter,
 };

@@ -59,5 +59,33 @@ module.exports = {
         }
     },
 
+    deleteB2bClientVisaMarkup : async(req,res)=>{
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid markup id");
+            }
+
+            const b2bClientVisaMarkups =
+                await B2BClientVisaMarkup.findByIdAndDelete(id);
+
+            if (!b2bClientVisaMarkups) {
+                return sendErrorResponse(
+                    res,
+                    404,
+                    "B2B Visa markup not found"
+                );
+            }
+
+            res.status(200).json({
+                message: "b2b visa markup deleted successfully",
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+
+    }
+
    
 };
