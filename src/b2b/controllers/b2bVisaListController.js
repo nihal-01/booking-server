@@ -607,95 +607,95 @@ module.exports={
               as: "markupClient",
             },
           },
-          // {
-          //   $lookup: {
-          //     from: "b2bsubagentvisamarkups",
-          //     let: {
-          //       visaType: "$_id",
-          //     },
-          //     pipeline: [
-          //       {
-          //         $match: {
-          //           $expr: {
-          //             $and: [
-          //               { $eq: ["$resellerId", req.reseller?.referredBy] },
-          //               { $eq: ["$visaType", "$$visaType"] },
-          //             ],
-          //           },
-          //         },
-          //       },
-          //     ],
-          //     as: "markupSubAgent",
-          //   },
-          // },
+          {
+            $lookup: {
+              from: "b2bsubagentvisamarkups",
+              let: {
+                visaType: "$_id",
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$resellerId", req.reseller?.referredBy] },
+                        { $eq: ["$visaType", "$$visaType"] },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "markupSubAgent",
+            },
+          },
   
-          // {
-          //   $set: {
-          //     markupClient: { $arrayElemAt: ["$markupClient", 0] },
-          //     markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
-          //   },
-          // },
-          // {
-          //   $addFields: {
-          //     totalPriceSubAgent: {
-          //       $cond: [
-          //         {
-          //           $eq: ["$markupSubAgent.markupType", "percentage"],
-          //         },
+          {
+            $set: {
+              markupClient: { $arrayElemAt: ["$markupClient", 0] },
+              markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
+            },
+          },
+          {
+            $addFields: {
+              totalPriceSubAgent: {
+                $cond: [
+                  {
+                    $eq: ["$markupSubAgent.markupType", "percentage"],
+                  },
   
-          //         {
-          //           $sum: [
-          //             "$visaPrice",
-          //             {
-          //               $divide: [
-          //                 {
-          //                   $multiply: ["$markupSubAgent.markup", "$visaPrice"],
-          //                 },
-          //                 100,
-          //               ],
-          //             },
-          //           ],
-          //         },
+                  {
+                    $sum: [
+                      "$visaPrice",
+                      {
+                        $divide: [
+                          {
+                            $multiply: ["$markupSubAgent.markup", "$visaPrice"],
+                          },
+                          100,
+                        ],
+                      },
+                    ],
+                  },
   
-          //         {
-          //           $sum: ["$visaPrice", "$markupSubAgent.markup"],
-          //         },
-          //       ],
-          //     },
-          //   },
-          // },
-          // {
-          //   $addFields: {
-          //     totalPrice: {
-          //       $cond: [
-          //         {
-          //           $eq: ["$markupClient.markupType", "percentage"],
-          //         },
+                  {
+                    $sum: ["$visaPrice", "$markupSubAgent.markup"],
+                  },
+                ],
+              },
+            },
+          },
+          {
+            $addFields: {
+              totalPrice: {
+                $cond: [
+                  {
+                    $eq: ["$markupClient.markupType", "percentage"],
+                  },
   
-          //         {
-          //           $sum: [
-          //             "$totalPriceSubAgent",
-          //             {
-          //               $divide: [
-          //                 {
-          //                   $multiply: [
-          //                     "$markupClient.markup",
-          //                     "$totalPriceSubAgent",
-          //                   ],
-          //                 },
-          //                 100,
-          //               ],
-          //             },
-          //           ],
-          //         },
+                  {
+                    $sum: [
+                      "$totalPriceSubAgent",
+                      {
+                        $divide: [
+                          {
+                            $multiply: [
+                              "$markupClient.markup",
+                              "$totalPriceSubAgent",
+                            ],
+                          },
+                          100,
+                        ],
+                      },
+                    ],
+                  },
   
-          //         {
-          //           $sum: ["$totalPriceSubAgent", "$markupClient.markup"],
-          //         },
-          //       ],
-          //     },
-          //   },
-          // },
+                  {
+                    $sum: ["$totalPriceSubAgent", "$markupClient.markup"],
+                  },
+                ],
+              },
+            },
+          },
         ]);
 
         if (!visaType) {
