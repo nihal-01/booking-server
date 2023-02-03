@@ -25,6 +25,7 @@ const PaymentService = require("./paymentService.model");
 const OtpSettings = require("./otpSettings.model");
 const EmailSettings = require("./emailSettings.model");
 const Hotel = require("./hotel.model");
+const HotelFacility = require("./hotelFacility.model");
 const HotelContract = require("./hotelContract.model");
 const RoomType = require("./roomType.model");
 
@@ -59,4 +60,5 @@ module.exports = {
     Hotel,
     RoomType,
     HotelContract,
+    HotelFacility,
 };

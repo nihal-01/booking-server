@@ -17,15 +17,13 @@ const roomTypeSchema = new Schema(
             uppercase: true,
             enum: ["DBL", "SGL", "TPL", "CWB", "CNB"],
         },
-        facilities: {
+        inclusions: {
             type: [
                 {
-                    type: Schema.Types.ObjectId,
-                    ref: "HotelFacility",
+                    type: String,
                     required: true,
                 },
             ],
-            default: [],
         },
         noOfSleeps: {
             type: Number,
@@ -42,6 +40,14 @@ const roomTypeSchema = new Schema(
         area: {
             type: Number,
             required: true,
+        },
+        images: {
+            type: [{ type: String, required: true }],
+        },
+        isDeleted: {
+            type: Boolean,
+            required: true,
+            default: false,
         },
     },
     { timestamps: true }

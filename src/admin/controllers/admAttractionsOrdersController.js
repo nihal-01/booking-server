@@ -499,7 +499,21 @@ module.exports = {
         try {
             await generateB2bOrdersSheet({ ...req.query, res });
         } catch (err) {
-            sendErrorResponse(res, 400, err);
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSingleResellerAttractionOrdersSheet: async (req, res) => {
+        try {
+            const { resellerId } = req.params;
+
+            if (!isValidObjectId(resellerId)) {
+                return sendErrorResponse(res, 400, "invalid reseller id");
+            }
+
+            await generateB2bOrdersSheet({ ...req.query, res, resellerId });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
         }
     },
 };

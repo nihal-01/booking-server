@@ -26,6 +26,10 @@ const {
     admPaymentServicesRouter,
     admOtpSettingsRouter,
     admVisaRouter,
+    admHotelFacilitiesRouter,
+    admHotelsRouter,
+    admRoomTypesRouter,
+    admHotelContractsRouter,
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
@@ -55,6 +59,10 @@ router.use("/transactions", admTransactionsRouter);
 router.use("/payment-services", admPaymentServicesRouter);
 router.use("/email-settings", admEmailSettingsRouter);
 router.use("/otp-settings", admOtpSettingsRouter);
-router.use("/visa" , admVisaRouter)
+router.use("/visa", admVisaRouter);
+router.use("/hotels/facilities", admHotelFacilitiesRouter);
+router.use("/hotels/contracts", admHotelContractsRouter);
+router.use("/hotels", admHotelsRouter);
+router.use("/room-types", admRoomTypesRouter);
 
 module.exports = router;

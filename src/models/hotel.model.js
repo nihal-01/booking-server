@@ -2,13 +2,20 @@ const { Schema, model } = require("mongoose");
 
 const hotelSchema = new Schema(
     {
+        isPublished: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
         hotelName: {
             type: String,
             required: true,
         },
         address: {
             type: String,
-            required: true,
+            required: function () {
+                return this.isPublished === true;
+            },
         },
         place: {
             type: String,
@@ -16,28 +23,39 @@ const hotelSchema = new Schema(
         },
         destination: {
             type: Schema.Types.ObjectId,
-            ref: "Hotel",
-            required: true,
+            ref: "Destination",
+            required: function () {
+                return this.isPublished === true;
+            },
         },
         country: {
             type: Schema.Types.ObjectId,
-            required: true,
+            ref: "Country",
+            required: function () {
+                return this.isPublished === true;
+            },
         },
         geoCode: {
             longitude: {
                 type: String,
-                required: true,
+                required: function () {
+                    return this.isPublished === true;
+                },
             },
             latitude: {
                 type: String,
-                required: true,
+                required: function () {
+                    return this.isPublished === true;
+                },
             },
         },
         description: {
             type: String,
-            required: true,
+            required: function () {
+                return this.isPublished === true;
+            },
         },
-        faq: {
+        faqs: {
             type: [
                 {
                     question: {
@@ -53,23 +71,33 @@ const hotelSchema = new Schema(
         },
         checkInTime: {
             type: String,
-            required: true,
+            required: function () {
+                return this.isPublished === true;
+            },
         },
         checkOutTime: {
             type: String,
-            required: true,
+            required: function () {
+                return this.isPublished === true;
+            },
         },
-        isAgeRestrictions: {
+        isAgeRestriction: {
             type: Boolean,
-            required: true,
+            required: function () {
+                return this.isPublished === true;
+            },
         },
         isPetsAllowed: {
             type: Boolean,
-            required: true,
+            required: function () {
+                return this.isPublished === true;
+            },
         },
         isCashAllowedOnly: {
             type: Boolean,
-            required: true,
+            required: function () {
+                return this.isPublished === true;
+            },
         },
         facilities: {
             type: [
@@ -81,15 +109,23 @@ const hotelSchema = new Schema(
             ],
             default: [],
         },
-        isPublished: {
-            type: Boolean,
+        website: {
+            type: String,
+        },
+        starCategory: {
+            type: String,
             required: true,
-            default: false,
         },
         isDeleted: {
             type: Boolean,
             required: true,
             default: false,
+        },
+        roomsCount: { type: Number },
+        floorsCount: { type: Number },
+        carParkingSlots: { type: Number },
+        images: {
+            type: [{ type: String, required: true }],
         },
     },
     { timestamps: true }

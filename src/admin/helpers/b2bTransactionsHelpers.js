@@ -15,7 +15,7 @@ module.exports = {
         dateFrom,
         dateTo,
         resellerId,
-        resellerEmail,
+        agentCode,
     }) => {
         try {
             const filters1 = {};
@@ -56,8 +56,8 @@ module.exports = {
                 filters2["reseller.role"] = b2bRole;
             }
 
-            if (resellerEmail && resellerEmail !== "") {
-                filters2["reseller.email"] = resellerEmail;
+            if (agentCode && agentCode !== "") {
+                filters2["reseller.agentCode"] = Number(agentCode);
             }
 
             const transactions = await B2BTransaction.aggregate([
@@ -137,6 +137,7 @@ module.exports = {
         dateTo,
         resellerId,
         res,
+        agentCode,
     }) => {
         try {
             const filters1 = {};
@@ -175,6 +176,10 @@ module.exports = {
 
             if (b2bRole && b2bRole !== "") {
                 filters2["reseller.role"] = b2bRole;
+            }
+
+            if (agentCode && agentCode !== "") {
+                filters2["reseller.agentCode"] = Number(agentCode);
             }
 
             const transactions = await B2BTransaction.aggregate([

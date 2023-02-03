@@ -12,7 +12,7 @@ module.exports = {
         status,
         referenceNo,
         resellerId,
-        resellerEmail,
+        agentCode,
         dateFrom,
         dateTo,
         attraction,
@@ -51,8 +51,8 @@ module.exports = {
                 filters1.email = travellerEmail;
             }
 
-            if (resellerEmail && resellerEmail !== "") {
-                filters2["reseller.email"] = resellerEmail;
+            if (agentCode && agentCode !== "") {
+                filters2["reseller.agentCode"] = Number(agentCode);
             }
 
             if (dateFrom && dateFrom !== "" && dateTo && dateTo !== "") {
@@ -197,6 +197,7 @@ module.exports = {
                             companyName: 1,
                             email: 1,
                             website: 1,
+                            agentCode: 1,
                         },
                     },
                 },
@@ -239,7 +240,7 @@ module.exports = {
         status,
         referenceNo,
         resellerId,
-        resellerEmail,
+        agentCode,
         dateFrom,
         dateTo,
         attraction,
@@ -279,8 +280,8 @@ module.exports = {
                 filters1.email = travellerEmail;
             }
 
-            if (resellerEmail && resellerEmail !== "") {
-                filters2["reseller.email"] = resellerEmail;
+            if (agentCode && agentCode !== "") {
+                filters2["reseller.agentCode"] = Number(agentCode);
             }
 
             if (dateFrom && dateFrom !== "" && dateTo && dateTo !== "") {
@@ -423,6 +424,7 @@ module.exports = {
                             companyName: 1,
                             website: 1,
                             email: 1,
+                            agentCode: 1,
                         },
                         referenceNumber: 1,
                     },
