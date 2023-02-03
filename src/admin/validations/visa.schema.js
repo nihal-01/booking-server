@@ -57,4 +57,43 @@ const visaTypeSchema = Joi.object({
     ageTo: Joi.number().required(),
 });
 
-module.exports = { visaSchema, visaTypeSchema  };
+
+const visaUpdateSchema = Joi.object({
+    country: Joi.string().required(),
+    name: Joi.string().required(),
+    // documents: Joi.array()
+    //     .min(1)
+    //     .items({
+    //         title: Joi.string().required(),
+    //         body: Joi.string().required(),
+    //     })
+    //     .required(),
+    inclusions: Joi.array().min(1).required(),
+    image : Joi.string().allow("", null),
+
+    description: Joi.string().required(),
+    faqs: Joi.array()
+        .min(1)
+        .items({
+            _id: Joi.string().required(),
+            question: Joi.string().required(),
+            answer: Joi.string().required(),
+        })
+        .required(),
+    
+    details: Joi.array()
+        .min(1)
+        .items({
+            _id: Joi.string().required(),
+            title: Joi.string().required(),
+            body: Joi.string().required(),
+        })
+        .required(),
+        
+    // keywords: Joi.array(),
+});
+
+
+
+
+module.exports = { visaSchema, visaTypeSchema , visaUpdateSchema };
