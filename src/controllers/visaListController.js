@@ -1,5 +1,7 @@
 const { sendErrorResponse } = require("../helpers");
 const { Visa, VisaType } = require("../models");
+const { isValidObjectId, Types } = require("mongoose");
+
 
 module.exports = {
 
@@ -49,7 +51,7 @@ listVisaType : async(req,res)=>{
       const visaType = await VisaType.aggregate([
         {
           $match: {
-            visa : id,
+            visa : Types.ObjectId(id),
             isDeleted: false
           },
         },

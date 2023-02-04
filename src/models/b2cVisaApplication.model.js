@@ -11,11 +11,7 @@ const b2cVisaApplicationSchema = new Schema(
             type: Number,
             required: true,
         },
-        totalAmount:{
-            type: Number,
-            required: true,
-        },
-        markupAmount:{
+        clientMarkup:{
             type: Number,
             required: true,
         }, 
@@ -23,12 +19,11 @@ const b2cVisaApplicationSchema = new Schema(
             type: Number,
             required: true,
         },
-        
-        orderedBy : {
-            type: String,
-            required: true,
+        totalAmount : {
+           type: Number,
+            required: true, 
         },
-
+        
         email: {
             type: String,
             required: true,
@@ -42,10 +37,7 @@ const b2cVisaApplicationSchema = new Schema(
             type: Date,
             required:true,
         },
-        otp : {
-            type: Number,
-            required: true,
-        },
+       
         returnDate: {
             type: Date,
             required:true,
@@ -112,6 +104,11 @@ const b2cVisaApplicationSchema = new Schema(
                     },
                 },
             ],
+        },
+        user: {
+            type: Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
         },
         isPayed: {
             type: Boolean,

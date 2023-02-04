@@ -2,7 +2,7 @@ const { isValidObjectId } = require("mongoose");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 
-const { sendErrorResponse } = require("../helpers");
+const { sendErrorResponse, sendEmail } = require("../helpers");
 const {
     Attraction,
     AttractionActivity,
@@ -349,6 +349,7 @@ module.exports = {
                     await user.save();
                 }
             }
+
 
             let buyer = req.user || user;
 

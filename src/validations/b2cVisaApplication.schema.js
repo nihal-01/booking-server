@@ -28,5 +28,10 @@ const b2cVisaApplicationSchema = Joi.object({
 
   });
 
-  module.exports = { b2cVisaApplicationSchema };
+  const visaOrderCaptureSchema = Joi.object({
+    orderId: Joi.string().required(),
+    paymentId: Joi.string().required(),
+});
+
+  module.exports = { b2cVisaApplicationSchema , visaOrderCaptureSchema };
   
