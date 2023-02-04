@@ -20,7 +20,11 @@ module.exports = {
                 .limit(limit)
                 .skip(limit * skip);
 
-            const totalTransactions = await visaApplication.find(query).count();
+                if (!visaApplication) {
+                    return sendErrorResponse(res, 400, "No Visa Application Available");
+                  }
+
+            const totalTransactions = await VisaApplication.find(query).count();
 
             res.status(200).json({
                 transactions,
@@ -32,4 +36,42 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+
+    getSingleVisaApplication : async(req,res)=>{
+
+        try{
+
+            const {id} = req.params
+
+            let query = { _id : id , reseller: req.reseller._id };
+
+            const visaApplication = await VisaApplication.findOne(query).populate(
+                "reseller travellers.documents travellers.country"
+              ).populate({
+                path: 'visaType',
+                populate: {
+                  path: 'visa',
+                  populate : {
+                    path : 'country',
+                    select : "countryName"
+                  }
+    
+                }
+              })
+
+              if (!visaApplication) {
+                return sendErrorResponse(res, 400, "No Visa Application Available");
+              }
+
+
+              res.status(200).json(visaApplication)
+
+        }catch(err){
+
+            sendErrorResponse(res, 500, err);
+
+
+        }
+    }
 }

@@ -111,6 +111,10 @@ module.exports= {
           if (!visaApplication) {
             return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
           }
+
+          if (visaApplication.isPayed == false) {
+            return sendErrorResponse(res, 400, "VisaApplication Amount Payed ");
+          }
           
           if(visaApplication.status == "approved"){
             return sendErrorResponse(res, 400, "VisaApplication Already Approved");
@@ -181,7 +185,7 @@ module.exports= {
 
 
 
-          res.status(200).json("Visa Approved Succesfully ")
+          res.status(200).json({message : "Visa Approved Succesfully " })
 
         }catch(err){
 
@@ -239,12 +243,6 @@ module.exports= {
 
           visaApplication.status = "cancelled"
           await  visaApplication.save()
-
-
-
-          
-
-
        
 
         }catch(err){
