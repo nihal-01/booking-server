@@ -50,7 +50,7 @@ const visaTypeSchema = Joi.object({
         .valid(...["single", "multiple"])
         .required(),
     tax: Joi.number().required(),
-    serviceCharge: Joi.number().required(),
+    insurance: Joi.number().required(),
     purchaseCost: Joi.number().required(),
     visaPrice: Joi.number().required(),
     ageFrom: Joi.number().required(),

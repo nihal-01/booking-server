@@ -51,9 +51,8 @@ const visaTypeSchema = new Schema(
             type: Number,
             required: true,
         },
-        serviceCharge: {
+        insurance: {
             type: Number,
-            required: true,
         },
         purchaseCost: {
             type: Number,

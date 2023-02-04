@@ -255,6 +255,8 @@ module.exports = {
         (visaTypeList[0].visaPrice - visaTypeList[0].purchaseCost) *
         noOfTravellers;
 
+      let totalAmount = visaTypeList[0].totalAmount + (visaTypeList[0]?.insurance + visaTypeList[0]?.tax)*noOfTravellers
+
       console.log(visaTypeList[0], "visaTypeList[0]");
 
       const otp = await sendMobileOtp(countryDetail.phonecode, contactNo);
@@ -262,7 +264,7 @@ module.exports = {
       const newVisaApplication = new VisaApplication({
         visaType,
         visaPrice: visaTypeList[0].singleVisaPrice || 0,
-        totalAmount: visaTypeList[0].totalAmount || 0,
+        totalAmount: totalAmount || 0,
         profit,
         resellerMarkup: visaTypeList[0].resellerMarkup || 0,
         subAgentMarkup: visaTypeList[0].subAgentMarkup || 0,
@@ -498,6 +500,7 @@ module.exports = {
 
       res.status(200).json({
         visaApplication,
+        
       });
 
 

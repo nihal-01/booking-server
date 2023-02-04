@@ -49,11 +49,22 @@ module.exports = {
         isDeleted: false,
         _id: country,
       });
+      
+
+      if (onwardDate <= new Date()) {
+        return sendErrorResponse(res, 400, "Onward date must be greater than the current date");
+      }
+
+      if (returnDate <= new Date()) {
+        return sendErrorResponse(res, 400, "Return Date date must be greater than the current date");
+      }
 
 
       if (!countryDetail) {
         return sendErrorResponse(res, 404, "country not found");
       }
+
+
 
       if (noOfTravellers !== travellers.length) {
         return sendErrorResponse(res, 400, "PassengerDetails Not Added ");
@@ -563,7 +574,7 @@ module.exports = {
       await visaApplication.save();
 
       res.status(200).json({
-        visaApplication,
+        visaApplication
       });
 
 
