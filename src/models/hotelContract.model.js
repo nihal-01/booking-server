@@ -16,20 +16,57 @@ const hotelContractSchema = new Schema(
             type: Date,
             required: true,
         },
-        price: {
-            type: Number,
-            required: true,
-        },
         contractType: {
             type: String,
             required: true,
             lowercase: true,
             enum: ["free-sale", "stop-sale", "contracted-rates"],
         },
-        isNewUpdate: {
-            type: Boolean,
-            required: true,
+        price: {
+            type: Number,
+            required: function () {
+                return this.contractType !== "stop-sale"
+            },
         },
+        // isRoPriceAvailable: {
+        //     type: Boolean,
+        //     required: true,
+        // },
+        // roPrice: {
+        //     type: Number,
+        //     required: function () {
+        //         return (
+        //             this.contractType !== "stop-sale" &&
+        //             this.isRoPriceAvailable === true
+        //         );
+        //     },
+        // },
+        // isBbPriceAvailable: {
+        //     type: Boolean,
+        //     required: true,
+        // },
+        // bbPrice: {
+        //     type: Number,
+        //     required: function () {
+        //         return (
+        //             this.contractType !== "stop-sale" &&
+        //             this.isBbPriceAvailable === true
+        //         );
+        //     },
+        // },
+        // isNewUpdate: {
+        //     type: Boolean,
+        //     required: true,
+        // },
+        // extraAdultPrice: {
+        //     type: Number,
+        //     required: true,
+        //     default: 0,
+        // },
+        // isBreakfastIncludedInExtraAdultPrice: {
+        //     type: Boolean,
+        //     required: true,
+        // },
     },
     { timestamps: true }
 );

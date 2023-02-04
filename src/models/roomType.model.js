@@ -33,13 +33,8 @@ const roomTypeSchema = new Schema(
             type: Boolean,
             required: true,
         },
-        isBreakFastIncluded: {
-            type: Boolean,
-            required: true,
-        },
         area: {
             type: Number,
-            required: true,
         },
         images: {
             type: [{ type: String, required: true }],

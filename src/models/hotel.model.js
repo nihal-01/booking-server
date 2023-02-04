@@ -131,6 +131,12 @@ const hotelSchema = new Schema(
     { timestamps: true }
 );
 
+hotelSchema.virtual("roomTypes", {
+    ref: "RoomType",
+    localField: "_id",
+    foreignField: "hotel",
+});
+
 const Hotel = model("Hotel", hotelSchema);
 
 module.exports = Hotel;

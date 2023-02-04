@@ -10,8 +10,8 @@ const roomTypeSchema = Joi.object({
     noOfSleeps: Joi.number().required(),
     isRefundable: Joi.boolean().required(),
     isBreakFastIncluded: Joi.boolean().required(),
-    area: Joi.number().required(),
-    images: Joi.array().items(Joi.string()),
+    area: Joi.number().allow("", null),
+    oldImages: Joi.array().items(Joi.string()),
 });
 
 module.exports = { roomTypeSchema };

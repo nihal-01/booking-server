@@ -25,6 +25,7 @@ const hotelSchema = Joi.object({
     roomsCount: Joi.number().allow("", null),
     floorsCount: Joi.number().allow("", null),
     carParkingSlots: Joi.number().allow("", null),
+    oldImages: Joi.array(),
 });
 
 module.exports = { hotelSchema };

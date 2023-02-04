@@ -123,9 +123,14 @@ module.exports = {
     updateHotel: async (req, res) => {
         try {
             const { id } = req.params;
-            const { oldImages } = req.body;
+            const { oldImages, faqs, facilities } = req.body;
 
-            const { _, error } = hotelSchema.validate(req.body);
+            const { _, error } = hotelSchema.validate({
+                ...req.body,
+                faqs: faqs ? JSON.parse(faqs) : [],
+                facilities: facilities ? JSON.parse(facilities) : [],
+                oldImages: oldImages ? JSON.parse(oldImages) : [],
+            });
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
             }
@@ -145,11 +150,23 @@ module.exports = {
                 newImages.push(img);
             }
 
+            let parsedFacilities;
+            if (facilities) {
+                parsedFacilities = JSON.parse(facilities);
+            }
+
+            let parsedFaqs;
+            if (faqs) {
+                parsedFaqs = JSON.parse(faqs);
+            }
+
             const hotel = await Hotel.findByIdAndUpdate(
                 id,
                 {
                     ...req.body,
                     images: newImages,
+                    faqs: parsedFaqs,
+                    facilities: parsedFacilities,
                 },
                 { runValidators: true }
             );
@@ -227,6 +244,42 @@ module.exports = {
                 .collation({ locale: "en", caseLevel: true });
 
             res.status(200).json({ facilities });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSingleHotelWithRoomTypes: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId) {
+                return sendErrorResponse(res, 400, "invalid hotel id");
+            }
+
+            const hotel = await Hotel.findOne({ _id: id, isDeleted: false })
+                .populate("roomTypes")
+                .lean();
+
+            res.status(200).json(hotel);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getHotelsName: async (req, res) => {
+        try {
+            const { search } = req.query;
+
+            const filters = {};
+
+            if (search && search !== "") {
+                filters.hotelName = { $regex: search, $options: "i" };
+            }
+
+            const hotels = await Hotel.find(filters).select("hotelName place");
+
+            res.status(200).json(hotels);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
