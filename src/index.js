@@ -17,6 +17,8 @@ const {
     blogsRouter,
     attractionsCategoriesRouter,
     attractionsOrdersRouter,
+    visaListRouter,
+    visaApplicationRouter,
 } = require("./routes");
 
 const app = express();
@@ -35,6 +37,9 @@ app.use("/api/v1/attractions", attractionsRouter);
 app.use("/api/v1/subscribers", subscribersRouter);
 app.use("/api/v1/countries", countriesRouter);
 app.use("/api/v1/blogs", blogsRouter);
+app.use("/api/v1/visa", visaListRouter);
+app.use("/api/v1/visa/application", visaApplicationRouter);
+
 
 // ADMIN ROUTE
 app.use("/api/v1/admin", adminRouter);

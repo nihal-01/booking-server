@@ -393,6 +393,7 @@ module.exports = {
       if (!visaApplication) {
         return sendErrorResponse(res, 404, "visa application  not found");
       }
+      
       console.log(visaApplication,req.files["passportFistPagePhoto"].length , "VisaApplication");
 
       if (req.files["passportFistPagePhoto"].length  !== visaApplication.noOfTravellers) {

@@ -9,7 +9,7 @@ router.get("/single/:id", b2bAuth, getSingleVisa);
 router.get('/list/:id' ,b2bAuth , listVisaType  )
 router.get("/all", b2bAuth , getAllVisa);
 router.get("/list" ,b2bAuth , listAll  )
-router.get("/country/all" ,b2bAuth , listAllCountry)
+router.get("/country/all" , listAllCountry)
 
 
 

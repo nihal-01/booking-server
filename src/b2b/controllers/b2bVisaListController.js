@@ -570,24 +570,140 @@ module.exports={
           return sendErrorResponse(res, 400, "Invalid VisaType id");
         }
 
-        let visa =  await Visa.findOne({ _id : id ,             isDeleted: false
+        let visa =  await Visa.findOne({ _id : id ,isDeleted: false
         }).populate('country')
 
           
         if (!visa) {
           return sendErrorResponse(res, 400, "No Visa ");
         }
-         let visaType =  await VisaType.find(
-          { 
-            visa :id ,  
-            isDeleted: false
-          }
-        )
+
+        const visaType = await VisaType.aggregate([
+          {
+            $match: {
+              visa : Types.ObjectId(id),
+              isDeleted: false
+            },
+          },
+        
+          {
+            $lookup: {
+              from: "b2bclientvisamarkups",
+              let: {
+                visaType: "$_id",
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$resellerId", req.reseller._id] },
+                        { $eq: ["$visaType", "$$visaType"] },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "markupClient",
+            },
+          },
+          {
+            $lookup: {
+              from: "b2bsubagentvisamarkups",
+              let: {
+                visaType: "$_id",
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $and: [
+                        { $eq: ["$resellerId", req.reseller?.referredBy] },
+                        { $eq: ["$visaType", "$$visaType"] },
+                      ],
+                    },
+                  },
+                },
+              ],
+              as: "markupSubAgent",
+            },
+          },
+  
+          {
+            $set: {
+              markupClient: { $arrayElemAt: ["$markupClient", 0] },
+              markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
+            },
+          },
+          {
+            $addFields: {
+              totalPriceSubAgent: {
+                $cond: [
+                  {
+                    $eq: ["$markupSubAgent.markupType", "percentage"],
+                  },
+  
+                  {
+                    $sum: [
+                      "$visaPrice",
+                      {
+                        $divide: [
+                          {
+                            $multiply: ["$markupSubAgent.markup", "$visaPrice"],
+                          },
+                          100,
+                        ],
+                      },
+                    ],
+                  },
+  
+                  {
+                    $sum: ["$visaPrice", "$markupSubAgent.markup"],
+                  },
+                ],
+              },
+            },
+          },
+          {
+            $addFields: {
+              totalPrice: {
+                $cond: [
+                  {
+                    $eq: ["$markupClient.markupType", "percentage"],
+                  },
+  
+                  {
+                    $sum: [
+                      "$totalPriceSubAgent",
+                      {
+                        $divide: [
+                          {
+                            $multiply: [
+                              "$markupClient.markup",
+                              "$totalPriceSubAgent",
+                            ],
+                          },
+                          100,
+                        ],
+                      },
+                    ],
+                  },
+  
+                  {
+                    $sum: ["$totalPriceSubAgent", "$markupClient.markup"],
+                  },
+                ],
+              },
+            },
+          },
+        ]);
 
         if (!visaType) {
           return sendErrorResponse(res, 400, "No visaType ");
         }
+       
 
+        console.log(visaType , visa ,"visaType")
 
         res.status(200).json({
           visa,

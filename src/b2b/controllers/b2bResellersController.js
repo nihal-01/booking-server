@@ -66,7 +66,7 @@ module.exports = {
                 companyRegistration,
                 role: "sub-agent",
                 password: hashedPassowrd,
-                status: "pending",
+                status: "ok",
             });
 
             await newSubAgent.save((error, subAgent) => {
