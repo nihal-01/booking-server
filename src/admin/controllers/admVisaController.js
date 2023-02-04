@@ -14,7 +14,7 @@ module.exports = {
       const {
         country,
         name,
-        documents,
+        termsAndConditions,
         inclusions,
         description,
         faqs,
@@ -73,12 +73,11 @@ module.exports = {
       const newVisa = new Visa({
         country,
         name,
-        // documents,
+        termsAndConditions,
         inclusions: parsedInclusion,
         description,
         faqs: parsedFaqs,
         details: parsedDetails,
-        // keywords,
         sampleVisa,
       });
       await newVisa.save();
@@ -356,7 +355,7 @@ module.exports = {
       const {
         country,
         name,
-        documents,
+        termsAndConditions,
         inclusions,
         description,
         faqs,
@@ -364,7 +363,6 @@ module.exports = {
         keywords,
       } = req.body;
 
-      console.log(req.body, "body");
 
       const { _, error } = visaUpdateSchema.validate({
         ...req.body,
@@ -413,8 +411,8 @@ module.exports = {
         {
           country,
           name,
-          // documents,
-          inclusions: parsedInclusion,
+          termsAndConditions,
+         inclusions: parsedInclusion,
           description,
           faqs: parsedFaqs,
           details: parsedDetails,

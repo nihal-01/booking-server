@@ -67,7 +67,7 @@ module.exports= {
           let query = { _id: id };
     
           const visaApplication = await VisaApplication.findOne(query).populate(
-            "reseller travellers.documents"
+            "reseller travellers.documents travellers.country"
           ).populate({
             path: 'visaType',
             populate: {
