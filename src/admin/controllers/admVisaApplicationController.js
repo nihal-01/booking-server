@@ -67,8 +67,18 @@ module.exports= {
           let query = { _id: id };
     
           const visaApplication = await VisaApplication.findOne(query).populate(
-            "visaType reseller travellers.documents"
-          );
+            "reseller travellers.documents"
+          ).populate({
+            path: 'visaType',
+            populate: {
+              path: 'visa',
+              populate : {
+                path : 'country',
+                select : "countryName"
+              }
+
+            }
+          })
     
           if (!visaApplication) {
             return sendErrorResponse(res, 400, "VisaApplication Not Found ");
