@@ -79,6 +79,17 @@ const visaApplicationSchema = new Schema(
                         type: String,
                         required: true,
                     },
+                    expiryDate: {
+                       
+                        month: {
+                            type: Number,
+                            required: true,
+                        },
+                        year: {
+                            type: Number,
+                            required: true,
+                        },
+                    },
                     dateOfBirth: {
                         day: {
                             type: Number,

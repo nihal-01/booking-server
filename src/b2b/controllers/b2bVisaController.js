@@ -387,7 +387,7 @@ module.exports = {
             populate: { path: "visa" , populate: { path: "country" },},
           })
 
-          console.log(visaApplication ,"visaApplication")
+          console.log(visaApplication.visaType.visa ,"visaApplication")
        
           if (!visaApplication) {
             return sendErrorResponse(
