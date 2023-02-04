@@ -382,8 +382,20 @@ module.exports = {
       const visaApplication = await VisaApplication.findOne({
         _id: orderId,
         reseller: req.reseller._id,
-      });
+      }).populate({
+            path: "visaType",
+            populate: { path: "visa" , populate: { path: "country" },},
+          })
 
+          console.log(visaApplication ,"visaApplication")
+       
+          if (!visaApplication) {
+            return sendErrorResponse(
+              res,
+              404,
+              "Visa Application Not Found"
+            );
+          }
       if (visaApplication.status === "submitted") {
         return sendErrorResponse(
           res,
@@ -497,10 +509,10 @@ module.exports = {
       visaApplication.isDocumentUplaoded = true;
       visaApplication.status = "submitted";
       await visaApplication.save();
-
+      
+        
       res.status(200).json({
         visaApplication,
-        
       });
 
 
