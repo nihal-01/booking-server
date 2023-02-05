@@ -9,15 +9,28 @@ module.exports = {
   listVisa :async (req,res)=>{
      
     try {
-          
-        const visaCountry = await Visa.find({ isDeleted: false }).populate({
+        
+        // const { countryName} = req.query
+
+        const visaCountry = await Visa.find({ isDeleted: false,
+        }).populate({
             path: 'country',
             select: 'countryName'
-          });        
+          });  
+          
+          if (!visaCountry) {
+            return sendErrorResponse(res, 400, "No Visa Available");
+          }      
 
-       if (!visaCountry) {
-        return sendErrorResponse(res, 400, "No Visa Available");
-      }
+        //   const filteredVisaCountry = visaCountry.filter(visa => {
+        //     return visa.country.countryName.match(new RegExp(countryName, "i"));
+        // });
+
+     
+
+      // if (!filteredVisaCountry) {
+      //   return sendErrorResponse(res, 400, "No Visa Available");
+      // }
 
      res.status(200).json(visaCountry) 
 

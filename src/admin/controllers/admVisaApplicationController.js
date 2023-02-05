@@ -67,8 +67,18 @@ module.exports= {
           let query = { _id: id };
     
           const visaApplication = await VisaApplication.findOne(query).populate(
-            "visaType reseller travellers.documents"
-          );
+            "reseller travellers.documents travellers.country"
+          ).populate({
+            path: 'visaType',
+            populate: {
+              path: 'visa',
+              populate : {
+                path : 'country',
+                select : "countryName"
+              }
+
+            }
+          })
     
           if (!visaApplication) {
             return sendErrorResponse(res, 400, "VisaApplication Not Found ");
@@ -100,6 +110,10 @@ module.exports= {
            
           if (!visaApplication) {
             return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
+          }
+
+          if (visaApplication.isPayed == false) {
+            return sendErrorResponse(res, 400, "VisaApplication Amount Payed ");
           }
           
           if(visaApplication.status == "approved"){
@@ -171,7 +185,7 @@ module.exports= {
 
 
 
-          res.status(200).json("Visa Approved Succesfully ")
+          res.status(200).json({message : "Visa Approved Succesfully " })
 
         }catch(err){
 
@@ -229,12 +243,6 @@ module.exports= {
 
           visaApplication.status = "cancelled"
           await  visaApplication.save()
-
-
-
-          
-
-
        
 
         }catch(err){

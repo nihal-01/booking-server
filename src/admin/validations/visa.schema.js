@@ -19,6 +19,7 @@ const visaSchema = Joi.object({
             answer: Joi.string().required(),
         })
         .required(),
+    termsAndConditions : Joi.string().required(),
     details: Joi.array()
         .min(1)
         .items({
@@ -50,7 +51,7 @@ const visaTypeSchema = Joi.object({
         .valid(...["single", "multiple"])
         .required(),
     tax: Joi.number().required(),
-    serviceCharge: Joi.number().required(),
+    insurance: Joi.number().required(),
     purchaseCost: Joi.number().required(),
     visaPrice: Joi.number().required(),
     ageFrom: Joi.number().required(),
@@ -61,6 +62,7 @@ const visaTypeSchema = Joi.object({
 const visaUpdateSchema = Joi.object({
     country: Joi.string().required(),
     name: Joi.string().required(),
+    termsAndConditions : Joi.string().required(),
     // documents: Joi.array()
     //     .min(1)
     //     .items({
