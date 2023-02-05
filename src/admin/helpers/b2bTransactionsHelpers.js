@@ -26,7 +26,7 @@ module.exports = {
             }
 
             if (transactionNo && transactionNo !== "") {
-                filters1.transactionNo = transactionNo;
+                filters1.transactionNo = Number(transactionNo);
             }
 
             if (transactionType && transactionType !== "") {
@@ -71,8 +71,17 @@ module.exports = {
                     },
                 },
                 {
+                    $lookup: {
+                        from: "admins",
+                        localField: "depositor",
+                        foreignField: "_id",
+                        as: "depositor",
+                    },
+                },
+                {
                     $addFields: {
                         reseller: { $arrayElemAt: ["$reseller", 0] },
+                        depositor: { $arrayElemAt: ["$depositor", 0] },
                     },
                 },
                 {
@@ -83,12 +92,18 @@ module.exports = {
                         reseller: {
                             companyName: 1,
                             website: 1,
+                            name: 1,
                         },
                         transactionType: 1,
                         paymentProcessor: 1,
                         amount: 1,
                         status: 1,
                         createdAt: 1,
+                        depositor: {
+                            name: 1,
+                        },
+                        referenceNo: 1,
+                        transactionNo: 1,
                     },
                 },
                 {
@@ -148,7 +163,7 @@ module.exports = {
             }
 
             if (transactionNo && transactionNo !== "") {
-                filters1.transactionNo = transactionNo;
+                filters1.transactionNo = Number(transactionNo);
             }
 
             if (transactionType && transactionType !== "") {
@@ -247,7 +262,9 @@ module.exports = {
             for (let i = 0; i < transactions?.length; i++) {
                 const transaction = transactions[i];
 
-                ws.cell(i + 2, 1).string(transaction?.transactionNo || "N/A");
+                ws.cell(i + 2, 1).number(
+                    Number(transaction?.transactionNo) || 0
+                );
                 ws.cell(i + 2, 2).string(
                     transaction?.reseller?.companyName || "N/A"
                 );

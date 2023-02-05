@@ -32,6 +32,7 @@ const {
     admHotelContractsRouter,
     admVisaApplicationRouter,
     admVisaMarkupRouter,
+    admB2bWalletsRouter,
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
@@ -66,8 +67,8 @@ router.use("/hotels/facilities", admHotelFacilitiesRouter);
 router.use("/hotels/contracts", admHotelContractsRouter);
 router.use("/hotels", admHotelsRouter);
 router.use("/room-types", admRoomTypesRouter);
-router.use('/visa/application' , admVisaApplicationRouter)
-router.use('/visa/markup' , admVisaMarkupRouter)
-
+router.use("/visa/application", admVisaApplicationRouter);
+router.use("/visa/markup", admVisaMarkupRouter);
+router.use("/wallets/b2b", admB2bWalletsRouter);
 
 module.exports = router;
