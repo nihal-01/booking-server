@@ -1,5 +1,5 @@
 const { isValidObjectId } = require("mongoose");
-const { B2BTransaction, B2BWallet } = require("../../b2b/models");
+const { B2BTransaction, B2BWallet, Reseller } = require("../../b2b/models");
 
 const { sendErrorResponse } = require("../../helpers");
 const { Country, VisaType, Visa, VisaApplication } = require("../../models");
@@ -97,16 +97,23 @@ module.exports= {
         try{
 
           const {id} = req.params
+          const {tra} = req.params
+
 
 
           if (!isValidObjectId(id)) {
             return sendErrorResponse(res, 400, "Invalid VisaApplication id");
           }
-          
+
+          let visa;
+          if (req.file?.path) {
+            visa = "/" + req.file.path.replace(/\\/g, "/");
+          }          
 
           let query = { _id: id , status : "submitted" };
 
           const visaApplication = await VisaApplication.findOne(query)
+
            
           if (!visaApplication) {
             return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
@@ -121,20 +128,32 @@ module.exports= {
 
           }
 
-          if(req.reseller.role == "subAgent"){
+          let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": ids }, 
+          { $set: { "travellers.$.visaUpload": visa } })
+
+          console.log(upload)
+
+        
+
+          let reseller = await Reseller.findById(visaApplication.reseller).populate("referredBy")
+
+          console.log(reseller , "reseller")
+
+          if(reseller.role == "subAgent"){
                
             const transaction = new B2BTransaction({
-              reseller: req.reseller?.referredBy,
+              reseller: reseller?.referredBy,
               transactionType: "markup",
               status: "pending",
               paymentProcessor: "wallet",
-              amount: visaApplication.subAgentMarkup,
+              amount: visaApplication.subAgentMarkup / visaApplication.noOfTravellers,
               order: visaApplication._id,
+              orderItem: visaApplication.visaType,
             });
 
            
             let wallet = await B2BWallet.updateOne({
-              reseller: req.reseller?.referredBy,
+              reseller: reseller?.referredBy,
             },
             {
               $inc: {
@@ -154,17 +173,18 @@ module.exports= {
           
 
           const transaction = new B2BTransaction({
-            reseller: req.reseller?._id,
+            reseller: reseller?._id,
             transactionType: "markup",
             status: "pending",
             paymentProcessor: "wallet",
-            amount: visaApplication.resellerMarkup,
+            amount: visaApplication.subAgentMarkup / visaApplication.noOfTravellers ,
             order: visaApplication._id,
-          });
+            orderItem: visaApplication.visaType
+                    });
 
          
           let wallet = await B2BWallet.updateOne({
-            reseller: req.reseller?._id,
+            reseller: reseller?._id,
           },
           {
             $inc: {
@@ -188,7 +208,8 @@ module.exports= {
           res.status(200).json({message : "Visa Approved Succesfully " })
 
         }catch(err){
-
+           
+          console.log(err , "error")
           sendErrorResponse(res, 500, err);
 
         }

@@ -1,9 +1,10 @@
+const { sendErrorResponse } = require("../../helpers");
 const { VisaApplication } = require("../../models");
 
 
 module.exports = {
 
-    getB2BVisaApplicationStatus: async (req, res) => {
+    getB2BAllVisaApplication: async (req, res) => {
         try {
             const { skip = 0, limit = 10, status } = req.query;
 
@@ -24,13 +25,13 @@ module.exports = {
                     return sendErrorResponse(res, 400, "No Visa Application Available");
                   }
 
-            const totalTransactions = await VisaApplication.find(query).count();
+            const totalVisaApplication = await VisaApplication.find(query).count();
 
             res.status(200).json({
-                transactions,
+                visaApplication,
                 skip: Number(skip),
                 limit: Number(limit),
-                totalTransactions,
+                totalVisaApplication,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
@@ -38,7 +39,7 @@ module.exports = {
     },
 
 
-    getSingleVisaApplication : async(req,res)=>{
+    getB2BSingleVisaApplication : async(req,res)=>{
 
         try{
 

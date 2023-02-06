@@ -105,6 +105,16 @@ const b2cVisaApplicationSchema = new Schema(
                         type: String,
                         required: true,
                     },
+                    isApproved: {
+                        type: String,
+                        default: false,
+                    },
+                    visaUpload: {
+                        type:String,
+                        required: function () {
+                            return this.isApproved === true;
+                        },
+                    },
                     
                     documents: {
                         type: Schema.Types.ObjectId,
