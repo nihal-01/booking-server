@@ -544,12 +544,12 @@ module.exports = {
         try {
             const { paymentId, paymentOrderId, orderId } = req.body;
 
-            const { _, error } = attractionOrderCaptureSchema.validate(
-                req.body
-            );
-            if (error) {
-                return sendErrorResponse(res, 400, error.details[0].message);
-            }
+            // const { _, error } = attractionOrderCaptureSchema.validate(
+            //     req.body
+            // );
+            // if (error) {
+            //     return sendErrorResponse(res, 400, error.details[0].message);
+            // }
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "Invalid order id");
