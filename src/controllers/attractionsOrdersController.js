@@ -585,7 +585,7 @@ module.exports = {
                     amount: attractionOrder?.totalAmount,
                     status: "pending",
                     transactionType: "deduct",
-                    paymentProcessor,
+                    paymentProcessor: "paypal",
                     orderId: attractionOrder?._id,
                 });
                 await newTransaction.save();
@@ -714,7 +714,7 @@ module.exports = {
             } = req.body;
 
             if (!isValidObjectId(orderId)) {
-                return sendErrorResponse(res, 400, "Invalid order id");
+                return sendErrorResponse(res, 400, "invalid order id");
             }
 
             const attractionOrder = await AttractionOrder.findOne({
@@ -737,7 +737,7 @@ module.exports = {
             }
 
             let transaction = await B2CTransaction.findOne({
-                paymentProcessor: "paypal",
+                paymentProcessor: "razorpay",
                 orderId: attractionOrder?._id,
                 status: "pending",
             });
@@ -747,7 +747,7 @@ module.exports = {
                     amount: attractionOrder?.totalAmount,
                     status: "pending",
                     transactionType: "deduct",
-                    paymentProcessor,
+                    paymentProcessor: "razorpay",
                     orderId: attractionOrder?._id,
                 });
                 await newTransaction.save();
