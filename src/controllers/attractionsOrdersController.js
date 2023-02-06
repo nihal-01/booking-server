@@ -718,7 +718,7 @@ module.exports = {
             }
 
             const attractionOrder = await AttractionOrder.findOne({
-                orderId,
+                _id: orderId,
             });
             if (!attractionOrder) {
                 return sendErrorResponse(
@@ -753,7 +753,10 @@ module.exports = {
                 await newTransaction.save();
             }
 
-            const generated_signature = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
+            const generated_signature = crypto.createHmac(
+                "sha256",
+                process.env.RAZORPAY_KEY_SECRET
+            );
             generated_signature.update(razorpay_order_id + "|" + transactionid);
 
             if (generated_signature.digest("hex") !== razorpay_signature) {
@@ -761,6 +764,7 @@ module.exports = {
                 await transaction.save();
                 attractionOrder.orderStatus = "failed";
                 await attractionOrder.save();
+
                 return sendErrorResponse(res, 400, "Transaction failed");
             }
 
