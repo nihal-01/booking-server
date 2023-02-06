@@ -97,6 +97,8 @@ module.exports= {
         try{
 
           const {id} = req.params
+          const {tra} = req.params
+
 
 
           if (!isValidObjectId(id)) {
@@ -111,6 +113,7 @@ module.exports= {
           let query = { _id: id , status : "submitted" };
 
           const visaApplication = await VisaApplication.findOne(query)
+
            
           if (!visaApplication) {
             return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
@@ -124,6 +127,13 @@ module.exports= {
             return sendErrorResponse(res, 400, "VisaApplication Already Approved");
 
           }
+
+          let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": ids }, 
+          { $set: { "travellers.$.visaUpload": visa } })
+
+          console.log(upload)
+
+        
 
           let reseller = await Reseller.findById(visaApplication.reseller).populate("referredBy")
 

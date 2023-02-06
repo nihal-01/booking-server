@@ -1,3 +1,4 @@
+const { sendErrorResponse } = require("../../helpers");
 const { VisaApplication } = require("../../models");
 
 
@@ -24,13 +25,13 @@ module.exports = {
                     return sendErrorResponse(res, 400, "No Visa Application Available");
                   }
 
-            const totalTransactions = await VisaApplication.find(query).count();
+            const totalVisaApplication = await VisaApplication.find(query).count();
 
             res.status(200).json({
-                transactions,
+                visaApplication,
                 skip: Number(skip),
                 limit: Number(limit),
-                totalTransactions,
+                totalVisaApplication,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
