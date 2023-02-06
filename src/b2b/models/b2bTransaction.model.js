@@ -27,6 +27,7 @@ const b2bTransactionSchema = new Schema(
                 "wallet",
                 "bank",
                 "cash-in-hand",
+                "ccavenue",
             ],
         },
         amount: {

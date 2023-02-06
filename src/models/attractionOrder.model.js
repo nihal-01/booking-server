@@ -1,7 +1,4 @@
-const mongoose = require("mongoose");
-const AutoIncrement = require("mongoose-sequence")(mongoose);
-
-const { Schema, model } = mongoose;
+const { Schema, model } = require("mongoose");
 
 const attractionOrderSchema = new Schema(
     {
@@ -90,7 +87,12 @@ const attractionOrderSchema = new Schema(
             type: String,
             required: true,
             lowercase: true,
-            enum: ["pending", "paid", "failed"],
+            enum: ["pending", "completed", "failed"],
+        },
+        isPaid: {
+            type: Boolean,
+            required: true,
+            default: false,
         },
         paymentOrderId: {
             type: String,
@@ -112,30 +114,18 @@ const attractionOrderSchema = new Schema(
             type: String,
             required: true,
         },
-        phoneNumberVerified: {
-            type: Boolean,
-            required: true,
-            default: false,
-        },
-        otp: {
-            type: Number,
-        },
         country: {
             type: Schema.Types.ObjectId,
             ref: "Country",
             required: true,
         },
-        referenceNo: {
-            type: Number,
+        referenceNumber: {
+            type: String,
+            required: true,
         },
     },
     { timestamps: true }
 );
-
-attractionOrderSchema.plugin(AutoIncrement, {
-    inc_field: "referenceNo",
-    start_seq: 10000,
-});
 
 const AttractionOrder = model("AttractionOrder", attractionOrderSchema);
 

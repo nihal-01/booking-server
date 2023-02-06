@@ -1,8 +1,9 @@
 const { isValidObjectId } = require("mongoose");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
+const nodeCCAvenue = require("node-ccavenue");
 
-const { sendErrorResponse, sendEmail } = require("../helpers");
+const { sendErrorResponse } = require("../helpers");
 const {
     Attraction,
     AttractionActivity,
@@ -10,15 +11,16 @@ const {
     AttractionTicket,
     User,
     Country,
+    B2CAttractionMarkup,
     B2CTransaction,
-} = require("../models/");
+} = require("../models");
 const {
     attractionOrderSchema,
     attractionOrderCaptureSchema,
 } = require("../validations/attractionOrder.schema");
-const { createOrder, fetchOrder, fetchPayment } = require("../utils/paypal");
-const { B2CWallet } = require("../models/b2cWallet.model");
-const sendMobileOtp = require("../helpers/sendMobileOtp");
+const { createOrder } = require("../utils/paypal");
+const { generateUniqueString } = require("../utils");
+const { convertCurrency } = require("../b2b/helpers/currencyHelpers");
 
 const dayNames = [
     "sunday",
@@ -31,15 +33,20 @@ const dayNames = [
 ];
 
 const instance = new Razorpay({
-    key_id: "rzp_test_wRs1QW9pU0kcUb",
-    key_secret: "b5EAobCLbhyi6wpOOA2HNGzV",
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+const ccav = new nodeCCAvenue.Configure({
+    merchant_id: process.env.CCAVENUE_MERCHANT_ID,
+    working_key: process.env.CCAVENUE_WORKING_KEY,
+});
+
+// TODO
+// 1. VAT Calculation
+// 2. Send password for new emails
+// 3. Verify Mobile Number
 module.exports = {
-    // TODO
-    // 1. VAT Calculation
-    // 2. Send password for new emails
-    // 3. Verify Mobile Number
     createAttractionOrder: async (req, res) => {
         try {
             const { selectedActivities, name, email, phoneNumber, country } =
@@ -72,6 +79,17 @@ module.exports = {
                 });
                 if (!attraction) {
                     return sendErrorResponse(res, 500, "Attraction not found!");
+                }
+
+                if (
+                    new Date(selectedActivities[i]?.date) <
+                    new Date(new Date().setDate(new Date().getDate() + 2))
+                ) {
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        `"selectedActivities[${i}].date" must be a valid date`
+                    );
                 }
 
                 if (
@@ -196,27 +214,79 @@ module.exports = {
                     }
                 }
 
+                let b2cMarkup = await B2CAttractionMarkup.findOne({
+                    attraction: attraction?._id,
+                });
+
+                let totalMarkup = 0;
                 let price = 0;
-                if (selectedActivities[i]?.adultsCount && activity.adultPrice) {
+                if (
+                    Number(selectedActivities[i]?.adultsCount) > 0 &&
+                    activity.adultPrice
+                ) {
                     price +=
                         Number(selectedActivities[i]?.adultsCount) *
                         activity.adultPrice;
+
+                    if (b2cMarkup) {
+                        let markup = 0;
+                        if (b2cMarkup.markupType === "flat") {
+                            markup = b2cMarkup.markup;
+                        } else {
+                            markup =
+                                (b2cMarkup.markup * activity.adultPrice) / 100;
+                        }
+                        price +=
+                            markup * Number(selectedActivities[i]?.adultsCount);
+                        totalMarkup +=
+                            markup * Number(selectedActivities[i]?.adultsCount);
+                    }
                 }
                 if (
-                    selectedActivities[i]?.childrenCount &&
+                    Number(selectedActivities[i]?.childrenCount) > 0 &&
                     activity?.childPrice
                 ) {
                     price +=
                         Number(selectedActivities[i]?.childrenCount) *
                         activity?.childPrice;
+
+                    if (b2cMarkup) {
+                        let markup = 0;
+                        if (b2cMarkup.markupType === "flat") {
+                            markup = b2cMarkup.markup;
+                        } else {
+                            markup =
+                                (b2cMarkup.markup * activity.childPrice) / 100;
+                        }
+                        price +=
+                            markup *
+                            Number(selectedActivities[i]?.childrenCount);
+                        totalMarkup +=
+                            markup * Number(selectedActivities[i]?.adultsCount);
+                    }
                 }
                 if (
-                    selectedActivities[i]?.infantCount &&
+                    Number(selectedActivities[i]?.infantCount) > 0 &&
                     activity?.infantPrice
                 ) {
                     price +=
                         Number(selectedActivities[i]?.infantCount) *
                         activity?.infantPrice;
+
+                    if (b2cMarkup) {
+                        let markup = 0;
+                        if (b2cMarkup.markupType === "flat") {
+                            markup = b2cMarkup.markup;
+                        } else {
+                            markup =
+                                (b2cMarkup.markup * activity.infantCount) / 100;
+                        }
+
+                        price +=
+                            markup * Number(selectedActivities[i]?.infantCount);
+                        totalMarkup +=
+                            markup * Number(selectedActivities[i]?.adultsCount);
+                    }
                 }
 
                 let offer = 0;
@@ -227,6 +297,7 @@ module.exports = {
                         offer = (price / 100) * attraction.offerAmount;
                     }
                 }
+
                 price -= offer;
                 if (price < 0) {
                     price = 0;
@@ -350,10 +421,8 @@ module.exports = {
                 }
             }
 
-
             let buyer = req.user || user;
 
-            const otp = await sendMobileOtp();
             const newAttractionOrder = new AttractionOrder({
                 activities: selectedActivities,
                 totalAmount,
@@ -364,43 +433,13 @@ module.exports = {
                 email,
                 phoneNumber,
                 orderStatus: "pending",
-                otp,
+                referenceNumber: generateUniqueString("B2CATO"),
             });
             await newAttractionOrder.save();
 
-            res.status(200).json(result);
+            res.status(200).json(newAttractionOrder);
         } catch (err) {
             sendErrorResponse(res, 500, err);
-        }
-    },
-
-    verifyAttractionOrderOTP: async (req, res) => {
-        try {
-            const { orderId, otp } = req.params;
-
-            if (!isValidObjectId(orderId)) {
-                return sendErrorResponse(res, 400, "Invalid order id");
-            }
-
-            const attractionOrder = await AttractionOrder.findById(orderId);
-            if (!attractionOrder) {
-                return sendErrorResponse(
-                    res,
-                    404,
-                    "Attraction order not found"
-                );
-            }
-
-            if (!attractionOrder.otp || attractionOrder.otp !== otp) {
-                return sendErrorResponse(res, 400, "Incorrect otp!");
-            }
-
-            attractionOrder.phoneNumberVerified = true;
-            attractionOrder.otp = "";
-
-            res.status(200).json({ message: "OTP successfully verified" });
-        } catch (err) {
-            sendErrorResponse(res, 400, err);
         }
     },
 
@@ -424,10 +463,20 @@ module.exports = {
 
             let totalAmount = attractionOrder.totalAmount;
 
+            const newTransaction = new B2CTransaction({
+                user: attractionOrder.user,
+                amount: attractionOrder?.totalAmount,
+                status: "pending",
+                transactionType: "deduct",
+                paymentProcessor,
+                orderId: attractionOrder?._id,
+            });
+            await newTransaction.save();
+
             if (paymentProcessor === "paypal") {
-                // convert currency to usd
                 const currency = "USD";
-                const response = await createOrder(totalAmount, currency);
+                const totalAmountUSD = await convertCurrency(totalAmount, currency);
+                const response = await createOrder(totalAmountUSD, currency);
 
                 if (response.statusCode !== 201) {
                     return sendErrorResponse(
@@ -439,13 +488,39 @@ module.exports = {
 
                 return res.status(200).json(response.result);
             } else if (paymentProcessor === "razorpay") {
-                // convert currency to INR
+                const currency = "INR"
+                const totalAmountINR = await convertCurrency(totalAmount, currency);
                 const options = {
-                    amount: totalAmount * 100,
-                    currency: "INR",
+                    amount: totalAmountINR * 100,
+                    currency,
                 };
                 const order = await instance.orders.create(options);
                 return res.status(200).json(order);
+            } else if (paymentProcessor === "ccavenue") {
+                let body = "";
+                body += {
+                    merchant_id: process.env.CCAVENUE_MERCHANT_ID,
+                    order_id: attractionOrder?._id,
+                    currency: "AED",
+                    amount: Number(attractionOrder?.totalAmount),
+                    redirect_url: "",
+                    cancel_url: "",
+                    language: "EN",
+                };
+                let accessCode = process.env.CCAVENUE_ACCESS_CODE;
+
+                const encRequest = ccav.encrypt(body);
+                const formbody =
+                    '<form id="nonseamless" method="post" name="redirect" action="https://secure.ccavenue.ae/transaction/transaction.do?command=initiateTransaction"/> <input type="hidden" id="encRequest" name="encRequest" value="' +
+                    encRequest +
+                    '"><input type="hidden" name="access_code" id="access_code" value="' +
+                    accessCode +
+                    '"><script language="javascript">document.redirect.submit();</script></form>';
+
+                res.setHeader("Content-Type", "text/html");
+                res.write(formbody);
+                res.end();
+                return;
             } else {
                 return sendErrorResponse(res, 400, "Invalid payment processor");
             }
@@ -454,9 +529,9 @@ module.exports = {
         }
     },
 
-    capturePaypalAttractionOrder: async (req, res) => {
+    capturePaypalAttractionPayment: async (req, res) => {
         try {
-            const { paymentId, orderId } = req.body;
+            const { paymentId, paymentOrderId, orderId } = req.body;
 
             const { _, error } = attractionOrderCaptureSchema.validate(
                 req.body
@@ -470,7 +545,8 @@ module.exports = {
             }
 
             const attractionOrder = await AttractionOrder.findOne({
-                _id: orderId,
+                paymentOrderId,
+                orderId,
             });
             if (!attractionOrder) {
                 return sendErrorResponse(
@@ -480,7 +556,6 @@ module.exports = {
                 );
             }
 
-            // checking for already paid or not
             if (attractionOrder.orderStatus === "completed") {
                 return sendErrorResponse(
                     res,
@@ -489,107 +564,81 @@ module.exports = {
                 );
             }
 
-            attractionOrder.paymentStatus = orderObject.status;
-            attractionOrder.paymentId = paymentId;
-            await attractionOrder.save();
+            let transaction = await B2CTransaction.findOne({
+                paymentProcessor: "paypal",
+                orderId: attractionOrder?._id,
+                status: "pending",
+            });
+            if (!transaction) {
+                const newTransaction = new B2CTransaction({
+                    user: attractionOrder.user,
+                    amount: attractionOrder?.totalAmount,
+                    status: "pending",
+                    transactionType: "deduct",
+                    paymentProcessor,
+                    orderId: attractionOrder?._id,
+                });
+                await newTransaction.save();
+            }
 
-            for (let i = 0; i < attractionOrder.activities?.length; i++) {
-                let activity = attractionOrder.activities[i];
+            const orderObject = await fetchOrder(orderId);
 
-                if (activity.bookingType === "ticket") {
-                    let adultTickets = [];
-                    let childTickets = [];
-                    let totalAdultPurchaseCost = 0;
-                    let totalChildPurchaseCost = 0;
+            if (orderObject.statusCode == "500") {
+                transaction.status = "failed";
+                await transaction.save();
+                attractionOrder.orderStatus = "failed";
+                await attractionOrder.save();
 
-                    for (let i = 0; i < activity.adultsCount; i++) {
-                        const ticket = await AttractionTicket.findOneAndUpdate(
-                            {
-                                activity: activity.activity,
-                                status: "ok",
-                                ticketFor: "adult",
-                                $or: [
-                                    {
-                                        validity: true,
-                                        validTill: {
-                                            $gte: new Date(
-                                                activity.date
-                                            ).toISOString(),
-                                        },
-                                    },
-                                    { validity: false },
-                                ],
-                            },
-                            { status: "used" }
-                        );
-                        if (!ticket) {
-                            return sendErrorResponse(
-                                res,
-                                400,
-                                "Ooh. sorry, We know you already paid. But tickets sold out. We are trying maximum to provide tickets for you. Otherwise amount will be refunded within 24hrs"
-                            );
-                        }
-                        adultTickets.push({
-                            ticketId: ticket._id,
-                            ticketNo: ticket?.ticketNo,
-                            lotNo: ticket?.lotNo,
-                            ticketFor: ticket?.ticketFor,
-                            validity: ticket.validity,
-                            validTill: ticket.validTill,
-                            cost: ticket?.ticketCost,
-                        });
-                        totalAdultPurchaseCost += ticket?.ticketCost;
-                    }
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "Error while fetching order status from paypal. Check with XYZ team if amount is debited from your bank!"
+                );
+            } else if (orderObject.status !== "COMPLETED") {
+                transaction.status = "failed";
+                await transaction.save();
+                attractionOrder.orderStatus = "failed";
+                await attractionOrder.save();
 
-                    for (let i = 0; i < activity.childrenCount; i++) {
-                        const ticket = await AttractionTicket.findOneAndUpdate(
-                            {
-                                activity: activity.activity,
-                                status: "ok",
-                                ticketFor: "child",
-                                $or: [
-                                    {
-                                        validity: true,
-                                        validTill: {
-                                            $gte: new Date(
-                                                activity.date
-                                            ).toISOString(),
-                                        },
-                                    },
-                                    { validity: false },
-                                ],
-                            },
-                            { status: "used" }
-                        );
-                        if (!ticket) {
-                            return sendErrorResponse(
-                                res,
-                                404,
-                                "Ooh. sorry, We know you already paid. But tickets sold out. We are trying maximum to provide tickets for you. Otherwise amount will be refunded within 24hrs"
-                            );
-                        }
-                        childTickets.push({
-                            ticketId: ticket._id,
-                            ticketNo: ticket?.ticketNo,
-                            lotNo: ticket?.lotNo,
-                            ticketFor: ticket?.ticketFor,
-                            validity: ticket.validity,
-                            validTill: ticket.validTill,
-                            cost: ticket?.ticketCost,
-                        });
-                        totalChildPurchaseCost += ticket?.ticketCost;
-                    }
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "Paypal order status is not Completed. Check with XYZ team if amount is debited from your bank!"
+                );
+            } else {
+                const paymentObject = await fetchPayment(paymentId);
 
-                    attractionOrder.activities[i].adultTickets = adultTickets;
-                    attractionOrder.activities[i].childTickets = childTickets;
-                    attractionOrder.activities[i].profit =
-                        attractionOrder.activities[i].amount -
-                        (totalAdultPurchaseCost + totalChildPurchaseCost);
-                    attractionOrder.activities[i].status = "confirmed";
-                } else {
-                    attractionOrder.activities[i].status = "booked";
+                if (paymentObject.statusCode == "500") {
+                    transaction.status = "failed";
+                    await transaction.save();
+                    attractionOrder.orderStatus = "failed";
+                    await attractionOrder.save();
+
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        "Error while fetching payment status from paypal. Check with XYZ team if amount is debited from your bank!"
+                    );
+                } else if (paymentObject.result.status !== "COMPLETED") {
+                    transaction.status = "failed";
+                    await transaction.save();
+                    attractionOrder.orderStatus = "failed";
+                    await attractionOrder.save();
+
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        "Paypal payment status is not Completed. Please complete your payment!"
+                    );
                 }
             }
+
+            transaction.status = "success";
+            await transaction.save();
+            attractionOrder.isPaid = true;
+            await attractionOrder.save();
+
+            await completeOrderAfterPayment(attractionOrder);
 
             attractionOrder.orderStatus = "completed";
             await attractionOrder.save();
@@ -598,12 +647,122 @@ module.exports = {
                 message: "Transaction Successful",
             });
         } catch (error) {
-            console.log(error);
             return sendErrorResponse(
                 res,
                 400,
-                "Payment processing failed! If money is deducted contact XYZ team, else try again!"
+                "Payment processing failed! If money is deducted contact team, else try again!"
             );
+        }
+    },
+
+    captureCCAvenueAttractionPayment: async (req, res) => {
+        try {
+            const ccavEncResponse = "";
+            const ccavResponse = "";
+            const workingKey = ""; //Put in the 32-Bit key shared by CCAvenues.
+            const ccavPOST = "";
+
+            request.on("data", function (data) {
+                ccavEncResponse += data;
+                ccavPOST = qs.parse(ccavEncResponse);
+                var encryption = ccavPOST.encResp;
+                ccavResponse = ccav.decrypt(encryption, workingKey);
+            });
+
+            request.on("end", function () {
+                var pData = "";
+                pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
+                pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
+                pData = pData.replace(/&/gi, "</td></tr><tr><td>");
+                pData = pData + "</td></tr></table>";
+                htmlcode =
+                    '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Response Handler</title></head><body><center><font size="4" color="blue"><b>Response Page</b></font><br>' +
+                    pData +
+                    "</center><br></body></html>";
+                response.writeHeader(200, { "Content-Type": "text/html" });
+                response.write(htmlcode);
+                response.end();
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    captureRazorpayAttractionPayment: async (req, res) => {
+        try {
+            const {
+                razorpay_order_id,
+                transactionid,
+                razorpay_signature,
+                orderId,
+            } = req.body;
+
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "Invalid order id");
+            }
+
+            const attractionOrder = await AttractionOrder.findOne({
+                orderId,
+            });
+            if (!attractionOrder) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "Attraction order not found!. Please create an order first. Check with our team if amount is debited from your bank!"
+                );
+            }
+
+            if (attractionOrder.orderStatus === "completed") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "This order already completed, Thank you. Check with our team if you paid multiple times."
+                );
+            }
+
+            let transaction = await B2CTransaction.findOne({
+                paymentProcessor: "paypal",
+                orderId: attractionOrder?._id,
+                status: "pending",
+            });
+            if (!transaction) {
+                const newTransaction = new B2CTransaction({
+                    user: attractionOrder.user,
+                    amount: attractionOrder?.totalAmount,
+                    status: "pending",
+                    transactionType: "deduct",
+                    paymentProcessor,
+                    orderId: attractionOrder?._id,
+                });
+                await newTransaction.save();
+            }
+
+            const generated_signature = crypto.createHmac("sha256", keysecret);
+            generated_signature.update(razorpay_order_id + "|" + transactionid);
+
+            if (generated_signature.digest("hex") !== razorpay_signature) {
+                transaction.status = "failed";
+                await transaction.save();
+                attractionOrder.orderStatus = "failed";
+                await attractionOrder.save();
+                return sendErrorResponse(res, 400, "Transaction failed");
+            }
+
+            transaction.status = "success";
+            await transaction.save();
+            attractionOrder.isPaid = true;
+            await attractionOrder.save();
+
+            await completeOrderAfterPayment(attractionOrder);
+
+            attractionOrder.orderStatus = "completed";
+            await attractionOrder.save();
+
+            return res.status(200).json({
+                message: "Transaction Successful",
+            });
+        } catch (err) {
+            sendErrorResponse(res, 400, err);
         }
     },
 

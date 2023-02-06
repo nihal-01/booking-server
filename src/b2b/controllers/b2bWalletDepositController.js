@@ -1,9 +1,17 @@
+const nodeCCAvenue = require("node-ccavenue");
+const qs = require("querystring");
+
 const { sendErrorResponse } = require("../../helpers");
 const { createOrder, fetchOrder, fetchPayment } = require("../../utils/paypal");
 const { B2BTransaction, B2BWallet } = require("../models");
 const {
     b2bAttractionOrderCaptureSchema,
 } = require("../validations/b2bAttractionOrder.schema");
+
+const ccav = new nodeCCAvenue.Configure({
+    merchant_id: process.env.CCAVENUE_MERCHANT_ID,
+    working_key: process.env.CCAVENUE_WORKING_KEY,
+});
 
 module.exports = {
     // TODO
@@ -20,13 +28,12 @@ module.exports = {
                 status: "pending",
             });
 
-            let resultFinal;
             if (paymentProcessor === "paypal") {
                 const currency = "USD";
                 const response = await createOrder(amount, currency);
 
                 newTransation.paymentOrderId = response.result.id;
-                resultFinal = response.result;
+                const resultFinal = response.result;
 
                 if (response.statusCode !== 201) {
                     newTransation.status = "failed";
@@ -38,7 +45,36 @@ module.exports = {
                         "Something went wrong while fetching order! Please try again later"
                     );
                 }
-            } else if (paymentProcessor === "razorpay") {
+
+                await newTransation.save();
+                res.status(200).json(resultFinal);
+            } else if (paymentProcessor === "ccavenue") {
+                let body = "";
+                body += {
+                    merchant_id: process.env.CCAVENUE_MERCHANT_ID,
+                    order_id: newTransation?._id,
+                    currency: "AED",
+                    amount: Number(amount),
+                    redirect_url: "",
+                    cancel_url: "",
+                    language: "EN",
+                };
+                let accessCode = process.env.CCAVENUE_ACCESS_CODE;
+
+                const encRequest = ccav.encrypt(body);
+                const formbody =
+                    '<form id="nonseamless" method="post" name="redirect" action="https://secure.ccavenue.ae/transaction/transaction.do?command=initiateTransaction"/> <input type="hidden" id="encRequest" name="encRequest" value="' +
+                    encRequest +
+                    '"><input type="hidden" name="access_code" id="access_code" value="' +
+                    accessCode +
+                    '"><script language="javascript">document.redirect.submit();</script></form>';
+
+                await newTransation.save();
+
+                res.setHeader("Content-Type", "text/html");
+                res.write(formbody);
+                res.end();
+                return;
             } else {
                 return sendErrorResponse(
                     res,
@@ -46,9 +82,6 @@ module.exports = {
                     "Invalid payment processor. Please select a valid one"
                 );
             }
-
-            await newTransation.save();
-            res.status(200).json(resultFinal);
         } catch (err) {
             // handle transaction fail here
             sendErrorResponse(res, 500, err);
@@ -149,6 +182,35 @@ module.exports = {
             res.status(200).json({ message: "Transaction Successful" });
         } catch (err) {
             // handle transaction fail here
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    captureCCAvenueWalletDeposit: async (req, res) => {
+        try {
+            let ccavEncResponse = "";
+            ccavEncResponse += req.body;
+
+            const ccavPOST = qs.parse(ccavEncResponse);
+            const encryption = ccavPOST.encResp;
+            const ccavResponse = ccav.decrypt(encryption);
+
+            // complete transaction here
+
+            let pData = "";
+            pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
+            pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
+            pData = pData.replace(/&/gi, "</td></tr><tr><td>");
+            pData = pData + "</td></tr></table>";
+            htmlcode =
+                '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Response Handler</title></head><body><center><font size="4" color="blue"><b>Response Page</b></font><br>' +
+                pData +
+                "</center><br></body></html>";
+
+            res.writeHeader(200, { "Content-Type": "text/html" });
+            res.write(htmlcode);
+            res.end();
+        } catch (err) {
             sendErrorResponse(res, 500, err);
         }
     },

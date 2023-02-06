@@ -19,7 +19,7 @@ module.exports = {
 
             const filters = {
                 "activities.status": {
-                    $in: ["booked", "confirmed", "cancelled"],
+                    $in: ["booked", "confirmed", "cancelled", "pending"],
                 },
             };
 
@@ -124,7 +124,7 @@ module.exports = {
                             driver: 1,
                             _id: 1,
                         },
-                        referenceNo: 1,
+                        referenceNumber: 1,
                     },
                 },
                 {
