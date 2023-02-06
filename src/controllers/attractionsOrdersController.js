@@ -753,7 +753,7 @@ module.exports = {
                 await newTransaction.save();
             }
 
-            const generated_signature = crypto.createHmac("sha256", keysecret);
+            const generated_signature = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
             generated_signature.update(razorpay_order_id + "|" + transactionid);
 
             if (generated_signature.digest("hex") !== razorpay_signature) {
