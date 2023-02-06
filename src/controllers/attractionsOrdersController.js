@@ -19,7 +19,7 @@ const {
     attractionOrderSchema,
     attractionOrderCaptureSchema,
 } = require("../validations/attractionOrder.schema");
-const { createOrder } = require("../utils/paypal");
+const { createOrder, fetchOrder, fetchPayment } = require("../utils/paypal");
 const { generateUniqueString } = require("../utils");
 const { convertCurrency } = require("../b2b/helpers/currencyHelpers");
 const {
@@ -591,9 +591,9 @@ module.exports = {
                 await newTransaction.save();
             }
 
-            const orderObject = await fetchOrder(orderId);
+            const orderObject = await fetchOrder(paymentOrderId);
 
-            if (orderObject.statusCode == "500") {
+            if (orderObject.statusCode === "500") {
                 transaction.status = "failed";
                 await transaction.save();
                 attractionOrder.orderStatus = "failed";
@@ -657,6 +657,7 @@ module.exports = {
                 message: "Transaction Successful",
             });
         } catch (error) {
+            console.log(error);
             return sendErrorResponse(
                 res,
                 400,
