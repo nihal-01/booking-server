@@ -20,7 +20,14 @@ const b2bTransactionSchema = new Schema(
             type: String,
             required: true,
             lowercase: true,
-            enum: ["paypal", "stripe", "razorpay", "wallet"],
+            enum: [
+                "paypal",
+                "stripe",
+                "razorpay",
+                "wallet",
+                "bank",
+                "cash-in-hand",
+            ],
         },
         amount: {
             type: Number,
@@ -61,6 +68,22 @@ const b2bTransactionSchema = new Schema(
         },
         transactionNo: {
             type: Number,
+        },
+        referenceNo: {
+            type: String,
+            required: function () {
+                return this.paymentProcessor === "bank";
+            },
+        },
+        depositor: {
+            type: Schema.Types.ObjectId,
+            ref: "Admin",
+            required: function () {
+                return (
+                    this.paymentProcessor === "bank" ||
+                    this.paymentProcessor === "cash-in-hand"
+                );
+            },
         },
     },
     { timestamps: true }

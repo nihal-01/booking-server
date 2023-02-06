@@ -32,14 +32,17 @@ module.exports = {
 
             const dates = getDates(dateFrom, dateTo);
             for (let i = 0; i < dates.length; i++) {
-                const newHotelContract = new HotelContract({
-                    hotel: roomTypeDetails.hotel,
-                    roomType,
-                    date: dates[i],
-                    price,
-                    contractType,
-                });
-                await newHotelContract.save();
+                await HotelContract.findOneAndUpdate(
+                    { date: dates[i], roomType },
+                    {
+                        hotel: roomTypeDetails.hotel,
+                        roomType,
+                        date: dates[i],
+                        contractType,
+                        price,
+                    },
+                    { upsert: true }
+                );
             }
 
             res.status(200).json({ message: "contract successfully updated" });
@@ -85,7 +88,12 @@ module.exports = {
                         as: "contracts",
                     },
                 },
-                { $unwind: "$contracts" },
+                {
+                    $unwind: {
+                        path: "$contracts",
+                        preserveNullAndEmptyArrays: true,
+                    },
+                },
                 {
                     $project: {
                         contracts: {
@@ -96,6 +104,7 @@ module.exports = {
                         },
                         _id: 1,
                         roomName: 1,
+                        createdAt: 1,
                     },
                 },
                 {
@@ -103,8 +112,10 @@ module.exports = {
                         _id: "$_id",
                         roomName: { $first: "$roomName" },
                         contracts: { $push: "$contracts" },
+                        createdAt: { $push: "$createdAt" },
                     },
                 },
+                { $sort: { createdAt: 1 } },
                 {
                     $project: {
                         roomName: 1,
