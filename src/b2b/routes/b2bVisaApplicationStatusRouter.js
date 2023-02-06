@@ -1,4 +1,4 @@
-const { getB2BVisaApplicationStatus } = require("../controllers/b2bVisaStatusController");
+const { getB2BVisaApplicationStatus } = require("../controllers/b2bVisaApplicationListController");
 const { b2bAuth } = require("../middlewares");
 
 const router = require("express").Router();

@@ -3,7 +3,7 @@ const { VisaApplication } = require("../../models");
 
 module.exports = {
 
-    getB2BVisaApplicationStatus: async (req, res) => {
+    getB2BAllVisaApplication: async (req, res) => {
         try {
             const { skip = 0, limit = 10, status } = req.query;
 
@@ -38,7 +38,7 @@ module.exports = {
     },
 
 
-    getSingleVisaApplication : async(req,res)=>{
+    getB2BSingleVisaApplication : async(req,res)=>{
 
         try{
 
