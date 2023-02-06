@@ -22,6 +22,9 @@ const {
 const { createOrder } = require("../utils/paypal");
 const { generateUniqueString } = require("../utils");
 const { convertCurrency } = require("../b2b/helpers/currencyHelpers");
+const {
+    completeOrderAfterPayment,
+} = require("../helpers/attractionOrderHelpers");
 
 const dayNames = [
     "sunday",

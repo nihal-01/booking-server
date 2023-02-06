@@ -1,4 +1,3 @@
-const { sendErrorResponse } = require("../../helpers");
 const { Currency } = require("../../models");
 
 // TODO
@@ -15,7 +14,9 @@ module.exports = {
                 return new Error("invalid amount");
             }
 
-            const convertedAmount = amount * currency?.conversionRate;
+            const convertedAmount = (amount * currency?.conversionRate).toFixed(
+                2
+            );
             return convertedAmount;
         } catch (err) {
             throw err;
