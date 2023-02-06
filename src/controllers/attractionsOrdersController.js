@@ -556,8 +556,7 @@ module.exports = {
             }
 
             const attractionOrder = await AttractionOrder.findOne({
-                paymentOrderId,
-                orderId,
+                _id: orderId,
             });
             if (!attractionOrder) {
                 return sendErrorResponse(
