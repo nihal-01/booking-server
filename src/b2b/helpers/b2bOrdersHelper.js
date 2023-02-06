@@ -1,7 +1,7 @@
 const { Types, isValidObjectId } = require("mongoose");
 const xl = require("excel4node");
 
-const { B2BAttractionOrder } = require("../../b2b/models");
+const { B2BAttractionOrder } = require("../models");
 
 module.exports = {
     getB2bOrders: async ({

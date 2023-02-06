@@ -1,5 +1,4 @@
-const { isValidObjectId, Types } = require("mongoose");
-const xl = require("excel4node");
+const { isValidObjectId } = require("mongoose");
 
 const {
     handleAttractionOrderMarkup,
@@ -10,7 +9,7 @@ const { AttractionOrder, Driver } = require("../../models");
 const {
     getB2bOrders,
     generateB2bOrdersSheet,
-} = require("../helpers/b2bOrdersHelper");
+} = require("../../b2b/helpers/b2bOrdersHelper");
 
 module.exports = {
     getAllB2cOrders: async (req, res) => {

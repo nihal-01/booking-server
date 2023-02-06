@@ -4,9 +4,9 @@ const { Currency } = require("../../models");
 // TODO
 // 1. Add cache here
 module.exports = {
-    convertCurrency: async (amount, currencySymbol) => {
+    convertCurrency: async (amount, isocode) => {
         try {
-            const currency = await Currency.findOne({ currencySymbol });
+            const currency = await Currency.findOne({ isocode });
             if (!currency) {
                 return new Error("currency not found");
             }

@@ -2,6 +2,7 @@ const { isValidObjectId } = require("mongoose");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const nodeCCAvenue = require("node-ccavenue");
+const qs = require("querystring");
 
 const { sendErrorResponse } = require("../helpers");
 const {
@@ -475,7 +476,11 @@ module.exports = {
 
             if (paymentProcessor === "paypal") {
                 const currency = "USD";
-                const totalAmountUSD = await convertCurrency(totalAmount, currency);
+                const totalAmountUSD = await convertCurrency(
+                    totalAmount,
+                    currency
+                );
+                console.log(totalAmountUSD);
                 const response = await createOrder(totalAmountUSD, currency);
 
                 if (response.statusCode !== 201) {
@@ -488,8 +493,11 @@ module.exports = {
 
                 return res.status(200).json(response.result);
             } else if (paymentProcessor === "razorpay") {
-                const currency = "INR"
-                const totalAmountINR = await convertCurrency(totalAmount, currency);
+                const currency = "INR";
+                const totalAmountINR = await convertCurrency(
+                    totalAmount,
+                    currency
+                );
                 const options = {
                     amount: totalAmountINR * 100,
                     currency,
@@ -503,8 +511,8 @@ module.exports = {
                     order_id: attractionOrder?._id,
                     currency: "AED",
                     amount: Number(attractionOrder?.totalAmount),
-                    redirect_url: "",
-                    cancel_url: "",
+                    redirect_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
+                    cancel_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
                     language: "EN",
                 };
                 let accessCode = process.env.CCAVENUE_ACCESS_CODE;
@@ -657,33 +665,38 @@ module.exports = {
 
     captureCCAvenueAttractionPayment: async (req, res) => {
         try {
-            const ccavEncResponse = "";
-            const ccavResponse = "";
-            const workingKey = ""; //Put in the 32-Bit key shared by CCAvenues.
-            const ccavPOST = "";
+            let ccavEncResponse = "";
+            ccavEncResponse += req.body;
 
-            request.on("data", function (data) {
-                ccavEncResponse += data;
-                ccavPOST = qs.parse(ccavEncResponse);
-                var encryption = ccavPOST.encResp;
-                ccavResponse = ccav.decrypt(encryption, workingKey);
-            });
+            const ccavPOST = qs.parse(ccavEncResponse);
+            const encryption = ccavPOST.encResp;
+            const ccavResponse = ccav.decrypt(encryption);
 
-            request.on("end", function () {
-                var pData = "";
-                pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
-                pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
-                pData = pData.replace(/&/gi, "</td></tr><tr><td>");
-                pData = pData + "</td></tr></table>";
-                htmlcode =
-                    '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Response Handler</title></head><body><center><font size="4" color="blue"><b>Response Page</b></font><br>' +
-                    pData +
-                    "</center><br></body></html>";
-                response.writeHeader(200, { "Content-Type": "text/html" });
-                response.write(htmlcode);
-                response.end();
+            const attractionOrder = await AttractionOrder.findOne({
+                _id: req.body?.order_id,
             });
+            if (!attractionOrder) {
+                return sendErrorResponse(
+                    res,
+                    404,
+                    "Attraction order not found"
+                );
+            }
+
+            let pData = "";
+            pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
+            pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
+            pData = pData.replace(/&/gi, "</td></tr><tr><td>");
+            pData = pData + "</td></tr></table>";
+            const htmlcode =
+                '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Response Handler</title></head><body><center><font size="4" color="blue"><b>Response Page</b></font><br>' +
+                pData +
+                "</center><br></body></html>";
+            res.writeHeader(200, { "Content-Type": "text/html" });
+            res.write(htmlcode);
+            res.end();
         } catch (err) {
+            console.log(err);
             sendErrorResponse(res, 500, err);
         }
     },
