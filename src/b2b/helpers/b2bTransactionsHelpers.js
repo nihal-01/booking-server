@@ -103,7 +103,7 @@ module.exports = {
                             name: 1,
                         },
                         referenceNo: 1,
-                        transactionNo: 1,
+                        b2bTransactionNo: 1,
                     },
                 },
                 {
@@ -227,7 +227,7 @@ module.exports = {
                         amount: 1,
                         status: 1,
                         createdAt: 1,
-                        transactionNo: 1,
+                        b2bTransactionNo: 1,
                     },
                 },
                 {

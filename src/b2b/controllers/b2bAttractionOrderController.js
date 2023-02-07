@@ -21,9 +21,12 @@ const {
     handleAttractionOrderMarkup,
 } = require("../helpers/attractionOrderHelpers");
 const { generateUniqueString } = require("../../utils");
+const {
+    getB2bOrders,
+    generateB2bOrdersSheet,
+} = require("../helpers/b2bOrdersHelper");
 const sendAttractionOrderEmail = require("../helpers/sendAttractionOrderEmail");
 const sendAttractionOrderAdminEmail = require("../helpers/sendAttractionOrderAdminEmail");
-const { getB2bOrders } = require("../helpers/b2bOrdersHelper");
 
 const dayNames = [
     "sunday",
@@ -373,6 +376,7 @@ module.exports = {
                 selectedActivities[i].resellerMarkup = totalResellerMarkup;
                 selectedActivities[i].subAgentMarkup = totalSubAgentMarkup;
                 selectedActivities[i].markups = markups;
+                selectedActivities[i].attraction = attraction?._id;
 
                 totalAmount += price;
             }
@@ -657,10 +661,8 @@ module.exports = {
                 }
             }
 
-            sendAttractionOrderEmail(attractionOrder)
-            sendAttractionOrderAdminEmail(attractionOrder)
-
-            
+            sendAttractionOrderEmail(attractionOrder);
+            sendAttractionOrderAdminEmail(attractionOrder);
 
             res.status(200).json({
                 message: "order successfully placed",
@@ -694,6 +696,172 @@ module.exports = {
                 resellerId: req.reseller?._id,
                 orderedBy: "",
                 agentCode: "",
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    cancelAttractionOrder: async (req, res) => {
+        try {
+            const { orderId, orderItemId } = req.body;
+
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "invalid order id");
+            }
+
+            if (!isValidObjectId(orderItemId)) {
+                return sendErrorResponse(res, 400, "invalid order item id");
+            }
+
+            // check order available or not
+            const order = await B2BAttractionOrder.findOne(
+                {
+                    _id: orderId,
+                    reseller: req.reseller?._id,
+                },
+                { activities: { $elemMatch: { _id: orderItemId } } }
+            );
+
+            if (!order || order?.activities?.length < 1) {
+                return sendErrorResponse(res, 400, "order not found");
+            }
+
+            const attraction = await Attraction.findById(
+                order.activities[0].attraction
+            );
+            if (!attraction) {
+                return sendErrorResponse(res, 400, "attraction not found");
+            }
+
+            // check if it's status is booked or confirmed
+            if (
+                order.activities[0].status !== "booked" &&
+                order.activities[0].status !== "confirmed"
+            ) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "you cantn't canel this order. order already cancelled or not completed the order"
+                );
+            }
+
+            // check if it's ok for cancelling with cancellation policy
+            if (attraction.cancellationType === "nonRefundable") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, this order is non refundable"
+                );
+            }
+
+            if (
+                new Date(order.activities[0].date).setHours(0, 0, 0, 0) <=
+                new Date().setDate(0, 0, 0, 0)
+            ) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, you cant't cancel the order after the activity date"
+                );
+            }
+
+            let orderAmount = order.activities[0].amount;
+            let cancellationFee = 0;
+            let cancelBeforeDate = new Date(
+                new Date(order.activities[0].date).setHours(0, 0, 0, 0)
+            );
+            cancelBeforeDate.setHours(
+                cancelBeforeDate.getHours() - attraction.cancelBeforeTime
+            );
+
+            if (attraction.cancellationType === "freeCancellation") {
+                if (new Date().setHours(0, 0, 0, 0) < cancelBeforeDate) {
+                    cancellationFee = 0;
+                } else {
+                    cancellationFee =
+                        (orderAmount / 100) * attraction.cancellationFee;
+                }
+            } else if (attraction.cancellationType === "cancelWithFee") {
+                if (new Date().setHours(0, 0, 0, 0) < cancelBeforeDate) {
+                    cancellationFee =
+                        (orderAmount / 100) * attraction.cancellationFee;
+                } else {
+                    cancellationFee = totalAmount;
+                }
+            } else {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, cancellation failed"
+                );
+            }
+
+            // Update tickets state to back
+            if (order.activities[0].bookingType === "ticket") {
+                await AttractionTicket.find({
+                    activity: order.activities[0].activity,
+                    ticketNo: { $all: order.activities[0].adultTickets },
+                }).updateMany({ status: "ok" });
+                await AttractionTicket.find({
+                    activity: order.activities[0].activity,
+                    ticketNo: { $all: order.activities[0].childTickets },
+                }).updateMany({ status: "ok" });
+                await AttractionTicket.find({
+                    activity: order.activities[0].activity,
+                    ticketNo: { $all: order.activities[0].infantTickets },
+                }).updateMany({ status: "ok" });
+            }
+
+            // Refund the order amount after substracting fee
+            let wallet = await B2BWallet.findOne({
+                reseller: req.reseller?._id,
+            });
+            if (!wallet) {
+                wallet = new B2BWallet({
+                    balance: 0,
+                    reseller: req.reseller?._id,
+                });
+                await wallet.save();
+            }
+            const newTransaction = new B2BTransaction({
+                amount: orderAmount - cancellationFee,
+                reseller: req.reseller?._id,
+                transactionType: "refund",
+                paymentProcessor: "wallet",
+                order: orderId,
+                orderItem: orderItemId,
+                status: "pending",
+            });
+            await newTransaction.save();
+
+            wallet.balance += newTransaction.amount;
+            await wallet.save();
+            newTransaction.status = "success";
+            await newTransaction.save();
+
+            // canecl the order item's markup transactions
+            // for reseller and sub-agaents
+            await B2BTransaction.find({
+                transactionType: "markup",
+                order: orderId,
+                orderItem: orderItemId,
+                status: "pending",
+            }).updateMany({ status: "failed" });
+
+            await B2BAttractionOrder.findOneAndUpdate(
+                {
+                    _id: orderId,
+                    "activities._id": orderItemId,
+                },
+                {
+                    "activities.$.status": "cancelled",
+                },
+                { runValidators: true }
+            );
+
+            res.status(200).json({
+                message: "you have successfully cancelled the order",
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
