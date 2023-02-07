@@ -2,14 +2,23 @@ const { isValidObjectId, Types } = require("mongoose");
 const crypto = require("crypto");
 const { generateUniqueString } = require("../utils");
 const { sendMobileOtp, sendEmail, sendErrorResponse } = require("../helpers");
-const { B2BWallet, B2BTransaction, VisaType, Country, B2CVisaApplication, B2CTransaction, User, VisaDocument } = require("../models");
-const { b2cVisaApplicationSchema, visaOrderCaptureSchema } = require("../validations/b2cVisaApplication.schema");
+const {
+  B2BWallet,
+  B2BTransaction,
+  VisaType,
+  Country,
+  B2CVisaApplication,
+  B2CTransaction,
+  User,
+  VisaDocument,
+} = require("../models");
+const {
+  b2cVisaApplicationSchema,
+  visaOrderCaptureSchema,
+} = require("../validations/b2cVisaApplication.schema");
 const { createOrder } = require("../utils/paypal");
 
-
 module.exports = {
-
-
   applyVisa: async (req, res) => {
     try {
       const {
@@ -49,27 +58,31 @@ module.exports = {
         isDeleted: false,
         _id: country,
       });
-      
 
       if (onwardDate <= new Date()) {
-        return sendErrorResponse(res, 400, "Onward date must be greater than the current date");
+        return sendErrorResponse(
+          res,
+          400,
+          "Onward date must be greater than the current date"
+        );
       }
 
       if (returnDate <= new Date()) {
-        return sendErrorResponse(res, 400, "Return Date date must be greater than the current date");
+        return sendErrorResponse(
+          res,
+          400,
+          "Return Date date must be greater than the current date"
+        );
       }
-
 
       if (!countryDetail) {
         return sendErrorResponse(res, 404, "country not found");
       }
 
-
-      noOfTravellers = Number(noOfTravellers)
+      noOfTravellers = Number(noOfTravellers);
       if (noOfTravellers !== travellers.length) {
         return sendErrorResponse(res, 400, "PassengerDetails Not Added ");
       }
-
 
       console.log(visaTypeDetails._id, visaType, "visaTypeDetails");
       const visaTypeList = await VisaType.aggregate([
@@ -97,9 +110,7 @@ module.exports = {
               {
                 $match: {
                   $expr: {
-                    $and: [
-                      { $eq: ["$visaType", "$$visaType"] },
-                    ],
+                    $and: [{ $eq: ["$visaType", "$$visaType"] }],
                   },
                 },
               },
@@ -107,7 +118,7 @@ module.exports = {
             as: "markupClient",
           },
         },
-       
+
         {
           $set: {
             markupClient: { $arrayElemAt: ["$markupClient", 0] },
@@ -176,7 +187,6 @@ module.exports = {
             },
           },
         },
-        
       ]);
 
       let profit =
@@ -187,50 +197,49 @@ module.exports = {
 
       let user;
       if (!req.user) {
-          if (!isValidObjectId(country)) {
-              return sendErrorResponse(res, 400, "Invalid country id");
-          }
+        if (!isValidObjectId(country)) {
+          return sendErrorResponse(res, 400, "Invalid country id");
+        }
 
-          const countryDetails = await Country.findOne({
-              _id: country,
-              isDeleted: false,
+        const countryDetails = await Country.findOne({
+          _id: country,
+          isDeleted: false,
+        });
+
+        if (!countryDetails) {
+          return sendErrorResponse(res, 400, "Country not found");
+        }
+
+        // console.log(travellers[0].firstName , "travellers[0].firstname")
+
+        user = await User.findOne({ email });
+        if (!user) {
+          const password = crypto.randomBytes(6);
+          user = new User({
+            name: travellers[0].firstName,
+            email,
+            phoneNumber: contactNo,
+            country,
+            password,
           });
 
-          if (!countryDetails) {
-              return sendErrorResponse(res, 400, "Country not found");
-          }
-          
-          // console.log(travellers[0].firstName , "travellers[0].firstname")
+          sendEmail(
+            email,
+            "New Account",
+            `username : ${email} password : ${password}`
+          );
 
-          
-          user = await User.findOne({ email });
-          if (!user) {
-              const password = crypto.randomBytes(6);
-              user = new User({
-                  name : travellers[0].firstName,
-                  email,
-                  phoneNumber :contactNo ,
-                  country,
-                  password,
-              });
-
-              sendEmail(email , "New Account" , `username : ${email} password : ${password}` )
-
-              await user.save();
-          }
+          await user.save();
+        }
       }
 
-
       let buyer = req.user || user;
-
-
-
 
       const newVisaApplication = new B2CVisaApplication({
         visaType,
         visaPrice: visaTypeList[0].totalPrice || 0,
         totalAmount: visaTypeList[0].totalAmount || 0,
-        profit : profit,
+        profit: profit,
         clientMarkup: visaTypeList[0].clientMarkup || 0,
         email,
         contactNo,
@@ -238,216 +247,177 @@ module.exports = {
         returnDate,
         noOfTravellers,
         travellers,
-        user : buyer?._id,
+        user: buyer?._id,
         referenceNumber: generateUniqueString("B2CVSA"),
       });
-
-
 
       await newVisaApplication.save();
 
       res.status(200).json(newVisaApplication);
     } catch (err) {
-
-      console.log(err , "error")
+      console.log(err, "error");
       sendErrorResponse(res, 500, err);
     }
   },
 
-
-  
-
-  initiatePayment : async(req,res)=>{
-
+  initiatePayment: async (req, res) => {
     try {
+      const { orderId } = req.params;
+      const { paymentProcessor } = req.body;
 
-        const { orderId } = req.params
-        const { paymentProcessor} = req.body;
-        
+      let visaApplication = await B2CVisaApplication.findById(orderId);
 
+      if (!visaApplication) {
+        return sendErrorResponse(res, 400, "Visa Application Not Found");
+      }
 
-        let visaApplication = await B2CVisaApplication.findById(orderId)
+      console.log(visaApplication.totalAmount, "visaApplication.totalAmount");
 
-        if(!visaApplication){
+      let amount = visaApplication.totalAmount;
+
+      const newTransation = new B2CTransaction({
+        transactionType: "deduct",
+        amount,
+        paymentProcessor,
+        status: "pending",
+        user: visaApplication.user,
+      });
+
+      let resultFinal;
+
+      if (paymentProcessor === "paypal") {
+        const currency = "USD";
+        const response = await createOrder(amount, currency);
+
+        console.log(response, "response");
+        newTransation.paymentOrderId = response.result.id;
+        resultFinal = response.result;
+
+        if (response.statusCode !== 201) {
+          newTransation.status = "failed";
+          await newTransation.save();
+
           return sendErrorResponse(
             res,
             400,
-            "Visa Application Not Found"
-            );
-            
-          }
-          
-          console.log(visaApplication.totalAmount , "visaApplication.totalAmount")
-          
-        let amount = visaApplication.totalAmount
-
-        const newTransation = new B2CTransaction({
-            transactionType: "deduct",
-            amount,
-            paymentProcessor,
-            status: "pending",
-            user : visaApplication.user
-        });
-        
-
-        let resultFinal;
-
-        if (paymentProcessor === "paypal") {
-
-
-            const currency = "USD";
-            const response = await createOrder(amount, currency);
-           
-            console.log(response , "response")
-            newTransation.paymentOrderId = response.result.id;
-            resultFinal = response.result;
-
-            if (response.statusCode !== 201) {
-                newTransation.status = "failed";
-                await newTransation.save();
-
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "Something went wrong while fetching order! Please try again later"
-                );
-            }
-        } else if (paymentProcessor === "razorpay") {
-        } else {
-            return sendErrorResponse(
-                res,
-                400,
-                "Invalid payment processor. Please select a valid one"
-            );
-        }
-
-        await newTransation.save();
-        res.status(200).json(resultFinal);
-
-    } catch (err) {
-        // handle transaction fail here
-        sendErrorResponse(res, 500, err);
-    }
-  },
-  
-
-  capturePayalVisaApplication : async(req,res)=>{
-    
-    try{
-
-        const { paymentId, orderId } = req.body;
-
-        const { _, error } = visaOrderCaptureSchema.validate(
-            req.body
-        );
-
-
-        if (error) {
-            return sendErrorResponse(res, 400, error.details[0].message);
-        }
-
-        if (!isValidObjectId(orderId)) {
-            return sendErrorResponse(res, 400, "Invalid order id");
-        }
-
-        let visaApplication = await B2CVisaApplication.findById(orderId)
-        
-
-        if (!visaApplication) {
-          return sendErrorResponse(
-              res,
-              400,
-              "visa application not found!"
+            "Something went wrong while fetching order! Please try again later"
           );
+        }
+      } else if (paymentProcessor === "razorpay") {
+      } else {
+        return sendErrorResponse(
+          res,
+          400,
+          "Invalid payment processor. Please select a valid one"
+        );
       }
 
-        const transaction = await B2CTransaction.findOne({
-            paymentOrderId: orderId,
-        });
-
-        if (!transaction) {
-            return sendErrorResponse(
-                res,
-                400,
-                "transation not found!. check with the team if amount is debited from your bank!"
-            );
-        }
-
-        if (transaction.status === "success") {
-            return sendErrorResponse(
-                res,
-                400,
-                "this transaction already completed, Thank you"
-            );
-        }
-
-        const orderObject = await fetchOrder(orderId);
-
-        if (orderObject.statusCode == "500") {
-            transaction.status = "failed";
-            await transaction.save();
-
-            return sendErrorResponse(
-                res,
-                400,
-                "Error while fetching order status from paypal. Check with XYZ team if amount is debited from your bank!"
-            );
-        } else if (orderObject.status !== "COMPLETED") {
-            transaction.status = "failed";
-            await transaction.save();
-
-            return sendErrorResponse(
-                res,
-                400,
-                "Paypal order status is not Completed. Check with XYZ team if amount is debited from your bank!"
-            );
-        } else {
-            const paymentObject = await fetchPayment(paymentId);
-
-            if (paymentObject.statusCode == "500") {
-                transaction.status = "failed";
-                await transaction.save();
-
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "Error while fetching payment status from paypal. Check with XYZ team if amount is debited from your bank!"
-                );
-            } else if (paymentObject.result.status !== "COMPLETED") {
-                transaction.status = "failed";
-                await transaction.save();
-
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "Paypal payment status is not Completed. Please complete your payment!"
-                );
-            } else {
-
-                transaction.status = "success";
-                visaApplication.isPayed = true
-                visaApplication.save()
-                
-
-                transaction.paymentDetails = paymentObject?.result;
-                await transaction.save();
-
-                res.status(200).json({ visaApplication , status : "Transation Success" })
-
-            }
-
-
-    
-        }
-
-    }catch(err){
-
-        sendErrorResponse(res, 500, err);
-
+      await newTransation.save();
+      res.status(200).json(resultFinal);
+    } catch (err) {
+      // handle transaction fail here
+      sendErrorResponse(res, 500, err);
     }
   },
 
- 
+  capturePayalVisaApplication: async (req, res) => {
+    try {
+      const { paymentId, orderId } = req.body;
+
+      const { _, error } = visaOrderCaptureSchema.validate(req.body);
+
+      if (error) {
+        return sendErrorResponse(res, 400, error.details[0].message);
+      }
+
+      if (!isValidObjectId(orderId)) {
+        return sendErrorResponse(res, 400, "Invalid order id");
+      }
+
+      let visaApplication = await B2CVisaApplication.findById(orderId);
+
+      if (!visaApplication) {
+        return sendErrorResponse(res, 400, "visa application not found!");
+      }
+
+      const transaction = await B2CTransaction.findOne({
+        paymentOrderId: orderId,
+      });
+
+      if (!transaction) {
+        return sendErrorResponse(
+          res,
+          400,
+          "transation not found!. check with the team if amount is debited from your bank!"
+        );
+      }
+
+      if (transaction.status === "success") {
+        return sendErrorResponse(
+          res,
+          400,
+          "this transaction already completed, Thank you"
+        );
+      }
+
+      const orderObject = await fetchOrder(orderId);
+
+      if (orderObject.statusCode == "500") {
+        transaction.status = "failed";
+        await transaction.save();
+
+        return sendErrorResponse(
+          res,
+          400,
+          "Error while fetching order status from paypal. Check with XYZ team if amount is debited from your bank!"
+        );
+      } else if (orderObject.status !== "COMPLETED") {
+        transaction.status = "failed";
+        await transaction.save();
+
+        return sendErrorResponse(
+          res,
+          400,
+          "Paypal order status is not Completed. Check with XYZ team if amount is debited from your bank!"
+        );
+      } else {
+        const paymentObject = await fetchPayment(paymentId);
+
+        if (paymentObject.statusCode == "500") {
+          transaction.status = "failed";
+          await transaction.save();
+
+          return sendErrorResponse(
+            res,
+            400,
+            "Error while fetching payment status from paypal. Check with XYZ team if amount is debited from your bank!"
+          );
+        } else if (paymentObject.result.status !== "COMPLETED") {
+          transaction.status = "failed";
+          await transaction.save();
+
+          return sendErrorResponse(
+            res,
+            400,
+            "Paypal payment status is not Completed. Please complete your payment!"
+          );
+        } else {
+          transaction.status = "success";
+          visaApplication.isPayed = true;
+          visaApplication.save();
+
+          transaction.paymentDetails = paymentObject?.result;
+          await transaction.save();
+
+          res
+            .status(200)
+            .json({ visaApplication, status: "Transation Success" });
+        }
+      }
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
 
   completeVisaDocumentOrder: async (req, res) => {
     try {
@@ -472,10 +442,17 @@ module.exports = {
       if (!visaApplication) {
         return sendErrorResponse(res, 404, "visa application  not found");
       }
-      
-      console.log(visaApplication,req.files["passportFistPagePhoto"].length , "VisaApplication");
 
-      if (req.files["passportFistPagePhoto"].length  !== visaApplication.noOfTravellers) {
+      console.log(
+        visaApplication,
+        req.files["passportFistPagePhoto"].length,
+        "VisaApplication"
+      );
+
+      if (
+        req.files["passportFistPagePhoto"].length !==
+        visaApplication.noOfTravellers
+      ) {
         return sendErrorResponse(res, 400, "Please Upload all Documents ");
       }
 
@@ -526,13 +503,11 @@ module.exports = {
       const passportFirstPagePhotos = req.files["passportFistPagePhoto"];
       const passportLastPagePhotos = req.files["passportLastPagePhoto"];
       const passportSizePhotos = req.files["passportSizePhoto"];
-      const supportiveDoc1s = req.files["supportiveDoc1"]
-      const supportiveDoc2s = req.files["supportiveDoc2"]
-
+      const supportiveDoc1s = req.files["supportiveDoc1"];
+      const supportiveDoc2s = req.files["supportiveDoc2"];
 
       const photos = [];
       let promises = [];
-
 
       for (let i = 0; i < passportFirstPagePhotos.length; i++) {
         const visaDocument = new VisaDocument({
@@ -542,10 +517,8 @@ module.exports = {
             "/" + passportLastPagePhotos[i]?.path?.replace(/\\/g, "/"),
           passportSizePhoto:
             "/" + passportSizePhotos[i]?.path?.replace(/\\/g, "/"),
-            supportiveDoc1:
-            "/" + supportiveDoc1s[i]?.path?.replace(/\\/g, "/"),
-            supportiveDoc2:
-            "/" + supportiveDoc2s[i]?.path?.replace(/\\/g, "/"),
+          supportiveDoc1: "/" + supportiveDoc1s[i]?.path?.replace(/\\/g, "/"),
+          supportiveDoc2: "/" + supportiveDoc2s[i]?.path?.replace(/\\/g, "/"),
         });
 
         promises.push(
@@ -562,12 +535,9 @@ module.exports = {
             });
           })
         );
-
-        
       }
 
       await Promise.all(promises);
-
 
       console.log(visaApplication, "visaApplication");
 
@@ -576,15 +546,10 @@ module.exports = {
       await visaApplication.save();
 
       res.status(200).json({
-        visaApplication
+        visaApplication,
       });
-
-
     } catch (err) {
-
       sendErrorResponse(res, 500, err);
-
     }
   },
-
 };

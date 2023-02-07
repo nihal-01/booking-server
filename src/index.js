@@ -8,17 +8,18 @@ require("./config/dbConfig");
 const adminRouter = require("./admin");
 const b2bRouter = require("./b2b");
 const {
-    homeRouter,
-    usersRouter,
-    attractionsRouter,
-    subscribersRouter,
-    attractionReviewsRouter,
-    countriesRouter,
-    blogsRouter,
-    attractionsCategoriesRouter,
-    attractionsOrdersRouter,
-    visaListRouter,
-    visaApplicationRouter,
+  homeRouter,
+  usersRouter,
+  attractionsRouter,
+  subscribersRouter,
+  attractionReviewsRouter,
+  countriesRouter,
+  blogsRouter,
+  attractionsCategoriesRouter,
+  attractionsOrdersRouter,
+  visaListRouter,
+  visaApplicationRouter,
+  razorPayPaymentRouter,
 } = require("./routes");
 
 const app = express();
@@ -39,6 +40,7 @@ app.use("/api/v1/countries", countriesRouter);
 app.use("/api/v1/blogs", blogsRouter);
 app.use("/api/v1/visa", visaListRouter);
 app.use("/api/v1/visa/application", visaApplicationRouter);
+app.use("/api/v1/visa/razorpay", razorPayPaymentRouter);
 
 // ADMIN ROUTE
 app.use("/api/v1/admin", adminRouter);
@@ -47,5 +49,5 @@ app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/b2b", b2bRouter);
 
 app.listen(PORT, () => {
-    console.log(`server is up and running on port ${PORT}`);
+  console.log(`server is up and running on port ${PORT}`);
 });
