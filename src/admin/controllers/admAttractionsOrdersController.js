@@ -4,7 +4,7 @@ const xl = require("excel4node");
 const {
     handleAttractionOrderMarkup,
 } = require("../../b2b/helpers/attractionOrderHelpers");
-const { B2BAttractionOrder } = require("../../b2b/models");
+const { B2BAttractionOrder, B2BWallet } = require("../../b2b/models");
 const { sendErrorResponse } = require("../../helpers");
 const { AttractionOrder, Driver } = require("../../models");
 const {
@@ -635,9 +635,6 @@ module.exports = {
                 );
             }
 
-
-
-
             if (orderedBy === "b2c") {
                 orderDetails = await AttractionOrder.findOne(
                     {
@@ -645,13 +642,11 @@ module.exports = {
                     },
                     { activities: { $elemMatch: { _id: bookingId } } }
                 ).populate({
-                    path: 'activities.activity',
+                    path: "activities.activity",
                     populate: {
-                      path: 'attraction',
-                      
-        
-                    }
-                  })
+                        path: "attraction",
+                    },
+                });
 
                   console.log(orderDetails , "orderDetails1")
 
@@ -736,6 +731,11 @@ module.exports = {
                     },
                     {
                         "activities.$.status": "cancelled",
+                        "activities.$.cancelledBy": "admin",
+                        "activities.$.cancellationFee": 0,
+                        "activities.$.refundAmount":
+                            orderDetails.activities[0].amount,
+                        "activities.$.isRefundAvailable": true,
                     },
                     { runValidators: true }
                 );
@@ -750,12 +750,37 @@ module.exports = {
                     },
                     { runValidators: true }
                 );
+
+                let wallet = await B2BWallet.findOne({
+                    reseller: req.reseller?._id,
+                });
+                if (!wallet) {
+                    wallet = new B2BWallet({
+                        balance: 0,
+                        reseller: req.reseller?._id,
+                    });
+                    await wallet.save();
+                }
+                const newTransaction = new B2BTransaction({
+                    amount: orderDetails.activities[0].amount,
+                    reseller: orderDetails.reseller,
+                    transactionType: "refund",
+                    paymentProcessor: "wallet",
+                    order: orderId,
+                    orderItem: bookingId,
+                    status: "pending",
+                });
+                await newTransaction.save();
+
+                wallet.balance += newTransaction.amount;
+                await wallet.save();
+                newTransaction.status = "success";
+                await newTransaction.save();
             }
-             
 
-            sendOrderCancellationEmail(orderDetails)
+            sendOrderCancellationEmail(orderDetails);
 
-            // send email and refund balance
+            // send email
 
             res.status(200).json({
                 message: "Booking cancelled successfully",

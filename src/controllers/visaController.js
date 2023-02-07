@@ -65,7 +65,7 @@ module.exports = {
       }
 
 
-
+      noOfTravellers = Number(noOfTravellers)
       if (noOfTravellers !== travellers.length) {
         return sendErrorResponse(res, 400, "PassengerDetails Not Added ");
       }

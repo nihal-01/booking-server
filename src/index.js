@@ -40,7 +40,6 @@ app.use("/api/v1/blogs", blogsRouter);
 app.use("/api/v1/visa", visaListRouter);
 app.use("/api/v1/visa/application", visaApplicationRouter);
 
-
 // ADMIN ROUTE
 app.use("/api/v1/admin", adminRouter);
 
