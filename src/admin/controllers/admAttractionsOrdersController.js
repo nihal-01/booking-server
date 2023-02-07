@@ -12,6 +12,7 @@ const {
     generateB2bOrdersSheet,
 } = require("../../b2b/helpers/b2bOrdersHelper");
 const sendOrderCancellationEmail = require("../helpers/sendOrderRejectionEmail");
+const sendOrderConfirmationEmail = require("../helpers/sendOrderConfirmationMail");
 
 module.exports = {
     getAllB2cOrders: async (req, res) => {
@@ -652,16 +653,20 @@ module.exports = {
                     }
                   })
 
-                sendOrderConfirmationEmail(orderDetails)
+                  console.log(orderDetails , "orderDetails1")
+
+
+               await sendOrderConfirmationEmail(orderDetails)
             } else {
                 orderDetails = await B2BAttractionOrder.findOne(
                     {
-                        _id: orderId,
+                        _id: orderId, 
                     },
                     { activities: { $elemMatch: { _id: bookingId } } }
                 ).populate("activities.activity")
-                
-                sendOrderConfirmationEmail(orderDetails)
+                 
+             console.log(orderDetails , "orderDetails2")
+               await sendOrderConfirmationEmail(orderDetails)
 
             }
             res.status(200).json({

@@ -420,7 +420,18 @@ module.exports = {
             const attractionOrder = await B2BAttractionOrder.findOne({
                 _id: orderId,
                 reseller: req.reseller._id,
-            });
+            }).populate({
+                path: 'activities.activity',
+                populate: {
+                  path: 'attraction',
+                  populate : {
+                    path : 'destination'
+                  }
+    
+                }
+              })
+
+
             if (!attractionOrder) {
                 return sendErrorResponse(
                     res,
@@ -660,7 +671,8 @@ module.exports = {
                     );
                 }
             }
-
+            
+            console.log(attractionOrder , "attractionOrder")
             sendAttractionOrderEmail(attractionOrder);
             sendAttractionOrderAdminEmail(attractionOrder);
 

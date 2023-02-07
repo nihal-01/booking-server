@@ -1,20 +1,21 @@
 const nodemailer = require("nodemailer");
 const { sendEmail } = require("../../helpers");
+const sendAdminEmail = require("../../helpers/sendAdminEmail");
 
-const sendAttractionOrderEmail = async (attractionOrder) => {
+const sendAdminVisaApplicationEmail = async (visaApplication) => {
     
     try {
       
-          sendEmail(
-            attractionOrder.email,
-             "Order Placed Mail",
-            `<body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5;">
+          sendAdminEmail(
+            visaApplication.email,
+             "New Order Placed Mail",
+             `<body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5;">
             <div style="background-color: #333; color: #fff; padding: 20px; text-align: center;">
               <h1 style="margin: 0;">Order Confirmation</h1>
             </div>
             <div style="background-color: #f7f7f7; padding: 20px;">
-              <p style="font-size: 18px; font-weight: bold;">Dear ${attractionOrder.name},</p>
-              <p style="margin-top: 20px;">Thank you for your order. Your order details are as follows:</p>
+              <p style="font-size: 18px; font-weight: bold;">DearAdmin,</p>
+              <p style="margin-top: 20px;">New Order Placed. The order details are as follows:</p>
               <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
                 <tr style="background-color: #eee;">
                   <td style="padding: 10px; border: 1px solid #ddd;">Reference Number:</td>
@@ -82,4 +83,4 @@ const sendAttractionOrderEmail = async (attractionOrder) => {
     }
 };
 
-module.exports = sendAttractionOrderEmail;
+module.exports = sendAdminVisaApplicationEmail;
