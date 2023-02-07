@@ -9,6 +9,8 @@ const {
     updateHotel,
     uploadBulkHotels,
     getInitialData,
+    getSingleHotelWithRoomTypes,
+    getHotelsName,
 } = require("../controllers/admHotelsController");
 
 const storage = multer.diskStorage({
@@ -49,5 +51,7 @@ router.patch("/update/:id", upload.array("images"), updateHotel);
 router.delete("/delete/:id", deleteHotel);
 router.get("/all", getAllHotels);
 router.get("/initial-data", getInitialData);
+router.get("/single/:id", getSingleHotelWithRoomTypes);
+router.get("/names", getHotelsName);
 
 module.exports = router;

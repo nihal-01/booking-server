@@ -58,10 +58,22 @@ module.exports = {
         isDeleted: false,
         _id: country,
       });
+      
+
+      if (onwardDate <= new Date()) {
+        return sendErrorResponse(res, 400, "Onward date must be greater than the current date");
+      }
+
+      if (returnDate <= new Date()) {
+        return sendErrorResponse(res, 400, "Return Date date must be greater than the current date");
+      }
+
 
       if (!countryDetail) {
         return sendErrorResponse(res, 404, "country not found");
       }
+
+
 
       if (noOfTravellers !== travellers.length) {
         return sendErrorResponse(res, 400, "PassengerDetails Not Added ");
@@ -243,7 +255,15 @@ module.exports = {
     }
   },
 
+<<<<<<< HEAD
   initiatePayment: async (req, res) => {
+=======
+
+  
+
+  initiatePayment : async(req,res)=>{
+
+>>>>>>> ef56b15b37f9d241a9e51f5301c8e064378c2325
     try {
       const { orderId } = req.params;
       const { paymentProcessor } = req.body;
@@ -529,7 +549,7 @@ module.exports = {
       await visaApplication.save();
 
       res.status(200).json({
-        visaApplication,
+        visaApplication
       });
     } catch (err) {
       sendErrorResponse(res, 500, err);

@@ -17,6 +17,10 @@ const visaApplicationSchema = Joi.object({
           month: Joi.number().required(),
           year: Joi.number().required()
         }).required(),
+        expiryDate : Joi.object({
+          month: Joi.number().required(),
+          year: Joi.number().required()
+        }).required(),
         country: Joi.string().required(),
         passportNo: Joi.string().required(),
         contactNo: Joi.number().required(),

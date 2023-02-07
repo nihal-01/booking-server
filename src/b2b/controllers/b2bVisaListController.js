@@ -525,12 +525,18 @@ module.exports={
               },
             },
           ]);
-    
+          
+
+          if (!visaType) {
+            return sendErrorResponse(res, 400, "No visaType Available");
+          }
           // const countryDetails = await Country.findById(country);
     
           console.log(visaType, "visaType");
     
           res.status(200).json(visaType);
+
+
         } catch (err) {
           sendErrorResponse(res, 500, err);
         }

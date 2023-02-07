@@ -63,6 +63,21 @@ const b2cVisaApplicationSchema = new Schema(
                         type: String,
                         required: true,
                     },
+                    expiryDate: {
+                        day:{
+                            type: Number,
+                            required: true,
+
+                        },
+                        month: {
+                            type: Number,
+                            required: true,
+                        },
+                        year: {
+                            type: Number,
+                            required: true,
+                        },
+                    },
                     dateOfBirth: {
                         day: {
                             type: Number,
@@ -93,6 +108,16 @@ const b2cVisaApplicationSchema = new Schema(
                     email: {
                         type: String,
                         required: true,
+                    },
+                    isApproved: {
+                        type: String,
+                        default: false,
+                    },
+                    visaUpload: {
+                        type:String,
+                        required: function () {
+                            return this.isApproved === true;
+                        },
                     },
                     
                     documents: {

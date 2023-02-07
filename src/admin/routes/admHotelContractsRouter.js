@@ -1,11 +1,11 @@
 const router = require("express").Router();
 
 const {
-    getHotelContracts,
     updateHotelContract,
+    getSingleMonthHotelContract,
 } = require("../controllers/admHotelContractController");
 
-router.get("/", getHotelContracts);
 router.patch("/update", updateHotelContract);
+router.get("/hotel/:id/:month/:year", getSingleMonthHotelContract);
 
 module.exports = router;

@@ -14,11 +14,11 @@ const {
 } = require("../models/");
 const {
     attractionOrderSchema,
-    attractionOrderCaptureSchema,
 } = require("../validations/attractionOrder.schema");
 const { createOrder, fetchOrder, fetchPayment } = require("../utils/paypal");
 const { B2CWallet } = require("../models/b2cWallet.model");
 const sendMobileOtp = require("../helpers/sendMobileOtp");
+const sendOrderEmail = require("../helpers/sendOrderEmail");
 
 const dayNames = [
     "sunday",
@@ -31,15 +31,20 @@ const dayNames = [
 ];
 
 const instance = new Razorpay({
-    key_id: "rzp_test_wRs1QW9pU0kcUb",
-    key_secret: "b5EAobCLbhyi6wpOOA2HNGzV",
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+const ccav = new nodeCCAvenue.Configure({
+    merchant_id: process.env.CCAVENUE_MERCHANT_ID,
+    working_key: process.env.CCAVENUE_WORKING_KEY,
+});
+
+// TODO
+// 1. VAT Calculation
+// 2. Send password for new emails
+// 3. Verify Mobile Number
 module.exports = {
-    // TODO
-    // 1. VAT Calculation
-    // 2. Send password for new emails
-    // 3. Verify Mobile Number
     createAttractionOrder: async (req, res) => {
         try {
             const { selectedActivities, name, email, phoneNumber, country } =
@@ -72,6 +77,17 @@ module.exports = {
                 });
                 if (!attraction) {
                     return sendErrorResponse(res, 500, "Attraction not found!");
+                }
+
+                if (
+                    new Date(selectedActivities[i]?.date) <
+                    new Date(new Date().setDate(new Date().getDate() + 2))
+                ) {
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        `"selectedActivities[${i}].date" must be a valid date`
+                    );
                 }
 
                 if (
@@ -196,27 +212,79 @@ module.exports = {
                     }
                 }
 
+                let b2cMarkup = await B2CAttractionMarkup.findOne({
+                    attraction: attraction?._id,
+                });
+
+                let totalMarkup = 0;
                 let price = 0;
-                if (selectedActivities[i]?.adultsCount && activity.adultPrice) {
+                if (
+                    Number(selectedActivities[i]?.adultsCount) > 0 &&
+                    activity.adultPrice
+                ) {
                     price +=
                         Number(selectedActivities[i]?.adultsCount) *
                         activity.adultPrice;
+
+                    if (b2cMarkup) {
+                        let markup = 0;
+                        if (b2cMarkup.markupType === "flat") {
+                            markup = b2cMarkup.markup;
+                        } else {
+                            markup =
+                                (b2cMarkup.markup * activity.adultPrice) / 100;
+                        }
+                        price +=
+                            markup * Number(selectedActivities[i]?.adultsCount);
+                        totalMarkup +=
+                            markup * Number(selectedActivities[i]?.adultsCount);
+                    }
                 }
                 if (
-                    selectedActivities[i]?.childrenCount &&
+                    Number(selectedActivities[i]?.childrenCount) > 0 &&
                     activity?.childPrice
                 ) {
                     price +=
                         Number(selectedActivities[i]?.childrenCount) *
                         activity?.childPrice;
+
+                    if (b2cMarkup) {
+                        let markup = 0;
+                        if (b2cMarkup.markupType === "flat") {
+                            markup = b2cMarkup.markup;
+                        } else {
+                            markup =
+                                (b2cMarkup.markup * activity.childPrice) / 100;
+                        }
+                        price +=
+                            markup *
+                            Number(selectedActivities[i]?.childrenCount);
+                        totalMarkup +=
+                            markup * Number(selectedActivities[i]?.adultsCount);
+                    }
                 }
                 if (
-                    selectedActivities[i]?.infantCount &&
+                    Number(selectedActivities[i]?.infantCount) > 0 &&
                     activity?.infantPrice
                 ) {
                     price +=
                         Number(selectedActivities[i]?.infantCount) *
                         activity?.infantPrice;
+
+                    if (b2cMarkup) {
+                        let markup = 0;
+                        if (b2cMarkup.markupType === "flat") {
+                            markup = b2cMarkup.markup;
+                        } else {
+                            markup =
+                                (b2cMarkup.markup * activity.infantCount) / 100;
+                        }
+
+                        price +=
+                            markup * Number(selectedActivities[i]?.infantCount);
+                        totalMarkup +=
+                            markup * Number(selectedActivities[i]?.adultsCount);
+                    }
                 }
 
                 let offer = 0;
@@ -227,6 +295,7 @@ module.exports = {
                         offer = (price / 100) * attraction.offerAmount;
                     }
                 }
+
                 price -= offer;
                 if (price < 0) {
                     price = 0;
@@ -350,10 +419,8 @@ module.exports = {
                 }
             }
 
-
             let buyer = req.user || user;
 
-            const otp = await sendMobileOtp();
             const newAttractionOrder = new AttractionOrder({
                 activities: selectedActivities,
                 totalAmount,
@@ -364,11 +431,11 @@ module.exports = {
                 email,
                 phoneNumber,
                 orderStatus: "pending",
-                otp,
+                referenceNumber: generateUniqueString("B2CATO"),
             });
             await newAttractionOrder.save();
 
-            res.status(200).json(result);
+            res.status(200).json(newAttractionOrder);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
@@ -419,6 +486,14 @@ module.exports = {
                     res,
                     404,
                     "Attraction order not found"
+                );
+            }
+
+            if (attractionOrder.orderStatus === "completed") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, you have already completed this order"
                 );
             }
 
@@ -591,6 +666,8 @@ module.exports = {
                 }
             }
 
+            sendOrderEmail(attractionOrder)
+
             attractionOrder.orderStatus = "completed";
             await attractionOrder.save();
 
@@ -627,6 +704,141 @@ module.exports = {
             }
 
             res.status(200).json(attractionOrder);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    cancelAttractionOrder: async (req, res) => {
+        try {
+            const { orderId, orderItemId } = req.body;
+
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "invalid order id");
+            }
+
+            if (!isValidObjectId(orderItemId)) {
+                return sendErrorResponse(res, 400, "invalid order item id");
+            }
+
+            // check order available or not
+            const order = await AttractionOrder.findOne(
+                {
+                    _id: orderId,
+                    user: req.user?._id,
+                },
+                { activities: { $elemMatch: { _id: orderItemId } } }
+            );
+
+            if (!order || order?.activities?.length < 1) {
+                return sendErrorResponse(res, 400, "order not found");
+            }
+
+            const attraction = await Attraction.findById(
+                order.activities[0].attraction
+            );
+            if (!attraction) {
+                return sendErrorResponse(res, 400, "attraction not found");
+            }
+
+            // check if it's status is booked or confirmed
+            if (
+                order.activities[0].status !== "booked" &&
+                order.activities[0].status !== "confirmed"
+            ) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "you cantn't canel this order. order already cancelled or not completed the order"
+                );
+            }
+
+            // check if it's ok for cancelling with cancellation policy
+            if (attraction.cancellationType === "nonRefundable") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, this order is non refundable"
+                );
+            }
+
+            if (
+                new Date(order.activities[0].date).setHours(0, 0, 0, 0) <=
+                new Date().setDate(0, 0, 0, 0)
+            ) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, you cant't cancel the order after the activity date"
+                );
+            }
+
+            let orderAmount = order.activities[0].amount;
+            let cancellationFee = 0;
+            let cancelBeforeDate = new Date(
+                new Date(order.activities[0].date).setHours(0, 0, 0, 0)
+            );
+            cancelBeforeDate.setHours(
+                cancelBeforeDate.getHours() - attraction.cancelBeforeTime
+            );
+
+            if (attraction.cancellationType === "freeCancellation") {
+                if (new Date().setHours(0, 0, 0, 0) < cancelBeforeDate) {
+                    cancellationFee = 0;
+                } else {
+                    cancellationFee =
+                        (orderAmount / 100) * attraction.cancellationFee;
+                }
+            } else if (attraction.cancellationType === "cancelWithFee") {
+                if (new Date().setHours(0, 0, 0, 0) < cancelBeforeDate) {
+                    cancellationFee =
+                        (orderAmount / 100) * attraction.cancellationFee;
+                } else {
+                    cancellationFee = totalAmount;
+                }
+            } else {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, cancellation failed"
+                );
+            }
+
+            // Update tickets state to back
+            if (order.activities[0].bookingType === "ticket") {
+                await AttractionTicket.find({
+                    activity: order.activities[0].activity,
+                    ticketNo: { $all: order.activities[0].adultTickets },
+                }).updateMany({ status: "ok" });
+                await AttractionTicket.find({
+                    activity: order.activities[0].activity,
+                    ticketNo: { $all: order.activities[0].childTickets },
+                }).updateMany({ status: "ok" });
+                await AttractionTicket.find({
+                    activity: order.activities[0].activity,
+                    ticketNo: { $all: order.activities[0].infantTickets },
+                }).updateMany({ status: "ok" });
+            }
+
+            // Refund the order amount after substracting fee
+            await AttractionOrder.findOneAndUpdate(
+                {
+                    _id: orderId,
+                    "activities._id": orderItemId,
+                    user: req.user?._id,
+                },
+                {
+                    "activities.$.status": "cancelled",
+                    "activities.$.cancelledBy": "user",
+                    "activities.$.cancellationFee": cancellationFee,
+                    "activities.$.refundAmount": totalAmount - cancellationFee,
+                },
+                { runValidators: true }
+            );
+
+            res.status(200).json({
+                message: "you have successfully cancelled the order",
+            });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

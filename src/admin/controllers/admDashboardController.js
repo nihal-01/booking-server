@@ -4,7 +4,7 @@ const { AttractionOrder, User } = require("../../models");
 module.exports = {
     getDashboardData: async (req, res) => {
         try {
-            const totalUsers = await User.count();
+            // const totalRevenue = await AttractionOrder.;
 
             const recentOrders = await AttractionOrder.aggregate([
                 { $match: { status: { $ne: "pending" } } },
@@ -56,7 +56,7 @@ module.exports = {
                 },
             ]);
 
-            res.status(200).json({ totalUsers });
+            res.status(200).json({});
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
