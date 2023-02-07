@@ -27,7 +27,6 @@ const {
 } = require("../helpers/b2bOrdersHelper");
 const sendAttractionOrderEmail = require("../helpers/sendAttractionOrderEmail");
 const sendAttractionOrderAdminEmail = require("../helpers/sendAttractionOrderAdminEmail");
-const { getB2bOrders } = require("../helpers/b2bOrdersHelper");
 
 const dayNames = [
     "sunday",
@@ -662,10 +661,8 @@ module.exports = {
                 }
             }
 
-            sendAttractionOrderEmail(attractionOrder)
-            sendAttractionOrderAdminEmail(attractionOrder)
-
-            
+            sendAttractionOrderEmail(attractionOrder);
+            sendAttractionOrderAdminEmail(attractionOrder);
 
             res.status(200).json({
                 message: "order successfully placed",
