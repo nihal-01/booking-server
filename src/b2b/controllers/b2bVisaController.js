@@ -7,6 +7,9 @@ const {
   VisaDocument,
 } = require("../../models");
 const { generateUniqueString } = require("../../utils");
+const sendAdminVisaApplicationEmail = require("../helpers/sendVisaAdminEmail");
+const sendApplicationEmail = require("../helpers/sendVisaApplicationEmail");
+const sendVisaOrderOtp = require("../helpers/sendVisaOrderEmail");
 const { B2BWallet, B2BTransaction } = require("../models");
 const {
   visaApplicationSchema,
@@ -25,6 +28,8 @@ module.exports = {
         travellers,
         country,
       } = req.body;
+
+      console.log(req.body , "body ")
 
       const { _, error } = visaApplicationSchema.validate(req.body);
       if (error) {
@@ -261,7 +266,7 @@ module.exports = {
 
       const otp = await sendMobileOtp(countryDetail.phonecode, contactNo);
 
-      sendVisaOrderOtp(email, "Visa Application Order", otp);
+      await sendVisaOrderOtp(email, "Visa Application Order", otp);
 
       const newVisaApplication = new VisaApplication({
         visaType,
@@ -302,6 +307,8 @@ module.exports = {
       if (!isValidObjectId(orderId)) {
         return sendErrorResponse(res, 400, "invalid order id");
       }
+
+      console.log(otp )
 
       const VisaApplicationOrder = await VisaApplication.findOne({
         _id: orderId,
@@ -373,6 +380,7 @@ module.exports = {
         VisaApplicationOrder,
       });
     } catch (err) {
+      console.log(err ,error)
       sendErrorResponse(res, 500, err);
     }
   },
@@ -508,6 +516,11 @@ module.exports = {
 
       visaApplication.isDocumentUplaoded = true;
       visaApplication.status = "submitted";
+
+      await sendApplicationEmail( visaApplication);
+      await sendAdminVisaApplicationEmail( visaApplication);
+
+
       await visaApplication.save();
 
       res.status(200).json({

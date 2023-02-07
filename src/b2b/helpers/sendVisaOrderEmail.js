@@ -1,6 +1,6 @@
 const { sendEmail } = require("../../helpers");
 
-const sendVisaOrder = ( email, subject, otp ) => {
+const sendVisaOrderOtp = ( email, subject, otp ) => {
   try {
     
     sendEmail(
@@ -32,4 +32,4 @@ const sendVisaOrder = ( email, subject, otp ) => {
   }
 };
 
-module.exports = sendVisaOrder;
+module.exports = sendVisaOrderOtp;
