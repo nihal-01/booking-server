@@ -25,6 +25,8 @@ const {
     handleAttractionOrderMarkup,
 } = require("../helpers/attractionOrderHelpers");
 const { generateUniqueString } = require("../../utils");
+const sendAttractionOrderEmail = require("../helpers/sendAttractionOrderEmail");
+const sendAttractionOrderAdminEmail = require("../helpers/sendAttractionOrderAdminEmail");
 
 const dayNames = [
     "sunday",
@@ -657,6 +659,11 @@ module.exports = {
                     );
                 }
             }
+
+            sendAttractionOrderEmail(attractionOrder)
+            sendAttractionOrderAdminEmail(attractionOrder)
+
+            
 
             res.status(200).json({
                 message: "order successfully placed",

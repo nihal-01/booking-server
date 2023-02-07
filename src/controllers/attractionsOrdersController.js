@@ -19,6 +19,7 @@ const {
 const { createOrder, fetchOrder, fetchPayment } = require("../utils/paypal");
 const { B2CWallet } = require("../models/b2cWallet.model");
 const sendMobileOtp = require("../helpers/sendMobileOtp");
+const sendOrderEmail = require("../helpers/sendOrderEmail");
 
 const dayNames = [
     "sunday",
@@ -590,6 +591,8 @@ module.exports = {
                     attractionOrder.activities[i].status = "booked";
                 }
             }
+
+            sendOrderEmail(attractionOrder)
 
             attractionOrder.orderStatus = "completed";
             await attractionOrder.save();

@@ -11,6 +11,7 @@ const {
     getB2bOrders,
     generateB2bOrdersSheet,
 } = require("../helpers/b2bOrdersHelper");
+const sendOrderCancellationEmail = require("../helpers/sendOrderRejectionEmail");
 
 module.exports = {
     getAllB2cOrders: async (req, res) => {
@@ -290,6 +291,36 @@ module.exports = {
                 );
             }
 
+
+
+
+            if (orderedBy === "b2c") {
+                orderDetails = await AttractionOrder.findOne(
+                    {
+                        _id: orderId,
+                    },
+                    { activities: { $elemMatch: { _id: bookingId } } }
+                ).populate({
+                    path: 'activities.activity',
+                    populate: {
+                      path: 'attraction',
+                      
+        
+                    }
+                  })
+
+                sendOrderConfirmationEmail(orderDetails)
+            } else {
+                orderDetails = await B2BAttractionOrder.findOne(
+                    {
+                        _id: orderId,
+                    },
+                    { activities: { $elemMatch: { _id: bookingId } } }
+                ).populate("activities.activity")
+                
+                sendOrderConfirmationEmail(orderDetails)
+
+            }
             res.status(200).json({
                 message: "Booking confirmed successfully",
                 bookingConfirmationNumber,
@@ -372,6 +403,9 @@ module.exports = {
                     { runValidators: true }
                 );
             }
+             
+
+            sendOrderCancellationEmail(orderDetails)
 
             // send email and refund balance
 
