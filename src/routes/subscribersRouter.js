@@ -1,8 +1,8 @@
 const router = require("express").Router();
 
 const {
-    doSubscribe,
-    doUnsubscribe,
+  doSubscribe,
+  doUnsubscribe,
 } = require("../controllers/subscribersController");
 
 router.post("/subscribe", doSubscribe);

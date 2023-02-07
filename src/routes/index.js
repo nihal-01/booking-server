@@ -7,19 +7,21 @@ const countriesRouter = require("./countriesRouter");
 const blogsRouter = require("./blogsRouter");
 const attractionsCategoriesRouter = require("./attractionsCategoriesRouter");
 const attractionsOrdersRouter = require("./attractionsOrdersRouter");
-const visaApplicationRouter = require('./visaApplicationRouter')
-const visaListRouter = require('./visaListRouter')
+const visaApplicationRouter = require("./visaApplicationRouter");
+const visaListRouter = require("./visaListRouter");
+const razorPayPaymentRouter = require("./razorPayPaymentRouter");
 
 module.exports = {
-    homeRouter,
-    usersRouter,
-    attractionsRouter,
-    subscribersRouter,
-    attractionReviewsRouter,
-    countriesRouter,
-    blogsRouter,
-    attractionsCategoriesRouter,
-    attractionsOrdersRouter,
-    visaApplicationRouter,
-    visaListRouter
+  homeRouter,
+  usersRouter,
+  attractionsRouter,
+  subscribersRouter,
+  attractionReviewsRouter,
+  countriesRouter,
+  blogsRouter,
+  attractionsCategoriesRouter,
+  attractionsOrdersRouter,
+  visaApplicationRouter,
+  visaListRouter,
+  razorPayPaymentRouter,
 };
