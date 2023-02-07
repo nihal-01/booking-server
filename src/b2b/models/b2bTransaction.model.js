@@ -67,7 +67,7 @@ const b2bTransactionSchema = new Schema(
         paymentOrderId: {
             type: String,
         },
-        transactionNo: {
+        b2bTransactionNo: {
             type: Number,
         },
         referenceNo: {
@@ -91,7 +91,7 @@ const b2bTransactionSchema = new Schema(
 );
 
 b2bTransactionSchema.plugin(AutoIncrement, {
-    inc_field: "transactionNo",
+    inc_field: "b2bTransactionNo",
     start_seq: 10000,
 });
 

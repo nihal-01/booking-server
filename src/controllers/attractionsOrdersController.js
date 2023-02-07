@@ -17,7 +17,6 @@ const {
 } = require("../models");
 const {
     attractionOrderSchema,
-    attractionOrderCaptureSchema,
 } = require("../validations/attractionOrder.schema");
 const { createOrder, fetchOrder, fetchPayment } = require("../utils/paypal");
 const { generateUniqueString } = require("../utils");
@@ -465,6 +464,14 @@ module.exports = {
                 );
             }
 
+            if (attractionOrder.orderStatus === "completed") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, you have already completed this order"
+                );
+            }
+
             let totalAmount = attractionOrder.totalAmount;
 
             const newTransaction = new B2CTransaction({
@@ -806,6 +813,141 @@ module.exports = {
             }
 
             res.status(200).json(attractionOrder);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    cancelAttractionOrder: async (req, res) => {
+        try {
+            const { orderId, orderItemId } = req.body;
+
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "invalid order id");
+            }
+
+            if (!isValidObjectId(orderItemId)) {
+                return sendErrorResponse(res, 400, "invalid order item id");
+            }
+
+            // check order available or not
+            const order = await AttractionOrder.findOne(
+                {
+                    _id: orderId,
+                    user: req.user?._id,
+                },
+                { activities: { $elemMatch: { _id: orderItemId } } }
+            );
+
+            if (!order || order?.activities?.length < 1) {
+                return sendErrorResponse(res, 400, "order not found");
+            }
+
+            const attraction = await Attraction.findById(
+                order.activities[0].attraction
+            );
+            if (!attraction) {
+                return sendErrorResponse(res, 400, "attraction not found");
+            }
+
+            // check if it's status is booked or confirmed
+            if (
+                order.activities[0].status !== "booked" &&
+                order.activities[0].status !== "confirmed"
+            ) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "you cantn't canel this order. order already cancelled or not completed the order"
+                );
+            }
+
+            // check if it's ok for cancelling with cancellation policy
+            if (attraction.cancellationType === "nonRefundable") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, this order is non refundable"
+                );
+            }
+
+            if (
+                new Date(order.activities[0].date).setHours(0, 0, 0, 0) <=
+                new Date().setDate(0, 0, 0, 0)
+            ) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, you cant't cancel the order after the activity date"
+                );
+            }
+
+            let orderAmount = order.activities[0].amount;
+            let cancellationFee = 0;
+            let cancelBeforeDate = new Date(
+                new Date(order.activities[0].date).setHours(0, 0, 0, 0)
+            );
+            cancelBeforeDate.setHours(
+                cancelBeforeDate.getHours() - attraction.cancelBeforeTime
+            );
+
+            if (attraction.cancellationType === "freeCancellation") {
+                if (new Date().setHours(0, 0, 0, 0) < cancelBeforeDate) {
+                    cancellationFee = 0;
+                } else {
+                    cancellationFee =
+                        (orderAmount / 100) * attraction.cancellationFee;
+                }
+            } else if (attraction.cancellationType === "cancelWithFee") {
+                if (new Date().setHours(0, 0, 0, 0) < cancelBeforeDate) {
+                    cancellationFee =
+                        (orderAmount / 100) * attraction.cancellationFee;
+                } else {
+                    cancellationFee = totalAmount;
+                }
+            } else {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, cancellation failed"
+                );
+            }
+
+            // Update tickets state to back
+            if (order.activities[0].bookingType === "ticket") {
+                await AttractionTicket.find({
+                    activity: order.activities[0].activity,
+                    ticketNo: { $all: order.activities[0].adultTickets },
+                }).updateMany({ status: "ok" });
+                await AttractionTicket.find({
+                    activity: order.activities[0].activity,
+                    ticketNo: { $all: order.activities[0].childTickets },
+                }).updateMany({ status: "ok" });
+                await AttractionTicket.find({
+                    activity: order.activities[0].activity,
+                    ticketNo: { $all: order.activities[0].infantTickets },
+                }).updateMany({ status: "ok" });
+            }
+
+            // Refund the order amount after substracting fee
+            await AttractionOrder.findOneAndUpdate(
+                {
+                    _id: orderId,
+                    "activities._id": orderItemId,
+                    user: req.user?._id,
+                },
+                {
+                    "activities.$.status": "cancelled",
+                    "activities.$.cancelledBy": "user",
+                    "activities.$.cancellationFee": cancellationFee,
+                    "activities.$.refundAmount": totalAmount - cancellationFee,
+                },
+                { runValidators: true }
+            );
+
+            res.status(200).json({
+                message: "you have successfully cancelled the order",
+            });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

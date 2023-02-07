@@ -67,6 +67,25 @@ const attractionOrderSchema = new Schema(
                             );
                         },
                     },
+                    cancelledBy: {
+                        type: String,
+                        required: function () {
+                            return this.status === "cancelled";
+                        },
+                        enum: ["user", "admin"],
+                    },
+                    cancellationFee: {
+                        type: Number,
+                        required: function () {
+                            return this.status === true;
+                        },
+                    },
+                    refundAmount: {
+                        type: Number,
+                        required: function () {
+                            return this.status === true;
+                        },
+                    },
                     isRefunded: {
                         type: Boolean,
                         required: true,

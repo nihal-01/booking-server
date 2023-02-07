@@ -22,6 +22,12 @@ const attractionSchema = new Schema(
             lowercase: true,
             enum: ["booking", "ticket"],
         },
+        bookingPriorDays: {
+            type: Number,
+            required: function () {
+                return this.bookingType === "bookingType";
+            },
+        },
         isCustomDate: {
             type: Boolean,
             required: true,

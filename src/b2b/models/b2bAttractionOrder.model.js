@@ -15,6 +15,11 @@ const b2battractionOrderSchema = new Schema(
         activities: {
             type: [
                 {
+                    attraction: {
+                        type: Schema.Types.ObjectId,
+                        ref: "Attraction",
+                        required: true,
+                    },
                     activity: {
                         type: Schema.Types.ObjectId,
                         ref: "AttractionActivity",
