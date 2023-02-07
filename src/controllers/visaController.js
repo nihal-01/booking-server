@@ -259,7 +259,15 @@ module.exports = {
     }
   },
 
+<<<<<<<<< Temporary merge branch 1
   initiatePayment: async (req, res) => {
+=======
+
+  
+
+  initiatePayment : async(req,res)=>{
+
+>>>>>>> ef56b15b37f9d241a9e51f5301c8e064378c2325
     try {
       const { orderId } = req.params;
       const { paymentProcessor } = req.body;
