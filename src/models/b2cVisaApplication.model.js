@@ -64,7 +64,11 @@ const b2cVisaApplicationSchema = new Schema(
                         required: true,
                     },
                     expiryDate: {
-                
+                        day:{
+                            type: Number,
+                            required: true,
+
+                        },
                         month: {
                             type: Number,
                             required: true,

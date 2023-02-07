@@ -3,6 +3,7 @@ const qs = require("querystring");
 
 const { sendErrorResponse } = require("../../helpers");
 const { createOrder, fetchOrder, fetchPayment } = require("../../utils/paypal");
+const SendaddWalletEmail = require("../helpers/sendAddWalletEmail");
 const { B2BTransaction, B2BWallet } = require("../models");
 const {
     b2bAttractionOrderCaptureSchema,
@@ -178,6 +179,11 @@ module.exports = {
                     );
                 }
             }
+            
+            let email = req.reseller.email
+            let amount = transaction.amount
+            SendaddWalletEmail(email , "Wallet Deposit Mail" , amount )
+
 
             res.status(200).json({ message: "Transaction Successful" });
         } catch (err) {

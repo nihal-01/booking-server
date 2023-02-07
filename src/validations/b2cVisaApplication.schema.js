@@ -13,6 +13,7 @@ const b2cVisaApplicationSchema = Joi.object({
         firstName: Joi.string().required(),
         lastName: Joi.string().required(),
         expiryDate: Joi.object({
+          day:Joi.number().required(),
           month: Joi.number().required(),
           year: Joi.number().required()
         }).required(),

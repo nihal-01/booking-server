@@ -3,6 +3,7 @@ const { B2BTransaction, B2BWallet, Reseller } = require("../../b2b/models");
 
 const { sendErrorResponse } = require("../../helpers");
 const { Country, VisaType, Visa, VisaApplication } = require("../../models");
+const sendVisaApplicationApproveEmail = require("../helpers/sendVisaApplicationApproveEmail");
 
 module.exports= {
 
@@ -97,7 +98,7 @@ module.exports= {
         try{
 
           const {id} = req.params
-          const {tra} = req.params
+          const {travellerId} = req.params
 
 
 
@@ -112,8 +113,19 @@ module.exports= {
 
           let query = { _id: id , status : "submitted" };
 
-          const visaApplication = await VisaApplication.findOne(query)
+          const visaApplication = await VisaApplication.findOne(query).populate(
+            "reseller travellers.documents travellers.country"
+          ).populate({
+            path: 'visaType',
+            populate: {
+              path: 'visa',
+              populate : {
+                path : 'country',
+                select : "countryName"
+              }
 
+            }
+          })
            
           if (!visaApplication) {
             return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
@@ -128,16 +140,14 @@ module.exports= {
 
           }
 
-          let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": ids }, 
+          let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
           { $set: { "travellers.$.visaUpload": visa } })
 
-          console.log(upload)
 
         
 
           let reseller = await Reseller.findById(visaApplication.reseller).populate("referredBy")
 
-          console.log(reseller , "reseller")
 
           if(reseller.role == "subAgent"){
                
@@ -194,18 +204,25 @@ module.exports= {
           {
             upsert: true
           });
+          
+
+          const filteredTraveller = visaApplication.travellers.filter(traveller => {
+            return traveller._id == travellerId;
+        });
+
+
+          sendVisaApplicationApproveEmail(visaApplication , filteredTraveller)
 
           transaction.status = "success"
          await transaction.save()
 
 
-          visaApplication.status = "approved"
           await  visaApplication.save()
 
 
 
 
-          res.status(200).json({message : "Visa Approved Succesfully " })
+          res.status(200).json({message : "Visa Uploaded Succesfully " })
 
         }catch(err){
            
@@ -219,52 +236,42 @@ module.exports= {
 
         try{
            
-           const {id} = req.params
+          const {id} = req.params
+          const {travellerId , reason} = req.body
+
+
 
           if (!isValidObjectId(id)) {
             return sendErrorResponse(res, 400, "Invalid VisaApplication id");
           }
-          
-          let query = { _id: id };
+
+          let visa;
+          if (req.file?.path) {
+            visa = "/" + req.file.path.replace(/\\/g, "/");
+          }          
+
+          let query = { _id: id , status : "submitted" };
 
           const visaApplication = await VisaApplication.findOne(query)
 
-
-          if(visaApplication.status == "approved"){
-            return sendErrorResponse(res, 400, "VisaApplication Already Approved");
-
+           
+          if (!visaApplication) {
+            return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
           }
 
-
-          const transaction = new B2BTransaction({
-            reseller: req.reseller?._id,
-            transactionType: "credited",
-            status: "pending",
-            paymentProcessor: "wallet",
-            amount: visaApplication.totalAmount,
-            order: visaApplication._id,
-          });
-
+          if (visaApplication.isPayed == false) {
+            return sendErrorResponse(res, 400, "VisaApplication Amount Payed ");
+          }
+          
          
-          let wallet = await B2BWallet.updateOne({
-            reseller: req.reseller?._id,
-          },
-          {
-            $inc: {
-              balance: visaApplication.totalAmount
-            }
-          },
-          {
-            upsert: true
-          });
 
-          transaction.status = "success"
-         await transaction.save()
-
-
-          visaApplication.status = "cancelled"
-          await  visaApplication.save()
+          let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
+          { $set: { "travellers.$.reason": reason } })
        
+          
+
+          res.json({message : "Visa Rejectd Due To Some Reason"})
+
 
         }catch(err){
 
