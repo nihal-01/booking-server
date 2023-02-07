@@ -1,7 +1,7 @@
-const { isValidObjectId } = require("mongoose");
+const { isValidObjectId, Types } = require("mongoose");
 
 const { sendErrorResponse } = require("../../helpers");
-const { RoomType, HotelContract } = require("../../models");
+const { RoomType, HotelContract, Hotel } = require("../../models");
 const getDates = require("../../utils/getDates");
 const {
     hotelContractSchema,
@@ -10,14 +10,8 @@ const {
 module.exports = {
     updateHotelContract: async (req, res) => {
         try {
-            const {
-                dateFrom,
-                dateTo,
-                roomType,
-                price,
-                contractType,
-                isNewUpdate,
-            } = req.body;
+            const { dateFrom, dateTo, roomType, price, contractType } =
+                req.body;
 
             const { _, error } = hotelContractSchema.validate(req.body);
             if (error) {
@@ -38,15 +32,17 @@ module.exports = {
 
             const dates = getDates(dateFrom, dateTo);
             for (let i = 0; i < dates.length; i++) {
-                const newHotelContract = new HotelContract({
-                    hotel: roomTypeDetails.hotel,
-                    roomType,
-                    date: dates[i],
-                    price,
-                    contractType,
-                    isNewUpdate,
-                });
-                await newHotelContract.save();
+                await HotelContract.findOneAndUpdate(
+                    { date: dates[i], roomType },
+                    {
+                        hotel: roomTypeDetails.hotel,
+                        roomType,
+                        date: dates[i],
+                        contractType,
+                        price,
+                    },
+                    { upsert: true }
+                );
             }
 
             res.status(200).json({ message: "contract successfully updated" });
@@ -55,8 +51,147 @@ module.exports = {
         }
     },
 
-    getHotelContracts: async (req, res) => {
+    getSingleMonthHotelContract: async (req, res) => {
         try {
+            const { id, month, year } = req.params;
+
+            const totalDays = new Date(
+                Number(year),
+                Number(month),
+                0
+            ).getDate();
+
+            let dummyDates = [];
+            for (let i = 1; i <= totalDays; i++) {
+                dummyDates.push(i);
+            }
+
+            const hotel = await Hotel.findOne({
+                _id: id,
+                isDeleted: false,
+            })
+                .populate("destination")
+                .populate("roomTypes", "roomName")
+                .lean();
+
+            if (!hotel) {
+                return sendErrorResponse(res, 404, "hotel not found");
+            }
+
+            const roomTypes = await RoomType.aggregate([
+                { $match: { hotel: Types.ObjectId(id) } },
+                {
+                    $lookup: {
+                        from: "hotelcontracts",
+                        localField: "_id",
+                        foreignField: "roomType",
+                        as: "contracts",
+                    },
+                },
+                {
+                    $unwind: {
+                        path: "$contracts",
+                        preserveNullAndEmptyArrays: true,
+                    },
+                },
+                {
+                    $project: {
+                        contracts: {
+                            year: { $year: "$contracts.date" },
+                            month: { $month: "$contracts.date" },
+                            day: { $dayOfMonth: "$contracts.date" },
+                            contractType: 1,
+                        },
+                        _id: 1,
+                        roomName: 1,
+                        createdAt: 1,
+                    },
+                },
+                {
+                    $group: {
+                        _id: "$_id",
+                        roomName: { $first: "$roomName" },
+                        contracts: { $push: "$contracts" },
+                        createdAt: { $push: "$createdAt" },
+                    },
+                },
+                { $sort: { createdAt: 1 } },
+                {
+                    $project: {
+                        roomName: 1,
+                        contracts: {
+                            $filter: {
+                                input: "$contracts",
+                                as: "contract",
+                                cond: {
+                                    $and: [
+                                        {
+                                            $eq: [
+                                                "$$contract.year",
+                                                Number(year),
+                                            ],
+                                        },
+                                        {
+                                            $eq: [
+                                                "$$contract.month",
+                                                Number(month),
+                                            ],
+                                        },
+                                    ],
+                                },
+                            },
+                        },
+                    },
+                },
+                {
+                    $project: {
+                        roomName: 1,
+                        contracts: {
+                            $map: {
+                                input: dummyDates,
+                                as: "date",
+                                in: {
+                                    $let: {
+                                        vars: {
+                                            dateIndex: {
+                                                $indexOfArray: [
+                                                    "$contracts.day",
+                                                    "$$date",
+                                                ],
+                                            },
+                                        },
+                                        in: {
+                                            $cond: {
+                                                if: {
+                                                    $ne: ["$$dateIndex", -1],
+                                                },
+                                                then: {
+                                                    $arrayElemAt: [
+                                                        "$contracts",
+                                                        "$$dateIndex",
+                                                    ],
+                                                },
+                                                else: {
+                                                    _id: "",
+                                                    day: "$$date",
+                                                    month: Number(month),
+                                                    year: Number(year),
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            ]);
+
+            res.status(200).json({
+                hotel,
+                roomTypes,
+                dates: dummyDates,
+            });
         } catch (err) {
             sendErrorResponse(res, 400, err);
         }

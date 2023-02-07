@@ -79,6 +79,17 @@ const visaApplicationSchema = new Schema(
                         type: String,
                         required: true,
                     },
+                    expiryDate: {
+                       
+                        month: {
+                            type: Number,
+                            required: true,
+                        },
+                        year: {
+                            type: Number,
+                            required: true,
+                        },
+                    },
                     dateOfBirth: {
                         day: {
                             type: Number,
@@ -110,6 +121,24 @@ const visaApplicationSchema = new Schema(
                         type: String,
                         required: true,
                     },
+                    isStatus: {
+                        type: String,
+                      enum: ["initiated", "approved", "rejected"],
+                      default: "initiated",
+
+                    },
+                    visaUpload: {
+                        type:String,
+                        required: function () {
+                            return this.isStatus=== "approved";
+                        },
+                    },
+                        reason: {
+                        type:String,
+                        required: function () {
+                            return this.isStatus=== "rejected";
+                        },
+                    },
                     
                     documents: {
                         type: Schema.Types.ObjectId,
@@ -137,7 +166,7 @@ const visaApplicationSchema = new Schema(
             type: String,
             required: true,
             lowercase: true,
-            enum: ["initiated", "submitted", "approved", "cancelled"],
+            enum: ["initiated", "submitted", "cancelled"],
             default: "initiated",
         },
         referenceNumber : {
@@ -147,6 +176,8 @@ const visaApplicationSchema = new Schema(
     },
     { timestamps: true }
 );
+
+
 
 const VisaApplication = model("VisaApplication", visaApplicationSchema);
 

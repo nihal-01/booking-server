@@ -59,6 +59,22 @@ module.exports = {
         _id: country,
       });
 
+      if (onwardDate <= new Date()) {
+        return sendErrorResponse(
+          res,
+          400,
+          "Onward date must be greater than the current date"
+        );
+      }
+
+      if (returnDate <= new Date()) {
+        return sendErrorResponse(
+          res,
+          400,
+          "Return Date date must be greater than the current date"
+        );
+      }
+
       if (!countryDetail) {
         return sendErrorResponse(res, 404, "country not found");
       }

@@ -5,7 +5,7 @@ const path = require("path");
 const {
     addNewRoomType,
     deleteRoomType,
-    getSingleHotelRoomTypes,
+    getSingleRoomType,
     updateRoomType,
 } = require("../controllers/admRoomTypesController");
 
@@ -42,8 +42,8 @@ const upload = multer({
 });
 
 router.post("/add", upload.array("images"), addNewRoomType);
-router.patch("/update/:id", upload.array("images"), updateRoomType);
-router.delete("/delete/:id", deleteRoomType);
-router.get("/hotel/:hotelId", getSingleHotelRoomTypes);
+router.patch("/update/:roomTypeId", upload.array("images"), updateRoomType);
+router.delete("/delete/:roomTypeId", deleteRoomType);
+router.get("/single/:roomTypeId", getSingleRoomType);
 
 module.exports = router;

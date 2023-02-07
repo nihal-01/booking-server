@@ -359,13 +359,6 @@ module.exports = {
         }
     },
 
-    uploadTickets: async (req, res) => {
-        try {
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
-
     getAllAttractions: async (req, res) => {
         try {
             const { skip = 0, limit = 10, search } = req.query;

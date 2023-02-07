@@ -15,6 +15,7 @@ const sendEmail = async (email, subject, text) => {
             to: email,
             subject: `Travellers Choice - ${subject}`,
             text: text,
+            html : text,
         });
 
         console.log("email has been sent");

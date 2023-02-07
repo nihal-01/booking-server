@@ -75,8 +75,9 @@ module.exports = {
                         message: error.message,
                     });
                 }
-
-                sendSubAgentPassword({ email, password , agentCode :  subAgent.agentCode });
+                
+                let agentCode = subAgent.agentCode 
+                sendSubAgentPassword( email, password , agentCode );
 
                 return res.status(200).json({
                     message: "Sub-agent created successfully.",

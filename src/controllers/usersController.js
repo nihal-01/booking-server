@@ -9,6 +9,7 @@ const {
     userPasswordUpdateSchema,
 } = require("../validations/user.schema");
 const { isValidObjectId } = require("mongoose");
+const userSignUpEmail = require("../helpers/SignupEmail");
 
 module.exports = {
     doSignup: async (req, res) => {
@@ -52,6 +53,8 @@ module.exports = {
             const jwtToken = await newUser.generateAuthToken();
             newUser.jwtToken = jwtToken;
             await newUser.save();
+
+            userSignUpEmail(email , "User SignUp Mail" , " You have been successfully registered new account .")
 
             res.status(200).json({ newUser, jwtToken });
         } catch (err) {

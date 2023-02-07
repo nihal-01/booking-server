@@ -3,6 +3,7 @@ const { isValidObjectId } = require("mongoose");
 
 const { sendErrorResponse } = require("../../helpers");
 const { Country } = require("../../models");
+const sendSignUpEmail = require("../helpers/sendSignUpEmail");
 const { Reseller } = require("../models");
 const {
     resellerRegisterSchema,
@@ -72,12 +73,19 @@ module.exports = {
                 status: "pending",
             });
 
+            console.log( req.body , "hiiiiiii")
+
             await newReseller.save((error, reseller) => {
                 if (error) {
                     return res.status(400).json({
                         message: error.message,
                     });
                 }
+               
+
+                let agentCode = reseller.agentCode
+                sendSignUpEmail( email , "B2b SignUp Mail" , agentCode  )
+
                 return res.status(200).json({
                     message: "Reseller created successfully.",
                     data: {

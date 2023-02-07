@@ -6,9 +6,12 @@ const { roomTypeSchema } = require("../validations/admRoomType.schema");
 module.exports = {
     addNewRoomType: async (req, res) => {
         try {
-            const { hotel } = req.body;
+            const { hotel, inclusions } = req.body;
 
-            const { _, error } = roomTypeSchema.validate(req.body);
+            const { _, error } = roomTypeSchema.validate({
+                ...req.body,
+                inclusions: inclusions ? JSON.parse(inclusions) : [],
+            });
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
             }
@@ -32,9 +35,15 @@ module.exports = {
                 images.push(img);
             }
 
+            let parsedInclusions = [];
+            if (inclusions) {
+                parsedInclusions = JSON.parse(inclusions);
+            }
+
             const newRoomType = new RoomType({
                 ...req.body,
                 images,
+                inclusions: parsedInclusions,
             });
             await newRoomType.save();
 
@@ -49,10 +58,14 @@ module.exports = {
 
     updateRoomType: async (req, res) => {
         try {
-            const { hotel, oldImages } = req.body;
+            const { hotel, oldImages, inclusions } = req.body;
             const { roomTypeId } = req.params;
 
-            const { _, error } = roomTypeSchema.validate(req.body);
+            const { _, error } = roomTypeSchema.validate({
+                ...req.body,
+                inclusions: inclusions ? JSON.parse(inclusions) : [],
+                oldImages: oldImages ? JSON.parse(oldImages) : [],
+            });
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0].message);
             }
@@ -85,6 +98,11 @@ module.exports = {
                 newImages.push(img);
             }
 
+            let parsedInclusions = [];
+            if (inclusions) {
+                parsedInclusions = JSON.parse(inclusions);
+            }
+
             const roomType = await RoomType.findOneAndUpdate(
                 {
                     isDeleted: false,
@@ -93,6 +111,7 @@ module.exports = {
                 {
                     ...req.body,
                     images: newImages,
+                    inclusions: parsedInclusions,
                 },
                 { runValidators: true }
             );
@@ -138,28 +157,23 @@ module.exports = {
         }
     },
 
-    getSingleHotelRoomTypes: async (req, res) => {
+    getSingleRoomType: async (req, res) => {
         try {
-            const { hotelId } = req.params;
+            const { roomTypeId } = req.params;
 
-            if (!isValidObjectId(hotelId)) {
+            if (!isValidObjectId(roomTypeId)) {
                 return sendErrorResponse(res, 400, "invalid hotel id");
             }
 
-            const hotel = await Hotel.findOne({
-                _id: hotelId,
+            const roomType = await RoomType.findOne({
+                _id: roomTypeId,
                 isDeleted: false,
-            }).select("name");
-            if (!hotel) {
-                return sendErrorResponse(res, 404, "hotel not found");
+            });
+            if (!roomType) {
+                return sendErrorResponse(res, 404, "room type not found");
             }
 
-            const roomTypes = await RoomType.find({
-                isDeleted: false,
-                hotel: hotelId,
-            }).sort({ createdAt: -1 });
-
-            res.status(200).json({ hotel, roomTypes });
+            res.status(200).json(roomType);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

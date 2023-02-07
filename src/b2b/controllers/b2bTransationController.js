@@ -1,31 +1,34 @@
 const { sendErrorResponse } = require("../../helpers");
 const { B2BTransaction, B2BWallet } = require("../models");
+const {
+    getB2bTransactions,
+    generateB2bTransactionsSheet,
+} = require("../helpers/b2bTransactionsHelpers");
 
 module.exports = {
-    getB2BTransactions: async (req, res) => {
+    getSingleB2bAllTransactions: async (req, res) => {
         try {
-            const { skip = 0, limit = 10, status } = req.query;
+            const { result, skip, limit } = await getB2bTransactions({
+                ...req.query,
+                resellerId: req.reseller?._id,
+                b2bRole: "",
+                agentCode: "",
+            });
 
-            let query = { reseller: req.reseller._id };
+            res.status(200).json({ result, skip, limit });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 
-            if (status && status !== "all") {
-                query.status = status;
-            }
-
-            const transactions = await B2BTransaction.find(query)
-                .sort({
-                    createdAt: -1,
-                })
-                .limit(limit)
-                .skip(limit * skip);
-
-            const totalTransactions = await B2BTransaction.find(query).count();
-
-            res.status(200).json({
-                transactions,
-                skip: Number(skip),
-                limit: Number(limit),
-                totalTransactions,
+    getSingleB2bAllTransactionsSheet: async (req, res) => {
+        try {
+            await generateB2bTransactionsSheet({
+                ...req.query,
+                res,
+                resellerId: req.reseller?._id,
+                b2bRole: "",
+                agentCode: "",
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);

@@ -255,14 +255,18 @@ module.exports = {
         (visaTypeList[0].visaPrice - visaTypeList[0].purchaseCost) *
         noOfTravellers;
 
-      console.log(visaTypeList[0], "visaTypeList[0]");
+      let totalAmount =
+        visaTypeList[0].totalAmount +
+        (visaTypeList[0]?.insurance + visaTypeList[0]?.tax) * noOfTravellers;
 
       const otp = await sendMobileOtp(countryDetail.phonecode, contactNo);
+
+      sendVisaOrderOtp(email, "Visa Application Order", otp);
 
       const newVisaApplication = new VisaApplication({
         visaType,
         visaPrice: visaTypeList[0].singleVisaPrice || 0,
-        totalAmount: visaTypeList[0].totalAmount || 0,
+        totalAmount: totalAmount || 0,
         profit,
         resellerMarkup: visaTypeList[0].resellerMarkup || 0,
         subAgentMarkup: visaTypeList[0].subAgentMarkup || 0,
@@ -280,8 +284,12 @@ module.exports = {
 
       await newVisaApplication.save();
 
+      console.log(newVisaApplication , "newVisaApplication")
+
       res.status(200).json(newVisaApplication);
     } catch (err) {
+
+      console.log(err , "error")
       sendErrorResponse(res, 500, err);
     }
   },
@@ -380,8 +388,16 @@ module.exports = {
       const visaApplication = await VisaApplication.findOne({
         _id: orderId,
         reseller: req.reseller._id,
+      }).populate({
+        path: "visaType",
+        populate: { path: "visa", populate: { path: "country" } },
       });
 
+      console.log(visaApplication.visaType.visa, "visaApplication");
+
+      if (!visaApplication) {
+        return sendErrorResponse(res, 404, "Visa Application Not Found");
+      }
       if (visaApplication.status === "submitted") {
         return sendErrorResponse(
           res,
@@ -393,10 +409,17 @@ module.exports = {
       if (!visaApplication) {
         return sendErrorResponse(res, 404, "visa application  not found");
       }
-      
-      console.log(visaApplication,req.files["passportFistPagePhoto"].length , "VisaApplication");
 
-      if (req.files["passportFistPagePhoto"].length  !== visaApplication.noOfTravellers) {
+      console.log(
+        visaApplication,
+        req.files["passportFistPagePhoto"].length,
+        "VisaApplication"
+      );
+
+      if (
+        req.files["passportFistPagePhoto"].length !==
+        visaApplication.noOfTravellers
+      ) {
         return sendErrorResponse(res, 400, "Please Upload all Documents ");
       }
 
@@ -447,13 +470,11 @@ module.exports = {
       const passportFirstPagePhotos = req.files["passportFistPagePhoto"];
       const passportLastPagePhotos = req.files["passportLastPagePhoto"];
       const passportSizePhotos = req.files["passportSizePhoto"];
-      const supportiveDoc1s = req.files["supportiveDoc1"]
-      const supportiveDoc2s = req.files["supportiveDoc2"]
-
+      const supportiveDoc1s = req.files["supportiveDoc1"];
+      const supportiveDoc2s = req.files["supportiveDoc2"];
 
       const photos = [];
       let promises = [];
-
 
       for (let i = 0; i < passportFirstPagePhotos.length; i++) {
         const visaDocument = new VisaDocument({
@@ -463,10 +484,8 @@ module.exports = {
             "/" + passportLastPagePhotos[i]?.path?.replace(/\\/g, "/"),
           passportSizePhoto:
             "/" + passportSizePhotos[i]?.path?.replace(/\\/g, "/"),
-            supportiveDoc1:
-            "/" + supportiveDoc1s[i]?.path?.replace(/\\/g, "/"),
-            supportiveDoc2:
-            "/" + supportiveDoc2s[i]?.path?.replace(/\\/g, "/"),
+          supportiveDoc1: "/" + supportiveDoc1s[i]?.path?.replace(/\\/g, "/"),
+          supportiveDoc2: "/" + supportiveDoc2s[i]?.path?.replace(/\\/g, "/"),
         });
 
         promises.push(
@@ -483,14 +502,159 @@ module.exports = {
             });
           })
         );
-
-        
       }
 
       await Promise.all(promises);
 
+      visaApplication.isDocumentUplaoded = true;
+      visaApplication.status = "submitted";
+      await visaApplication.save();
 
-      console.log(visaApplication, "visaApplication");
+      res.status(200).json({
+        visaApplication,
+      });
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
+
+  completeVisaReapplyDocumentOrder: async (req, res) => {
+    try {
+      const { travellersId } = req.body;
+
+      const { orderId } = req.params;
+
+      if (!isValidObjectId(orderId)) {
+        return sendErrorResponse(res, 400, "invalid order id");
+      }
+
+      const visaApplication = await VisaApplication.findOne({
+        _id: orderId,
+        reseller: req.reseller._id,
+      }).populate({
+        path: "visaType",
+        populate: { path: "visa", populate: { path: "country" } },
+      });
+
+      console.log(visaApplication.visaType.visa, "visaApplication");
+
+      if (!visaApplication) {
+        return sendErrorResponse(res, 404, "Visa Application Not Found");
+      }
+      if (visaApplication.status === "submitted") {
+        return sendErrorResponse(
+          res,
+          404,
+          "Visa Application Already Submitted"
+        );
+      }
+
+      if (!visaApplication) {
+        return sendErrorResponse(res, 404, "visa application  not found");
+      }
+
+      console.log(
+        visaApplication,
+        req.files["passportFistPagePhoto"].length,
+        "VisaApplication"
+      );
+
+      if (
+        req.files["passportFistPagePhoto"].length !==
+        visaApplication.noOfTravellers
+      ) {
+        return sendErrorResponse(res, 400, "Please Upload all Documents ");
+      }
+
+      // async function insertPhotos(numPersons, numPhotos) {
+      //   let persons = [];
+      //   let startIndex = 0;
+      //   let promises = [];
+      //   for (let i = 0; i < numPersons; i++) {
+      //     let person = {};
+      //     for (let j = 0; j < numPhotos; j++) {
+      //       let photoIndex = startIndex + j;
+      //       person[`photo${j + 1}`] =
+      //         "/" + req.files[photoIndex]?.path?.replace(/\\/g, "/");
+      //     }
+
+      //     console.log(person, "person");
+      //     const visaDocument = new VisaDocument({
+      //       passportFistPagePhoto: person.photo1,
+      //       passportLastPagePhoto: person.photo2,
+      //       passportSizePhoto: person.photo3,
+      //     });
+
+      //     promises.push(
+      //       new Promise((resolve, reject) => {
+      //         visaDocument.save((error, document) => {
+      //           if (error) {
+      //             return reject(error);
+      //           }
+
+      //           console.log(document, "document");
+
+      //           visaApplication.travellers[i].documents = document._id;
+      //           resolve();
+      //         });
+      //       })
+      //     );
+
+      //     persons.push(person);
+      //     startIndex += numPhotos;
+      //   }
+
+      //   await Promise.all(promises);
+      //   return persons;
+      // }
+
+      // let persons = await insertPhotos(visaApplication.noOfTravellers, 3);
+
+      const passportFirstPagePhotos = req.files["passportFistPagePhoto"];
+      const passportLastPagePhotos = req.files["passportLastPagePhoto"];
+      const passportSizePhotos = req.files["passportSizePhoto"];
+      const supportiveDoc1s = req.files["supportiveDoc1"];
+      const supportiveDoc2s = req.files["supportiveDoc2"];
+
+      const photos = [];
+      let promises = [];
+
+      for (let i = 0; i < passportFirstPagePhotos.length; i++) {
+        const visaDocument = new VisaDocument({
+          passportFistPagePhoto:
+            "/" + passportFirstPagePhotos[i]?.path?.replace(/\\/g, "/"),
+          passportLastPagePhoto:
+            "/" + passportLastPagePhotos[i]?.path?.replace(/\\/g, "/"),
+          passportSizePhoto:
+            "/" + passportSizePhotos[i]?.path?.replace(/\\/g, "/"),
+          supportiveDoc1: "/" + supportiveDoc1s[i]?.path?.replace(/\\/g, "/"),
+          supportiveDoc2: "/" + supportiveDoc2s[i]?.path?.replace(/\\/g, "/"),
+        });
+
+        promises.push(
+          new Promise((resolve, reject) => {
+            visaDocument.save(async (error, document) => {
+              if (error) {
+                return reject(error);
+              }
+
+              console.log(document, "document");
+
+              upload = await VisaApplication.updateOne(
+                {
+                  _id: id,
+                  status: "submitted",
+                  "travellers._id": travellersId[i],
+                },
+                { $set: { "travellers.$.documents": document._id, status: "initated" } }
+              );
+              resolve();
+            });
+          })
+        );
+      }
+
+      await Promise.all(promises);
 
       visaApplication.isDocumentUplaoded = true;
       visaApplication.status = "submitted";
@@ -500,9 +664,7 @@ module.exports = {
         visaApplication,
       });
 
-
-    } catch (err) {
-      sendErrorResponse(res, 500, err);
-    }
+      l;
+    } catch (err) {}
   },
 };

@@ -1,8 +1,9 @@
 const { isValidObjectId } = require("mongoose");
-const { B2BTransaction, B2BWallet } = require("../../b2b/models");
+const { B2BTransaction, B2BWallet, Reseller } = require("../../b2b/models");
 
 const { sendErrorResponse } = require("../../helpers");
 const { Country, VisaType, Visa, VisaApplication } = require("../../models");
+const sendVisaApplicationApproveEmail = require("../helpers/sendVisaApplicationApproveEmail");
 
 module.exports= {
 
@@ -67,8 +68,18 @@ module.exports= {
           let query = { _id: id };
     
           const visaApplication = await VisaApplication.findOne(query).populate(
-            "visaType reseller travellers.documents"
-          );
+            "reseller travellers.documents travellers.country"
+          ).populate({
+            path: 'visaType',
+            populate: {
+              path: 'visa',
+              populate : {
+                path : 'country',
+                select : "countryName"
+              }
+
+            }
+          })
     
           if (!visaApplication) {
             return sendErrorResponse(res, 400, "VisaApplication Not Found ");
@@ -87,19 +98,41 @@ module.exports= {
         try{
 
           const {id} = req.params
+          const {travellerId} = req.params
+
 
 
           if (!isValidObjectId(id)) {
             return sendErrorResponse(res, 400, "Invalid VisaApplication id");
           }
-          
+
+          let visa;
+          if (req.file?.path) {
+            visa = "/" + req.file.path.replace(/\\/g, "/");
+          }          
 
           let query = { _id: id , status : "submitted" };
 
-          const visaApplication = await VisaApplication.findOne(query)
+          const visaApplication = await VisaApplication.findOne(query).populate(
+            "reseller travellers.documents travellers.country"
+          ).populate({
+            path: 'visaType',
+            populate: {
+              path: 'visa',
+              populate : {
+                path : 'country',
+                select : "countryName"
+              }
+
+            }
+          })
            
           if (!visaApplication) {
             return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
+          }
+
+          if (visaApplication.isPayed == false) {
+            return sendErrorResponse(res, 400, "VisaApplication Amount Payed ");
           }
           
           if(visaApplication.status == "approved"){
@@ -107,20 +140,30 @@ module.exports= {
 
           }
 
-          if(req.reseller.role == "subAgent"){
+          let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
+          { $set: { "travellers.$.visaUpload": visa } })
+
+
+        
+
+          let reseller = await Reseller.findById(visaApplication.reseller).populate("referredBy")
+
+
+          if(reseller.role == "subAgent"){
                
             const transaction = new B2BTransaction({
-              reseller: req.reseller?.referredBy,
+              reseller: reseller?.referredBy,
               transactionType: "markup",
               status: "pending",
               paymentProcessor: "wallet",
-              amount: visaApplication.subAgentMarkup,
+              amount: visaApplication.subAgentMarkup / visaApplication.noOfTravellers,
               order: visaApplication._id,
+              orderItem: visaApplication.visaType,
             });
 
            
             let wallet = await B2BWallet.updateOne({
-              reseller: req.reseller?.referredBy,
+              reseller: reseller?.referredBy,
             },
             {
               $inc: {
@@ -140,17 +183,18 @@ module.exports= {
           
 
           const transaction = new B2BTransaction({
-            reseller: req.reseller?._id,
+            reseller: reseller?._id,
             transactionType: "markup",
             status: "pending",
             paymentProcessor: "wallet",
-            amount: visaApplication.resellerMarkup,
+            amount: visaApplication.subAgentMarkup / visaApplication.noOfTravellers ,
             order: visaApplication._id,
-          });
+            orderItem: visaApplication.visaType
+                    });
 
          
           let wallet = await B2BWallet.updateOne({
-            reseller: req.reseller?._id,
+            reseller: reseller?._id,
           },
           {
             $inc: {
@@ -160,21 +204,29 @@ module.exports= {
           {
             upsert: true
           });
+          
+
+          const filteredTraveller = visaApplication.travellers.filter(traveller => {
+            return traveller._id == travellerId;
+        });
+
+
+          sendVisaApplicationApproveEmail(visaApplication , filteredTraveller)
 
           transaction.status = "success"
          await transaction.save()
 
 
-          visaApplication.status = "approved"
           await  visaApplication.save()
 
 
 
 
-          res.status(200).json("Visa Approved Succesfully ")
+          res.status(200).json({message : "Visa Uploaded Succesfully " })
 
         }catch(err){
-
+           
+          console.log(err , "error")
           sendErrorResponse(res, 500, err);
 
         }
@@ -184,58 +236,42 @@ module.exports= {
 
         try{
            
-           const {id} = req.params
+          const {id} = req.params
+          const {travellerId , reason} = req.body
+
+
 
           if (!isValidObjectId(id)) {
             return sendErrorResponse(res, 400, "Invalid VisaApplication id");
           }
-          
-          let query = { _id: id };
+
+          let visa;
+          if (req.file?.path) {
+            visa = "/" + req.file.path.replace(/\\/g, "/");
+          }          
+
+          let query = { _id: id , status : "submitted" };
 
           const visaApplication = await VisaApplication.findOne(query)
 
-
-          if(visaApplication.status == "approved"){
-            return sendErrorResponse(res, 400, "VisaApplication Already Approved");
-
+           
+          if (!visaApplication) {
+            return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
           }
 
-
-          const transaction = new B2BTransaction({
-            reseller: req.reseller?._id,
-            transactionType: "credited",
-            status: "pending",
-            paymentProcessor: "wallet",
-            amount: visaApplication.totalAmount,
-            order: visaApplication._id,
-          });
-
+          if (visaApplication.isPayed == false) {
+            return sendErrorResponse(res, 400, "VisaApplication Amount Payed ");
+          }
+          
          
-          let wallet = await B2BWallet.updateOne({
-            reseller: req.reseller?._id,
-          },
-          {
-            $inc: {
-              balance: visaApplication.totalAmount
-            }
-          },
-          {
-            upsert: true
-          });
 
-          transaction.status = "success"
-         await transaction.save()
-
-
-          visaApplication.status = "cancelled"
-          await  visaApplication.save()
-
-
-
+          let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
+          { $set: { "travellers.$.reason": reason } })
+       
           
 
+          res.json({message : "Visa Rejectd Due To Some Reason"})
 
-       
 
         }catch(err){
 

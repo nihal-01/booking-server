@@ -32,6 +32,10 @@ const visaSchema = new Schema(
             type: String,
             required: true,
         },
+        termsAndConditions: {
+            type: String,
+            required: true,
+        },
         sampleVisa: {
             type: String,
             // required: true,
