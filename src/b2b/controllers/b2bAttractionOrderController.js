@@ -3,11 +3,7 @@ const { isValidObjectId } = require("mongoose");
 const {
     b2bAttractionOrderSchema,
 } = require("../validations/b2bAttractionOrder.schema");
-const {
-    sendErrorResponse,
-    sendMobileOtp,
-    sendEmail,
-} = require("../../helpers");
+const { sendErrorResponse, sendMobileOtp } = require("../../helpers");
 const {
     Attraction,
     AttractionActivity,
@@ -27,6 +23,7 @@ const {
 const { generateUniqueString } = require("../../utils");
 const sendAttractionOrderEmail = require("../helpers/sendAttractionOrderEmail");
 const sendAttractionOrderAdminEmail = require("../helpers/sendAttractionOrderAdminEmail");
+const { getB2bOrders } = require("../helpers/b2bOrdersHelper");
 
 const dayNames = [
     "sunday",
@@ -38,10 +35,10 @@ const dayNames = [
     "saturday",
 ];
 
+// TODO
+// 1. VAT
+// 2. Offer
 module.exports = {
-    // TODO
-    // 1. VAT
-    // 2. Offer
     createAttractionOrder: async (req, res) => {
         try {
             const { selectedActivities, country, name, email, phoneNumber } =
@@ -673,28 +670,33 @@ module.exports = {
             sendErrorResponse(res, 400, err);
         }
     },
+
+    getSingleB2bAllOrders: async (req, res) => {
+        try {
+            const { result, skip, limit } = await getB2bOrders({
+                ...req.query,
+                resellerId: req.reseller?._id,
+                orderedBy: "",
+                agentCode: "",
+            });
+
+            res.status(200).json({ result, skip, limit });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSingleB2bAllOrdersSheet: async (req, res) => {
+        try {
+            await generateB2bOrdersSheet({
+                ...req.query,
+                res,
+                resellerId: req.reseller?._id,
+                orderedBy: "",
+                agentCode: "",
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };
-
-//             sendEmail(
-//                 "lekhraj@hami.live",
-//                 "New Order placed",
-//                 `Reference No: ${attractionOrder.referenceNumber}
-// Amount: ${attractionOrder.totalAmount}
-// Activities: ${attractionOrder.activities.length}
-
-// name: ${attractionOrder.name}
-// email: ${attractionOrder.email}
-// phoneNumber: ${attractionOrder.phoneNumber}`
-//             );
-
-//             sendEmail(
-//                 "experiences@travellerschoice.ae",
-//                 "New Order placed",
-//                 `Reference No: ${attractionOrder.referenceNumber}
-// Amount: ${attractionOrder.totalAmount}
-// Activities: ${attractionOrder.activities.length}
-
-// name: ${attractionOrder.name}
-// email: ${attractionOrder.email}
-// phoneNumber: ${attractionOrder.phoneNumber}`
-//             );

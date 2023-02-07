@@ -1,11 +1,11 @@
-const { isValidObjectId, Types } = require("mongoose");
+const { isValidObjectId } = require("mongoose");
 
 const { sendErrorResponse } = require("../../helpers");
 const { B2CTransaction } = require("../../models");
 const {
     getB2bTransactions,
     generateB2bTransactionsSheet,
-} = require("../helpers/b2bTransactionsHelpers");
+} = require("../../b2b/helpers/b2bTransactionsHelpers");
 
 module.exports = {
     getAllB2cTransactions: async (req, res) => {

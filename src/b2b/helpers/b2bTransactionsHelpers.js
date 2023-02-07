@@ -1,7 +1,7 @@
 const xl = require("excel4node");
 const { Types } = require("mongoose");
 
-const { B2BTransaction } = require("../../b2b/models");
+const { B2BTransaction } = require("../models");
 
 module.exports = {
     getB2bTransactions: async ({

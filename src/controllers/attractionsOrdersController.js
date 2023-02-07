@@ -32,15 +32,20 @@ const dayNames = [
 ];
 
 const instance = new Razorpay({
-    key_id: "rzp_test_wRs1QW9pU0kcUb",
-    key_secret: "b5EAobCLbhyi6wpOOA2HNGzV",
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+const ccav = new nodeCCAvenue.Configure({
+    merchant_id: process.env.CCAVENUE_MERCHANT_ID,
+    working_key: process.env.CCAVENUE_WORKING_KEY,
+});
+
+// TODO
+// 1. VAT Calculation
+// 2. Send password for new emails
+// 3. Verify Mobile Number
 module.exports = {
-    // TODO
-    // 1. VAT Calculation
-    // 2. Send password for new emails
-    // 3. Verify Mobile Number
     createAttractionOrder: async (req, res) => {
         try {
             const { selectedActivities, name, email, phoneNumber, country } =
@@ -73,6 +78,17 @@ module.exports = {
                 });
                 if (!attraction) {
                     return sendErrorResponse(res, 500, "Attraction not found!");
+                }
+
+                if (
+                    new Date(selectedActivities[i]?.date) <
+                    new Date(new Date().setDate(new Date().getDate() + 2))
+                ) {
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        `"selectedActivities[${i}].date" must be a valid date`
+                    );
                 }
 
                 if (
@@ -197,27 +213,79 @@ module.exports = {
                     }
                 }
 
+                let b2cMarkup = await B2CAttractionMarkup.findOne({
+                    attraction: attraction?._id,
+                });
+
+                let totalMarkup = 0;
                 let price = 0;
-                if (selectedActivities[i]?.adultsCount && activity.adultPrice) {
+                if (
+                    Number(selectedActivities[i]?.adultsCount) > 0 &&
+                    activity.adultPrice
+                ) {
                     price +=
                         Number(selectedActivities[i]?.adultsCount) *
                         activity.adultPrice;
+
+                    if (b2cMarkup) {
+                        let markup = 0;
+                        if (b2cMarkup.markupType === "flat") {
+                            markup = b2cMarkup.markup;
+                        } else {
+                            markup =
+                                (b2cMarkup.markup * activity.adultPrice) / 100;
+                        }
+                        price +=
+                            markup * Number(selectedActivities[i]?.adultsCount);
+                        totalMarkup +=
+                            markup * Number(selectedActivities[i]?.adultsCount);
+                    }
                 }
                 if (
-                    selectedActivities[i]?.childrenCount &&
+                    Number(selectedActivities[i]?.childrenCount) > 0 &&
                     activity?.childPrice
                 ) {
                     price +=
                         Number(selectedActivities[i]?.childrenCount) *
                         activity?.childPrice;
+
+                    if (b2cMarkup) {
+                        let markup = 0;
+                        if (b2cMarkup.markupType === "flat") {
+                            markup = b2cMarkup.markup;
+                        } else {
+                            markup =
+                                (b2cMarkup.markup * activity.childPrice) / 100;
+                        }
+                        price +=
+                            markup *
+                            Number(selectedActivities[i]?.childrenCount);
+                        totalMarkup +=
+                            markup * Number(selectedActivities[i]?.adultsCount);
+                    }
                 }
                 if (
-                    selectedActivities[i]?.infantCount &&
+                    Number(selectedActivities[i]?.infantCount) > 0 &&
                     activity?.infantPrice
                 ) {
                     price +=
                         Number(selectedActivities[i]?.infantCount) *
                         activity?.infantPrice;
+
+                    if (b2cMarkup) {
+                        let markup = 0;
+                        if (b2cMarkup.markupType === "flat") {
+                            markup = b2cMarkup.markup;
+                        } else {
+                            markup =
+                                (b2cMarkup.markup * activity.infantCount) / 100;
+                        }
+
+                        price +=
+                            markup * Number(selectedActivities[i]?.infantCount);
+                        totalMarkup +=
+                            markup * Number(selectedActivities[i]?.adultsCount);
+                    }
                 }
 
                 let offer = 0;
@@ -228,6 +296,7 @@ module.exports = {
                         offer = (price / 100) * attraction.offerAmount;
                     }
                 }
+
                 price -= offer;
                 if (price < 0) {
                     price = 0;
@@ -351,10 +420,8 @@ module.exports = {
                 }
             }
 
-
             let buyer = req.user || user;
 
-            const otp = await sendMobileOtp();
             const newAttractionOrder = new AttractionOrder({
                 activities: selectedActivities,
                 totalAmount,
@@ -365,11 +432,11 @@ module.exports = {
                 email,
                 phoneNumber,
                 orderStatus: "pending",
-                otp,
+                referenceNumber: generateUniqueString("B2CATO"),
             });
             await newAttractionOrder.save();
 
-            res.status(200).json(result);
+            res.status(200).json(newAttractionOrder);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
