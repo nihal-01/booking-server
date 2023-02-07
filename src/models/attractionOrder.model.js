@@ -5,6 +5,11 @@ const attractionOrderSchema = new Schema(
         activities: {
             type: [
                 {
+                    attraction: {
+                        type: Schema.Types.ObjectId,
+                        ref: "Attraction",
+                        required: true,
+                    },
                     activity: {
                         type: Schema.Types.ObjectId,
                         ref: "AttractionActivity",
@@ -77,13 +82,18 @@ const attractionOrderSchema = new Schema(
                     cancellationFee: {
                         type: Number,
                         required: function () {
-                            return this.status === true;
+                            return this.status === "cancelled";
                         },
+                    },
+                    isRefundAvailable: {
+                        type: Boolean,
+                        required: true,
+                        default: false,
                     },
                     refundAmount: {
                         type: Number,
                         required: function () {
-                            return this.status === true;
+                            return this.isRefundAvailable === true;
                         },
                     },
                     isRefunded: {

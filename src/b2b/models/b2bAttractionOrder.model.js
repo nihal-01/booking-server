@@ -84,11 +84,6 @@ const b2battractionOrderSchema = new Schema(
                             );
                         },
                     },
-                    isRefunded: {
-                        type: Boolean,
-                        required: true,
-                        default: false,
-                    },
                     resellerMarkup: {
                         type: Number,
                         required: true,
