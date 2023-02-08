@@ -14,7 +14,7 @@ const   SendaddWalletEmail = async (email, subject, amount) => {
               </div>
               <p style="font-size:1.1em">Hi,</p>
               <p>Thank you for choosing Travellers Choice. </p>
-              <p>Congratulation ${amount} has been credited to your wallet </p>
+              <p>Congratulation ${amount}AED has been credited to your wallet </p>
               <p style="font-size:0.9em;">Regards,<br />Travellers Choice</p>
               <hr style="border:none;border-top:1px solid #eee" />
               <div style="float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">

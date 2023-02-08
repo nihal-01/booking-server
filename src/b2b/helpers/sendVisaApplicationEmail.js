@@ -26,7 +26,7 @@ const sendApplicationEmail = async (email ,visaApplication) => {
               </tr>
                 <tr style="background-color: #eee;">
                   <td style="padding: 10px; border: 1px solid #ddd;">Amount:</td>
-                  <td style="padding: 10px; border: 1px solid #ddd;">${visaApplication.totalAmount}</td>
+                  <td style="padding: 10px; border: 1px solid #ddd;">${visaApplication.totalAmount}AED</td>
                 </tr>
                 <tr style="background-color:  "" : "#eee">
                   <td style="padding: 10px; border: 1px solid #ddd;">Onward Date:</td>
