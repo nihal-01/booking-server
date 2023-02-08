@@ -80,8 +80,11 @@ const visaApplicationSchema = new Schema(
                         required: true,
                     },
                     expiryDate: {
-                       
-                        month: {
+                        day:{
+                            type: Number,
+                            required: true,
+                        },
+                       month: {
                             type: Number,
                             required: true,
                         },

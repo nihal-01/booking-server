@@ -266,7 +266,7 @@ module.exports = {
 
       const otp = await sendMobileOtp(countryDetail.phonecode, contactNo);
 
-      await sendVisaOrderOtp(email, "Visa Application Order", otp);
+      await sendVisaOrderOtp(req.reseller.email, "Visa Application Order Otp", otp);
 
       const newVisaApplication = new VisaApplication({
         visaType,
@@ -517,7 +517,7 @@ module.exports = {
       visaApplication.isDocumentUplaoded = true;
       visaApplication.status = "submitted";
 
-      await sendApplicationEmail( visaApplication);
+      await sendApplicationEmail( req.reseller.email ,visaApplication);
       await sendAdminVisaApplicationEmail( visaApplication);
 
 
@@ -680,4 +680,6 @@ module.exports = {
       l;
     } catch (err) {}
   },
+
+  
 };
