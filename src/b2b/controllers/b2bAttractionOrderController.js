@@ -387,7 +387,11 @@ module.exports = {
                 phoneNumber
             );
 
-            sendAttractionOrderOtp(req.reseller.email, "Attraction Order Otp Verifiaction", otp)
+            sendAttractionOrderOtp(
+                req.reseller.email,
+                "Attraction Order Otp Verifiaction",
+                otp
+            );
 
             const attractionOrder = new B2BAttractionOrder({
                 activities: selectedActivities,
@@ -672,9 +676,9 @@ module.exports = {
                     );
                 }
             }
-            
-            console.log(attractionOrder , "attractionOrder")
-            sendAttractionOrderEmail(req.reseller.email ,attractionOrder);
+
+            console.log(attractionOrder, "attractionOrder");
+            sendAttractionOrderEmail(req.reseller.email, attractionOrder);
             sendAttractionOrderAdminEmail(attractionOrder);
 
             res.status(200).json({
@@ -984,11 +988,11 @@ module.exports = {
                 },
             ]);
 
-            if (!order) {
+            if (!order || order?.length < 1) {
                 return sendErrorResponse(res, 404, "order not found");
             }
 
-            res.status(200).json(order);
+            res.status(200).json(order[0]);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

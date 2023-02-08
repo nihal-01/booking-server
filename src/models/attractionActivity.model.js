@@ -35,7 +35,7 @@ const attractionActivitySchema = new Schema(
         adultPrice: {
             type: Number,
             required: function () {
-                return this.activityType === "activity-with-transfer";
+                return this.activityType === "normal";
             },
         },
         childAgeLimit: {
@@ -45,7 +45,7 @@ const attractionActivitySchema = new Schema(
         childPrice: {
             type: Number,
             required: function () {
-                return this.activityType === "activity-with-transfer";
+                return this.activityType === "normal";
             },
         },
         infantAgeLimit: {
