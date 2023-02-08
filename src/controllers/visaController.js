@@ -79,6 +79,7 @@ module.exports = {
         return sendErrorResponse(res, 404, "country not found");
       }
 
+      // noOfTravellers = Number(noOfTravellers);
       if (Number(noOfTravellers) !== travellers.length) {
         return sendErrorResponse(res, 400, "PassengerDetails Not Added ");
       }
@@ -176,7 +177,7 @@ module.exports = {
                         100,
                       ],
                     },
-                    noOfTravellers,
+                    Number(noOfTravellers),
                   ],
                 },
                 {

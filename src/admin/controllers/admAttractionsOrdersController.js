@@ -11,8 +11,8 @@ const {
     getB2bOrders,
     generateB2bOrdersSheet,
 } = require("../../b2b/helpers/b2bOrdersHelper");
+const sendOrderCancellationEmail = require("../helpers/sendOrderRejectionEmail");
 const sendOrderConfirmationEmail = require("../helpers/sendOrderConfirmationMail");
-const sendOrderCancellationEmail = require("../helpers/sendOrderCancellationEmail");
 
 module.exports = {
     getAllB2cOrders: async (req, res) => {
@@ -636,27 +636,32 @@ module.exports = {
             }
 
             if (orderedBy === "b2c") {
-                orderAttraction = await AttractionOrder.findOne(
-                    { _id: orderId,  "activities._id": bookingId }, 
-                    { "activities.$": 1, referenceNumber: 1 , reseller : 1 ,email : 1 , name : 1 }
-                ).populate("activities.attraction")
+                orderDetails = await AttractionOrder.findOne(
+                    {
+                        _id: orderId,
+                    },
+                    { activities: { $elemMatch: { _id: bookingId } } }
+                ).populate({
+                    path: "activities.activity",
+                    populate: {
+                        path: "attraction",
+                    },
+                });
+
+                  console.log(orderDetails , "orderDetails1")
 
 
-
-               await sendOrderConfirmationEmail(orderAttraction.email , orderAttraction.name , orderAttraction )
-
+               await sendOrderConfirmationEmail(orderDetails)
             } else {
-
-               let orderAttraction = await B2BAttractionOrder.findOne(
-                    { _id: orderId,  "activities._id": bookingId }, 
-                    { "activities.$": 1, referenceNumber: 1 , reseller : 1 }
-                ).populate("reseller activities.attraction")
-
-                console.log(orderAttraction , "orderAttraction")
-
-                
-            
-               await sendOrderConfirmationEmail(orderAttraction.reseller.email ,orderAttraction.reseller.name ,orderAttraction)
+                orderDetails = await B2BAttractionOrder.findOne(
+                    {
+                        _id: orderId, 
+                    },
+                    { activities: { $elemMatch: { _id: bookingId } } }
+                ).populate("activities.activity")
+                 
+             console.log(orderDetails , "orderDetails2")
+               await sendOrderConfirmationEmail(orderDetails)
 
             }
             res.status(200).json({
@@ -734,8 +739,6 @@ module.exports = {
                     },
                     { runValidators: true }
                 );
-
-                
             } else {
                 await B2BAttractionOrder.findOneAndUpdate(
                     {
@@ -774,9 +777,8 @@ module.exports = {
                 newTransaction.status = "success";
                 await newTransaction.save();
             }
-            
 
-           
+            sendOrderCancellationEmail(orderDetails);
 
             // send email
 

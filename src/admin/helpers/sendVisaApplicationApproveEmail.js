@@ -11,13 +11,13 @@ const sendVisaApplicationApproveEmail = (visaApplication ,filteredTraveller ) =>
          <h1 style="margin: 0;">Visa Application Confirmation</h1>
        </div>
        <div style="background-color: #f7f7f7; padding: 20px;">
-         <p style="font-size: 18px; font-weight: bold;">Dear ${visaApplication.visaType.visa.country.countryName},</p>
+         <p style="font-size: 18px; font-weight: bold;">Dear ${visaApplication.country.countryName},</p>
          <p style="margin-top: 20px;">Your Visa is Approved. Your visa  details are as follows:</p>
          <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
            <tr style="background-color: #eee;">
             
              <td style="padding: 10px; border: 1px solid #ddd;">Reference Number:</td>
-             <td style="padding: 10px; border: 1px solid #ddd;">${visaApplication.referenceNumber}</td>
+             <td style="padding: 10px; border: 1px solid #ddd;">${visaApplication.referenceNo}</td>
            </tr>
            <tr >
              <td style="padding: 10px; border: 1px solid #ddd;">Travellers Name:</td>
@@ -32,10 +32,6 @@ const sendVisaApplicationApproveEmail = (visaApplication ,filteredTraveller ) =>
            <td style="padding: 10px; border: 1px solid #ddd;">Contact No:</td>
            <td style="padding: 10px; border: 1px solid #ddd;">${filteredTraveller[0]?.contactNo}</td>
          </tr>
-         <p style="margin-top: 20px;">Download your Visa file: <a href=${
-          process.env.REACT_APP_SERVER_URL +
-          filteredTraveller[0]?.visaUpload
-        } >here</a>.</p>
          
          </table>
          <p style="margin-top: 20px;">Attached to this email, you will find a PDF of your booking/ticket and invoice. Please keep these documents for your records.</p>

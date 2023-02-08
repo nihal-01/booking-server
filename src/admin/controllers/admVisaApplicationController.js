@@ -141,10 +141,8 @@ module.exports= {
           }
 
           let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
-          { $set: { "travellers.$.visaUpload": visa  , "travellers.$.isStatus" : "approved" }})
-         
+          { $set: { "travellers.$.visaUpload": visa } })
 
-          console.log(upload ,"upload")
 
         
 
@@ -212,10 +210,6 @@ module.exports= {
             return traveller._id == travellerId;
         });
 
-        console.log(filteredTraveller , "filteredTraveller")
-        console.log(visaApplication , "visaApplication")
-
-
 
           sendVisaApplicationApproveEmail(visaApplication , filteredTraveller)
 
@@ -275,7 +269,7 @@ module.exports= {
           { $set: { "travellers.$.reason": reason } })
        
           
-          sendVisaApplicationCancelEmail()
+
           res.json({message : "Visa Rejectd Due To Some Reason"})
 
 
