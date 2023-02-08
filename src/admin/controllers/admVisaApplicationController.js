@@ -140,6 +140,8 @@ module.exports= {
 
           }
 
+          console.log(visa , "visaaa")
+
           let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
           { $set: { "travellers.$.visaUpload": visa  , "travellers.$.isStatus" : "approved" }})
          
@@ -228,7 +230,7 @@ module.exports= {
 
 
 
-          res.status(200).json({message : "Visa Uploaded Succesfully " })
+          res.status(200).json({status: true ,message : "Visa Uploaded Succesfully " })
 
         }catch(err){
            
