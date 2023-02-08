@@ -14,7 +14,7 @@ const attractionTicketSchema = new Schema(
         ticketFor: {
             type: String,
             required: true,
-            enum: ["adult", "child", "infant"],
+            enum: ["adult", "child", "infant", "common"],
         },
         activity: {
             type: Schema.Types.ObjectId,

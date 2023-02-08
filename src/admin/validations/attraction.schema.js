@@ -101,12 +101,21 @@ const attractionSchema = Joi.object({
 const attractionActivitySchema = Joi.object({
     attraction: Joi.string().required(),
     name: Joi.string().required(),
+    activityType: Joi.string().valid("normal", "transfer").required(),
     facilities: Joi.string().required(),
     adultAgeLimit: Joi.number().required(),
-    adultPrice: Joi.number().required(),
     childAgeLimit: Joi.number().required(),
-    childPrice: Joi.number().required(),
     infantAgeLimit: Joi.number().required(),
+    adultPrice: Joi.when("activityType", {
+        is: Joi.string().valid("normal"),
+        then: Joi.number().required(),
+        otherwise: Joi.string().allow("", null),
+    }),
+    childPrice: Joi.when("activityType", {
+        is: Joi.string().valid("normal"),
+        then: Joi.number().required(),
+        otherwise: Joi.string().allow("", null),
+    }),
     infantPrice: Joi.number().allow("", null),
     isVat: Joi.boolean().required(),
     vat: Joi.number()
@@ -118,25 +127,37 @@ const attractionActivitySchema = Joi.object({
     base: Joi.string()
         .valid(...["person", "private", "hourly"])
         .required(),
-    isTransferAvailable: Joi.boolean().required(),
-    privateTransferPrice: Joi.number().allow("", null),
-    sharedTransferPrice: Joi.number().allow("", null),
+    isSharedTransferAvailable: Joi.boolean().required(),
+    sharedTransferPrice: Joi.when("isSharedTransferAvailable", {
+        is: Joi.boolean().valid(true),
+        then: Joi.number().required(),
+        otherwise: Joi.string().allow("", null),
+    }),
+    sharedTransferCost: Joi.when("isSharedTransferAvailable", {
+        is: Joi.boolean().valid(true),
+        then: Joi.number().required(),
+        otherwise: Joi.string().allow("", null),
+    }),
+    isPrivateTransferAvailable: Joi.boolean().required(),
+    privateTransfers: Joi.when("isPrivateTransferAvailable", {
+        is: Joi.boolean().valid(true),
+        then: Joi.array()
+            .items(
+                Joi.object({
+                    name: Joi.string().required(),
+                    maxCapacity: Joi.string().required(),
+                    price: Joi.number().required(),
+                    cost: Joi.number().required(),
+                })
+            )
+            .min(1),
+    }),
     isActive: Joi.boolean(),
     peakTime: Joi.date().allow("", null),
     note: Joi.string().allow("", null),
     bookingType: Joi.string().valid("booking", "ticket").required(),
-    childCost: Joi.number()
-        .allow("", null)
-        .when("bookingType", {
-            is: Joi.string().valid("booking"),
-            then: Joi.number().required(),
-        }),
-    adultCost: Joi.number()
-        .allow("", null)
-        .when("bookingType", {
-            is: Joi.string().valid("booking"),
-            then: Joi.number().required(),
-        }),
+    childCost: Joi.number().allow("", null),
+    adultCost: Joi.number().allow("", null),
     infantCost: Joi.number().allow("", null),
 });
 
