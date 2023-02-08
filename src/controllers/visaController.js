@@ -587,4 +587,37 @@ module.exports = {
     }
   },
 
+  visaApplicationInvoice :async(req,res)=>{
+
+    try{
+
+      const { orderId } = req.params;
+
+      if (!isValidObjectId(orderId)) {
+        return sendErrorResponse(res, 400, "invalid order id");
+      }
+
+      const visaApplication = await B2CVisaApplication.findOne({
+        _id: orderId,
+      }).populate({
+        path: "visaType",
+        populate: { path: "visa", populate: { path: "country" } },
+      });
+
+      if (!visaApplication) {
+        return sendErrorResponse(res, 404, "visa application  not found");
+      }
+
+
+      res.status(200).json(visaApplication)
+
+
+
+    }catch(err){
+
+      sendErrorResponse(res, 500, err);
+
+    }
+  }
+
 };

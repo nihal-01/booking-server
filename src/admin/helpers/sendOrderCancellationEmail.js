@@ -1,12 +1,12 @@
 const nodemailer = require("nodemailer");
 const { sendEmail } = require("../../helpers");
 
-const sendOrderConfirmationEmail = async (email,name, attractionOrder ) => {
+const sendOrderCancellationEmail = async ( email ,name, attractionOrder , orderDetails) => {
   try {
     const totalPersons =
-    attractionOrder.activities[0].adultsCount ||
-      0 + attractionOrder.activities[0].infantCount ||
-      0 + attractionOrder.activities[0].childrenCount;
+    orderDetails.activities[0].adultsCount ||
+      0 + orderDetails.activities[0].infantCount ||
+      0 + orderDetails.activities[0].childrenCount;
 
     sendEmail(
       email,
@@ -17,7 +17,7 @@ const sendOrderConfirmationEmail = async (email,name, attractionOrder ) => {
             </div>
             <div style="background-color: #f7f7f7; padding: 20px;">
               <p style="font-size: 18px; font-weight: bold;">Dear ${
-                 name
+                name
               },</p>
               <p style="margin-top: 20px;">Thank you for your order. Your order details are as follows:</p>
               <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
@@ -36,27 +36,27 @@ const sendOrderConfirmationEmail = async (email,name, attractionOrder ) => {
                     <tr style="background-color: #eee;">
                     <td style="padding: 10px; border: 1px solid #ddd;">Order Type:</td>
                   <td style="padding: 10px; border: 1px solid #ddd;">${
-                    attractionOrder.activities[0].bookingType
+                    orderDetails.activities[0].bookingType
                   }</td>
                 </tr>
                 <tr style="background-color:  "" : "#eee">
                  
                   <td style="padding: 10px; border: 1px solid #ddd;">Attraction:</td>
                   <td style="padding: 10px; border: 1px solid #ddd;">${
-                    attractionOrder.activities[0].attraction.title
+                    orderDetails.activities[0].attraction.title
                   }</td>
                 </tr>
                 <tr style="background-color: #eee;">
                  
                 <td style="padding: 10px; border: 1px solid #ddd;">Booking Confirmation Number:</td>
                 <td style="padding: 10px; border: 1px solid #ddd;">${
-                  attractionOrder.activities[0].bookingConfirmationNumber
+                  orderDetails.activities[0].bookingConfirmationNumber
                 }</td>
               </tr>
               <tr style="background-color:  "" : "#eee">
                   <td style="padding: 10px; border: 1px solid #ddd;">Date:</td>
                   <td style="padding: 10px; border: 1px solid #ddd;">${new Date(
-                    attractionOrder.activities[0].date
+                    orderDetails.activities[0].date
                   ).toLocaleString("default", {
                     month: "short",
                     day: "numeric",
@@ -82,4 +82,4 @@ const sendOrderConfirmationEmail = async (email,name, attractionOrder ) => {
   }
 };
 
-module.exports = sendOrderConfirmationEmail;
+module.exports = sendOrderCancellationEmail;
