@@ -251,4 +251,36 @@ module.exports = {
             sendErrorResponse(res, 500, error);
         }
     },
+
+    deleteAttractionTicket: async (req, res) => {
+        try {
+            const { ticketId } = req.params;
+
+            if (!isValidObjectId(ticketId)) {
+                return sendErrorResponse(res, 400, "invalid ticket id");
+            }
+
+            const ticket = await AttractionTicket.findById(ticketId);
+            if (!ticket) {
+                return sendErrorResponse(res, 404, "ticket not found");
+            }
+
+            if (ticket.status !== "ok") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "sorry, this ticket can't delete"
+                );
+            }
+
+            await AttractionTicket.findByIdAndDelete(ticketId);
+
+            res.status(200).json({
+                message: "ticket successfully deleted",
+                ticketNo: ticket?.ticketNo,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 400, err);
+        }
+    },
 };

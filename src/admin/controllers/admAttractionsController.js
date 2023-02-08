@@ -54,6 +54,7 @@ module.exports = {
                 cancellationFee,
                 isApiConnected,
                 isCombo,
+                bookingPriorDays,
             } = req.body;
 
             const { _, error } = attractionSchema.validate({
@@ -143,6 +144,7 @@ module.exports = {
                 cancellationFee,
                 isApiConnected,
                 isCombo,
+                bookingPriorDays,
             });
             await newAttraction.save();
 
@@ -182,6 +184,7 @@ module.exports = {
                 isApiConnected,
                 isCombo,
                 oldImages,
+                bookingPriorDays,
             } = req.body;
 
             const { _, error } = attractionSchema.validate({
@@ -271,6 +274,7 @@ module.exports = {
                     cancellationFee,
                     isApiConnected,
                     isCombo,
+                    bookingPriorDays,
                 },
                 { runValidators: true, new: true }
             );

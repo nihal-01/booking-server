@@ -39,7 +39,7 @@ const attractionTicketSchema = new Schema(
             type: String,
             required: true,
             lowercase: true,
-            enum: ["ok", "used", "cancelled"],
+            enum: ["ok", "used"],
             default: "ok",
         },
         isReserved: {
