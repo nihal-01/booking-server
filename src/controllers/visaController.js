@@ -65,8 +65,8 @@ module.exports = {
       }
 
 
-      noOfTravellers = Number(noOfTravellers)
-      if (noOfTravellers !== travellers.length) {
+      
+      if (Number(noOfTravellers) !== travellers.length) {
         return sendErrorResponse(res, 400, "PassengerDetails Not Added ");
       }
 
@@ -145,7 +145,7 @@ module.exports = {
         {
           $addFields: {
             totalAmount: {
-              $multiply: ["$totalPrice", noOfTravellers],
+              $multiply: ["$totalPrice", Number(noOfTravellers)],
             },
           },
         },
@@ -170,7 +170,7 @@ module.exports = {
                   ],
                 },
                 {
-                  $multiply: ["$markupClient.markup", noOfTravellers],
+                  $multiply: ["$markupClient.markup", Number(noOfTravellers)],
                 },
               ],
             },
@@ -181,7 +181,7 @@ module.exports = {
 
       let profit =
         (visaTypeList[0].totalPrice - visaTypeList[0].purchaseCost) *
-        noOfTravellers;
+        Number(noOfTravellers);
 
       console.log(visaTypeList[0], "visaTypeList[0]");
 
@@ -586,5 +586,38 @@ module.exports = {
 
     }
   },
+
+  visaApplicationInvoice :async(req,res)=>{
+
+    try{
+
+      const { orderId } = req.params;
+
+      if (!isValidObjectId(orderId)) {
+        return sendErrorResponse(res, 400, "invalid order id");
+      }
+
+      const visaApplication = await B2CVisaApplication.findOne({
+        _id: orderId,
+      }).populate({
+        path: "visaType",
+        populate: { path: "visa", populate: { path: "country" } },
+      });
+
+      if (!visaApplication) {
+        return sendErrorResponse(res, 404, "visa application  not found");
+      }
+
+
+      res.status(200).json(visaApplication)
+
+
+
+    }catch(err){
+
+      sendErrorResponse(res, 500, err);
+
+    }
+  }
 
 };

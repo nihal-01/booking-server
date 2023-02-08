@@ -33,7 +33,7 @@ const sendOrderEmail = async (attractionOrder) => {
                     </tr>
                           <tr style="background-color: ${index % 2 === 0 ? "#eee" : ""};">
                       <td style="padding: 10px; border: 1px solid #ddd;">Total Amount:</td>
-                      <td style="padding: 10px; border: 1px solid #ddd;">${activity.activity.amount}</td>
+                      <td style="padding: 10px; border: 1px solid #ddd;">${activity.activity.amount} AED</td>
                     </tr>
                    
                   `;

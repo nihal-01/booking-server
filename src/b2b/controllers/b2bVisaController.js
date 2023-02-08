@@ -266,7 +266,7 @@ module.exports = {
 
       const otp = await sendMobileOtp(countryDetail.phonecode, contactNo);
 
-      await sendVisaOrderOtp(email, "Visa Application Order", otp);
+      await sendVisaOrderOtp(req.reseller.email, "Visa Application Order Otp", otp);
 
       const newVisaApplication = new VisaApplication({
         visaType,
@@ -517,7 +517,7 @@ module.exports = {
       visaApplication.isDocumentUplaoded = true;
       visaApplication.status = "submitted";
 
-      await sendApplicationEmail( visaApplication);
+      await sendApplicationEmail( req.reseller.email ,visaApplication);
       await sendAdminVisaApplicationEmail( visaApplication);
 
 
@@ -680,4 +680,38 @@ module.exports = {
       l;
     } catch (err) {}
   },
+
+  visaApplicationInvoice : async(req,res)=>{
+
+    try{
+
+      const { orderId } = req.params;
+
+      if (!isValidObjectId(orderId)) {
+        return sendErrorResponse(res, 400, "invalid order id");
+      }
+
+      const visaApplication = await VisaApplication.findOne({
+        _id: orderId,
+        reseller: req.reseller._id,
+      }).populate({
+        path: "visaType",
+        populate: { path: "visa", populate: { path: "country" } },
+      });
+
+      if (!visaApplication) {
+        return sendErrorResponse(res, 404, "visa application  not found");
+      }
+
+      res.status(200).json(visaApplication)
+
+    }catch(err){
+
+      sendErrorResponse(res, 500, err);
+
+
+    }
+  }
+
+  
 };

@@ -27,6 +27,7 @@ const {
 } = require("../helpers/b2bOrdersHelper");
 const sendAttractionOrderEmail = require("../helpers/sendAttractionOrderEmail");
 const sendAttractionOrderAdminEmail = require("../helpers/sendAttractionOrderAdminEmail");
+const sendAttractionOrderOtp = require("../helpers/sendAttractionOrderOtp");
 
 const dayNames = [
     "sunday",
@@ -386,6 +387,8 @@ module.exports = {
                 phoneNumber
             );
 
+            sendAttractionOrderOtp(req.reseller.email, "Attraction Order Otp Verifiaction", otp)
+
             const attractionOrder = new B2BAttractionOrder({
                 activities: selectedActivities,
                 totalAmount,
@@ -669,9 +672,9 @@ module.exports = {
                     );
                 }
             }
-
-            console.log(attractionOrder, "attractionOrder");
-            sendAttractionOrderEmail(attractionOrder);
+            
+            console.log(attractionOrder , "attractionOrder")
+            sendAttractionOrderEmail(req.reseller.email ,attractionOrder);
             sendAttractionOrderAdminEmail(attractionOrder);
 
             res.status(200).json({
