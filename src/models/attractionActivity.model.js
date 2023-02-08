@@ -7,9 +7,22 @@ const attractionActivitySchema = new Schema(
             ref: "Attraction",
             required: true,
         },
+        // availableFor: {
+        //     type: [{
+        //         type: String,
+        //         required: true,
+        //         lowercase: true,
+        //         enum: ["adult", "child", "infant"],
+        //     }],
+        // },
         name: {
             type: String,
             required: true,
+        },
+        activityType: {
+            type: String,
+            required: true,
+            enum: ["normal", "transfer"],
         },
         facilities: {
             type: String,
@@ -21,7 +34,9 @@ const attractionActivitySchema = new Schema(
         },
         adultPrice: {
             type: Number,
-            required: true,
+            required: function () {
+                return this.activityType === "normal";
+            },
         },
         childAgeLimit: {
             type: Number,
@@ -29,22 +44,29 @@ const attractionActivitySchema = new Schema(
         },
         childPrice: {
             type: Number,
-            required: true,
+            required: function () {
+                return this.activityType === "normal";
+            },
         },
         infantAgeLimit: {
             type: Number,
+            required: true,
         },
         infantPrice: {
             type: Number,
+            default: 0,
         },
         adultCost: {
             type: Number,
+            default: 0,
         },
         childCost: {
             type: Number,
+            default: 0,
         },
         infantCost: {
             type: Number,
+            default: 0,
         },
         isVat: {
             type: Boolean,
@@ -62,15 +84,34 @@ const attractionActivitySchema = new Schema(
             lowercase: true,
             enum: ["person", "private", "hourly"],
         },
-        isTransferAvailable: {
+        isSharedTransferAvailable: {
             type: Boolean,
             required: true,
         },
-        privateTransferPrice: {
-            type: Number,
-        },
         sharedTransferPrice: {
             type: Number,
+            required: function () {
+                return this.isSharedTransferAvailable === true;
+            },
+        },
+        sharedTransferCost: {
+            type: Number,
+            required: function () {
+                return this.isSharedTransferAvailable === true;
+            },
+        },
+        isPrivateTransferAvailable: {
+            type: Boolean,
+            required: true,
+        },
+        privateTransfers: {
+            type: [
+                {
+                    maxCapacity: { type: Number, required: true },
+                    price: { type: Number, required: true },
+                    cost: { type: Number, required: true },
+                },
+            ],
         },
         isActive: {
             type: Boolean,

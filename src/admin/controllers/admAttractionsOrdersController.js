@@ -637,27 +637,34 @@ module.exports = {
 
             if (orderedBy === "b2c") {
                 orderAttraction = await AttractionOrder.findOne(
-                    { _id: orderId,  "activities._id": bookingId }, 
-                    { "activities.$": 1, referenceNumber: 1 , reseller : 1 ,email : 1 , name : 1 }
-                ).populate("activities.attraction")
+                    { _id: orderId, "activities._id": bookingId },
+                    {
+                        "activities.$": 1,
+                        referenceNumber: 1,
+                        reseller: 1,
+                        email: 1,
+                        name: 1,
+                    }
+                ).populate("activities.attraction");
 
-
-
-               await sendOrderConfirmationEmail(orderAttraction.email , orderAttraction.name , orderAttraction )
-
+                await sendOrderConfirmationEmail(
+                    orderAttraction.email,
+                    orderAttraction.name,
+                    orderAttraction
+                );
             } else {
+                let orderAttraction = await B2BAttractionOrder.findOne(
+                    { _id: orderId, "activities._id": bookingId },
+                    { "activities.$": 1, referenceNumber: 1, reseller: 1 }
+                ).populate("reseller activities.attraction");
 
-               let orderAttraction = await B2BAttractionOrder.findOne(
-                    { _id: orderId,  "activities._id": bookingId }, 
-                    { "activities.$": 1, referenceNumber: 1 , reseller : 1 }
-                ).populate("reseller activities.attraction")
+                console.log(orderAttraction, "orderAttraction");
 
-                console.log(orderAttraction , "orderAttraction")
-
-                
-            
-               await sendOrderConfirmationEmail(orderAttraction.reseller.email ,orderAttraction.reseller.name ,orderAttraction)
-
+                await sendOrderConfirmationEmail(
+                    orderAttraction.reseller.email,
+                    orderAttraction.reseller.name,
+                    orderAttraction
+                );
             }
             res.status(200).json({
                 message: "Booking confirmed successfully",
@@ -734,8 +741,6 @@ module.exports = {
                     },
                     { runValidators: true }
                 );
-
-                
             } else {
                 await B2BAttractionOrder.findOneAndUpdate(
                     {
@@ -749,12 +754,12 @@ module.exports = {
                 );
 
                 let wallet = await B2BWallet.findOne({
-                    reseller: req.reseller?._id,
+                    reseller: orderDetails.reseller,
                 });
                 if (!wallet) {
                     wallet = new B2BWallet({
                         balance: 0,
-                        reseller: req.reseller?._id,
+                        reseller: orderDetails.reseller,
                     });
                     await wallet.save();
                 }
@@ -774,9 +779,6 @@ module.exports = {
                 newTransaction.status = "success";
                 await newTransaction.save();
             }
-            
-
-           
 
             // send email
 

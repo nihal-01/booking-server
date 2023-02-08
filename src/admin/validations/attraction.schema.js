@@ -91,6 +91,11 @@ const attractionSchema = Joi.object({
             then: Joi.number().required(),
         }),
     isCombo: Joi.boolean().required(),
+    bookingPriorDays: Joi.when("bookingType", {
+        is: Joi.string().valid("booking"),
+        then: Joi.number().required(),
+        otherwise: Joi.allow("", null),
+    }),
 });
 
 const attractionActivitySchema = Joi.object({

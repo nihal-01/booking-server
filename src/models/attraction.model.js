@@ -25,7 +25,7 @@ const attractionSchema = new Schema(
         bookingPriorDays: {
             type: Number,
             required: function () {
-                return this.bookingType === "bookingType";
+                return this.bookingType === "booking";
             },
         },
         isCustomDate: {

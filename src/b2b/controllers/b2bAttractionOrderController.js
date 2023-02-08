@@ -1,4 +1,4 @@
-const { isValidObjectId } = require("mongoose");
+const { isValidObjectId, Types } = require("mongoose");
 
 const {
     b2bAttractionOrderSchema,
@@ -387,7 +387,11 @@ module.exports = {
                 phoneNumber
             );
 
-            sendAttractionOrderOtp(req.reseller.email, "Attraction Order Otp Verifiaction", otp)
+            sendAttractionOrderOtp(
+                req.reseller.email,
+                "Attraction Order Otp Verifiaction",
+                otp
+            );
 
             const attractionOrder = new B2BAttractionOrder({
                 activities: selectedActivities,
@@ -424,16 +428,14 @@ module.exports = {
                 _id: orderId,
                 reseller: req.reseller._id,
             }).populate({
-                path: 'activities.activity',
+                path: "activities.activity",
                 populate: {
-                  path: 'attraction',
-                  populate : {
-                    path : 'destination'
-                  }
-    
-                }
-              })
-
+                    path: "attraction",
+                    populate: {
+                        path: "destination",
+                    },
+                },
+            });
 
             if (!attractionOrder) {
                 return sendErrorResponse(
@@ -674,14 +676,15 @@ module.exports = {
                     );
                 }
             }
-            
-            console.log(attractionOrder , "attractionOrder")
-            sendAttractionOrderEmail(req.reseller.email ,attractionOrder);
+
+            console.log(attractionOrder, "attractionOrder");
+            sendAttractionOrderEmail(req.reseller.email, attractionOrder);
             sendAttractionOrderAdminEmail(attractionOrder);
 
             res.status(200).json({
                 message: "order successfully placed",
                 referenceNumber: attractionOrder.referenceNumber,
+                _id: attractionOrder?._id,
             });
         } catch (err) {
             sendErrorResponse(res, 400, err);
@@ -878,6 +881,118 @@ module.exports = {
             res.status(200).json({
                 message: "you have successfully cancelled the order",
             });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSingleAttractionOrder: async (req, res) => {
+        try {
+            const { orderId } = req.params;
+
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "invalid order id");
+            }
+
+            const order = await B2BAttractionOrder.aggregate([
+                {
+                    $match: {
+                        _id: Types.ObjectId(orderId),
+                        reseller: req.reseller?._id,
+                        orderStatus: "paid",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "countries",
+                        localField: "country",
+                        foreignField: "_id",
+                        as: "country",
+                    },
+                },
+                { $unwind: "$activities" },
+                {
+                    $lookup: {
+                        from: "attractionactivities",
+                        localField: "activities.activity",
+                        foreignField: "_id",
+                        as: "activities.activity",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "attractions",
+                        localField: "activities.attraction",
+                        foreignField: "_id",
+                        as: "activities.attraction",
+                    },
+                },
+                {
+                    $set: {
+                        "activities.activity": {
+                            $arrayElemAt: ["$activities.activity", 0],
+                        },
+                        "activities.attraction": {
+                            $arrayElemAt: ["$activities.attraction", 0],
+                        },
+                        country: {
+                            $arrayElemAt: ["$country", 0],
+                        },
+                    },
+                },
+                {
+                    $project: {
+                        referenceNumber: 1,
+                        name: 1,
+                        email: 1,
+                        phoneNumber: 1,
+                        orderStatus: 1,
+                        totalAmount: 1,
+                        totalOffer: 1,
+                        country: 1,
+                        activities: {
+                            adultTickets: 1,
+                            childrenTickets: 1,
+                            infantTickets: 1,
+                            status: 1,
+                            amount: 1,
+                            offerAmount: 1,
+                            transferType: 1,
+                            adultsCount: 1,
+                            childrenCount: 1,
+                            infantCount: 1,
+                            date: 1,
+                            bookingType: 1,
+                            activity: {
+                                name: 1,
+                            },
+                            attraction: {
+                                title: 1,
+                            },
+                        },
+                    },
+                },
+                {
+                    $group: {
+                        _id: null,
+                        activites: { $push: "$activities" },
+                        totalAmount: { $first: "$totalAmount" },
+                        referenceNumber: { $first: "$referenceNumber" },
+                        name: { $first: "$name" },
+                        email: { $first: "$email" },
+                        phoneNumber: { $first: "$phoneNumber" },
+                        orderStatus: { $first: "$orderStatus" },
+                        totalOffer: { $first: "$totalOffer" },
+                        country: { $first: "$country" },
+                    },
+                },
+            ]);
+
+            if (!order || order?.length < 1) {
+                return sendErrorResponse(res, 404, "order not found");
+            }
+
+            res.status(200).json(order[0]);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
