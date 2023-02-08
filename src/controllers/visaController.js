@@ -79,8 +79,8 @@ module.exports = {
         return sendErrorResponse(res, 404, "country not found");
       }
 
-      noOfTravellers = Number(noOfTravellers);
-      if (noOfTravellers !== travellers.length) {
+      // noOfTravellers = Number(noOfTravellers);
+      if (Number(noOfTravellers) !== travellers.length) {
         return sendErrorResponse(res, 400, "PassengerDetails Not Added ");
       }
 
@@ -156,7 +156,7 @@ module.exports = {
         {
           $addFields: {
             totalAmount: {
-              $multiply: ["$totalPrice", noOfTravellers],
+              $multiply: ["$totalPrice", Number(noOfTravellers)],
             },
           },
         },
@@ -177,11 +177,11 @@ module.exports = {
                         100,
                       ],
                     },
-                    noOfTravellers,
+                    Number(noOfTravellers),
                   ],
                 },
                 {
-                  $multiply: ["$markupClient.markup", noOfTravellers],
+                  $multiply: ["$markupClient.markup", Number(noOfTravellers)],
                 },
               ],
             },
@@ -191,7 +191,7 @@ module.exports = {
 
       let profit =
         (visaTypeList[0].totalPrice - visaTypeList[0].purchaseCost) *
-        noOfTravellers;
+        Number(noOfTravellers);
 
       console.log(visaTypeList[0], "visaTypeList[0]");
 

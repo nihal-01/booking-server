@@ -38,7 +38,7 @@ module.exports = {
       const isAuthentic = expectedSignature === razorpay_signature;
       if (isAuthentic) return res.status(200).send({ isValid: true });
 
-      return res.status(200).send({ isValid: false });
+      return res.status(400).send({ isValid: false });
     } catch (error) {
       sendErrorResponse(res, 500, error.message);
     }
