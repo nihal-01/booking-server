@@ -2,752 +2,757 @@ const { isValidObjectId, Types } = require("mongoose");
 
 const { sendErrorResponse } = require("../../helpers");
 const {
-    Attraction,
-    AttractionCategory,
-    AttractionActivity,
-    Destination,
-    AttractionOrder,
-    AttractionReview,
+  Attraction,
+  AttractionCategory,
+  AttractionActivity,
+  Destination,
+  AttractionOrder,
+  AttractionReview,
 } = require("../../models");
 const {
-    attractionSchema,
-    attractionActivitySchema,
+  attractionSchema,
+  attractionActivitySchema,
 } = require("../validations/attraction.schema");
 const { getDates } = require("../../utils");
 
 const weekday = [
-    "sunday",
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
 ];
 
 module.exports = {
-    createNewAttraction: async (req, res) => {
-        try {
-            const {
-                title,
-                category,
-                isActive,
-                mapLink,
-                isOffer,
-                offerAmountType,
-                offerAmount,
-                youtubeLink,
-                sections,
-                isCustomDate,
-                startDate,
-                endDate,
-                duration,
-                durationType,
-                availability,
-                offDates,
-                bookingType,
-                destination,
-                highlights,
-                faqs,
-                cancellationType,
-                cancelBeforeTime,
-                cancellationFee,
-                isApiConnected,
-                isCombo,
-            } = req.body;
+  createNewAttraction: async (req, res) => {
+    try {
+      const {
+        title,
+        category,
+        isActive,
+        mapLink,
+        isOffer,
+        offerAmountType,
+        offerAmount,
+        youtubeLink,
+        sections,
+        isCustomDate,
+        startDate,
+        endDate,
+        duration,
+        durationType,
+        availability,
+        offDates,
+        bookingType,
+        destination,
+        highlights,
+        faqs,
+        cancellationType,
+        cancelBeforeTime,
+        cancellationFee,
+        isApiConnected,
+        isCombo,
+      } = req.body;
 
-            const { _, error } = attractionSchema.validate({
-                ...req.body,
-                sections: sections ? JSON.parse(sections) : [],
-                faqs: faqs ? JSON.parse(faqs) : [],
-                offDates: offDates ? JSON.parse(offDates) : [],
-                availability: availability ? JSON.parse(availability) : [],
-            });
-            if (error) {
-                return sendErrorResponse(res, 400, error.details[0].message);
-            }
+      const { _, error } = attractionSchema.validate({
+        ...req.body,
+        sections: sections ? JSON.parse(sections) : [],
+        faqs: faqs ? JSON.parse(faqs) : [],
+        offDates: offDates ? JSON.parse(offDates) : [],
+        availability: availability ? JSON.parse(availability) : [],
+      });
+      if (error) {
+        return sendErrorResponse(res, 400, error.details[0].message);
+      }
 
-            if (!isValidObjectId(category)) {
-                return sendErrorResponse(res, 400, "Invalid category Id");
-            }
+      if (!isValidObjectId(category)) {
+        return sendErrorResponse(res, 400, "Invalid category Id");
+      }
 
-            const attractionCategory = await AttractionCategory.findById(
-                category
-            );
-            if (!attractionCategory) {
-                return sendErrorResponse(res, 404, "Category not found!");
-            }
+      const attractionCategory = await AttractionCategory.findById(category);
+      if (!attractionCategory) {
+        return sendErrorResponse(res, 404, "Category not found!");
+      }
 
-            if (!isValidObjectId(destination)) {
-                return sendErrorResponse(res, 400, "Invalid destination id");
-            }
+      if (!isValidObjectId(destination)) {
+        return sendErrorResponse(res, 400, "Invalid destination id");
+      }
 
-            const destinationDetails = await Destination.findOne({
-                _id: destination,
-                isDeleted: false,
-            });
-            if (!destinationDetails) {
-                return sendErrorResponse(res, 404, "Destination not found");
-            }
+      const destinationDetails = await Destination.findOne({
+        _id: destination,
+        isDeleted: false,
+      });
+      if (!destinationDetails) {
+        return sendErrorResponse(res, 404, "Destination not found");
+      }
 
-            let images = [];
-            for (let i = 0; i < req.files?.length; i++) {
-                const img = "/" + req.files[i]?.path?.replace(/\\/g, "/");
-                images.push(img);
-            }
+      let images = [];
+      for (let i = 0; i < req.files?.length; i++) {
+        const img = "/" + req.files[i]?.path?.replace(/\\/g, "/");
+        images.push(img);
+      }
 
-            let parsedSections;
-            if (sections) {
-                parsedSections = JSON.parse(sections);
-            }
+      let parsedSections;
+      if (sections) {
+        parsedSections = JSON.parse(sections);
+      }
 
-            let parsedFaqs;
-            if (faqs) {
-                parsedFaqs = JSON.parse(faqs);
-            }
+      let parsedFaqs;
+      if (faqs) {
+        parsedFaqs = JSON.parse(faqs);
+      }
 
-            let parsedOffDates;
-            if (offDates) {
-                parsedOffDates = JSON.parse(offDates);
-            }
+      let parsedOffDates;
+      if (offDates) {
+        parsedOffDates = JSON.parse(offDates);
+      }
 
-            let parsedAvailability;
-            if (availability) {
-                parsedAvailability = JSON.parse(availability);
-            }
+      let parsedAvailability;
+      if (availability) {
+        parsedAvailability = JSON.parse(availability);
+      }
 
-            const newAttraction = new Attraction({
-                title,
-                bookingType,
-                category,
-                mapLink,
-                isActive,
-                isOffer,
-                offerAmountType,
-                offerAmount,
-                youtubeLink,
-                images,
-                sections: parsedSections,
-                startDate,
-                isCustomDate,
-                endDate,
-                offDates: parsedOffDates,
-                availability: parsedAvailability,
-                duration,
-                durationType,
-                destination,
-                highlights,
-                faqs: parsedFaqs,
-                cancellationType,
-                cancelBeforeTime,
-                cancellationFee,
-                isApiConnected,
-                isCombo,
-            });
-            await newAttraction.save();
+      const newAttraction = new Attraction({
+        title,
+        bookingType,
+        category,
+        mapLink,
+        isActive,
+        isOffer,
+        offerAmountType,
+        offerAmount,
+        youtubeLink,
+        images,
+        sections: parsedSections,
+        startDate,
+        isCustomDate,
+        endDate,
+        offDates: parsedOffDates,
+        availability: parsedAvailability,
+        duration,
+        durationType,
+        destination,
+        highlights,
+        faqs: parsedFaqs,
+        cancellationType,
+        cancelBeforeTime,
+        cancellationFee,
+        isApiConnected,
+        isCombo,
+      });
+      await newAttraction.save();
 
-            res.status(200).json(newAttraction);
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+      res.status(200).json(newAttraction);
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
 
-    updateAttraction: async (req, res) => {
-        try {
-            const { id } = req.params;
-            const {
-                title,
-                category,
-                isActive,
-                mapLink,
-                isOffer,
-                offerAmountType,
-                offerAmount,
-                youtubeLink,
-                sections,
-                isCustomDate,
-                startDate,
-                endDate,
-                duration,
-                durationType,
-                availability,
-                offDates,
-                bookingType,
-                destination,
-                highlights,
-                faqs,
-                cancellationType,
-                cancelBeforeTime,
-                cancellationFee,
-                isApiConnected,
-                isCombo,
-                oldImages,
-            } = req.body;
+  updateAttraction: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const {
+        title,
+        category,
+        isActive,
+        mapLink,
+        isOffer,
+        offerAmountType,
+        offerAmount,
+        youtubeLink,
+        sections,
+        isCustomDate,
+        startDate,
+        endDate,
+        duration,
+        durationType,
+        availability,
+        offDates,
+        bookingType,
+        destination,
+        highlights,
+        faqs,
+        cancellationType,
+        cancelBeforeTime,
+        cancellationFee,
+        isApiConnected,
+        isCombo,
+        oldImages,
+      } = req.body;
 
-            const { _, error } = attractionSchema.validate({
-                ...req.body,
-                sections: sections ? JSON.parse(sections) : [],
-                faqs: faqs ? JSON.parse(faqs) : [],
-                offDates: offDates ? JSON.parse(offDates) : [],
-                availability: availability ? JSON.parse(availability) : [],
-                oldImages: oldImages ? JSON.parse(oldImages) : [],
-            });
-            if (error) {
-                return sendErrorResponse(res, 400, error.details[0].message);
-            }
+      const { _, error } = attractionSchema.validate({
+        ...req.body,
+        sections: sections ? JSON.parse(sections) : [],
+        faqs: faqs ? JSON.parse(faqs) : [],
+        offDates: offDates ? JSON.parse(offDates) : [],
+        availability: availability ? JSON.parse(availability) : [],
+        oldImages: oldImages ? JSON.parse(oldImages) : [],
+      });
+      if (error) {
+        return sendErrorResponse(res, 400, error.details[0].message);
+      }
 
-            if (!isValidObjectId(id)) {
-                return sendErrorResponse(res, 400, "Invalid attraction id");
-            }
+      if (!isValidObjectId(id)) {
+        return sendErrorResponse(res, 400, "Invalid attraction id");
+      }
 
-            if (category && !isValidObjectId(category)) {
-                return sendErrorResponse(res, 400, "Invalid category Id");
-            }
+      if (category && !isValidObjectId(category)) {
+        return sendErrorResponse(res, 400, "Invalid category Id");
+      }
 
-            const attractionCategory = await AttractionCategory.findById(
-                category
-            );
-            if (!attractionCategory) {
-                return sendErrorResponse(res, 404, "Category not found!");
-            }
+      const attractionCategory = await AttractionCategory.findById(category);
+      if (!attractionCategory) {
+        return sendErrorResponse(res, 404, "Category not found!");
+      }
 
-            let parsedOldImages = [];
-            if (oldImages) {
-                parsedOldImages = JSON.parse(oldImages);
-            }
+      let parsedOldImages = [];
+      if (oldImages) {
+        parsedOldImages = JSON.parse(oldImages);
+      }
 
-            let newImages = [...parsedOldImages];
-            for (let i = 0; i < req.files?.length; i++) {
-                const img = "/" + req.files[i]?.path?.replace(/\\/g, "/");
-                newImages.push(img);
-            }
+      let newImages = [...parsedOldImages];
+      for (let i = 0; i < req.files?.length; i++) {
+        const img = "/" + req.files[i]?.path?.replace(/\\/g, "/");
+        newImages.push(img);
+      }
 
-            let parsedSections;
-            if (sections) {
-                parsedSections = JSON.parse(sections);
-            }
+      let parsedSections;
+      if (sections) {
+        parsedSections = JSON.parse(sections);
+      }
 
-            let parsedFaqs;
-            if (faqs) {
-                parsedFaqs = JSON.parse(faqs);
-            }
+      let parsedFaqs;
+      if (faqs) {
+        parsedFaqs = JSON.parse(faqs);
+      }
 
-            let parsedOffDates;
-            if (offDates) {
-                parsedOffDates = JSON.parse(offDates);
-            }
+      let parsedOffDates;
+      if (offDates) {
+        parsedOffDates = JSON.parse(offDates);
+      }
 
-            let parsedAvailability;
-            if (availability) {
-                parsedAvailability = JSON.parse(availability);
-            }
+      let parsedAvailability;
+      if (availability) {
+        parsedAvailability = JSON.parse(availability);
+      }
 
-            const attraction = await Attraction.findOneAndUpdate(
-                { _id: id, isDeleted: false },
-                {
-                    title,
-                    bookingType,
-                    category,
-                    mapLink,
-                    isActive,
-                    isOffer,
-                    offerAmountType,
-                    offerAmount,
-                    youtubeLink,
-                    images: newImages,
-                    sections: parsedSections,
-                    startDate,
-                    isCustomDate,
-                    endDate,
-                    offDates: parsedOffDates,
-                    availability: parsedAvailability,
-                    duration,
-                    durationType,
-                    destination,
-                    highlights,
-                    faqs: parsedFaqs,
-                    cancellationType,
-                    cancelBeforeTime,
-                    cancellationFee,
-                    isApiConnected,
-                    isCombo,
+      const attraction = await Attraction.findOneAndUpdate(
+        { _id: id, isDeleted: false },
+        {
+          title,
+          bookingType,
+          category,
+          mapLink,
+          isActive,
+          isOffer,
+          offerAmountType,
+          offerAmount,
+          youtubeLink,
+          images: newImages,
+          sections: parsedSections,
+          startDate,
+          isCustomDate,
+          endDate,
+          offDates: parsedOffDates,
+          availability: parsedAvailability,
+          duration,
+          durationType,
+          destination,
+          highlights,
+          faqs: parsedFaqs,
+          cancellationType,
+          cancelBeforeTime,
+          cancellationFee,
+          isApiConnected,
+          isCombo,
+        },
+        { runValidators: true, new: true }
+      );
+
+      if (!attraction) {
+        return sendErrorResponse(res, 404, "Attraction not found");
+      }
+
+      res.status(200).json(attraction);
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
+
+  addAttractionActivity: async (req, res) => {
+    try {
+      const {
+        attraction,
+        name,
+        facilities,
+        adultAgeLimit,
+        adultPrice,
+        childAgeLimit,
+        childPrice,
+        infantAgeLimit,
+        infantPrice,
+        isCancelable,
+        isVat,
+        vat,
+        base,
+        isTransferAvailable,
+        privateTransferPrice,
+        sharedTransferPrice,
+        sharedTransferCost,
+        isPrivateTransferAvailable,
+        privateTransfers,
+        isActive,
+        peakTime,
+        note,
+        childCost,
+        adultCost,
+        infantCost,
+      } = req.body;
+
+      const { _, error } = attractionActivitySchema.validate(req.body);
+      if (error) {
+        return sendErrorResponse(res, 400, error.details[0].message);
+      }
+
+      if (!isValidObjectId(attraction)) {
+        return sendErrorResponse(res, 400, "Invalid attraction id!");
+      }
+
+      const attr = await Attraction.findById(attraction);
+      if (!attr) {
+        return sendErrorResponse(res, 404, "Attraction not found");
+      }
+
+      let isCostNee = true;
+      if (attr.bookingType === "booking" && activityType === "normal") {
+        noCostNeeded = false;
+      } else {
+      }
+
+      const newTicket = new AttractionActivity({
+        attraction,
+        name,
+        activityType,
+        facilities,
+        adultAgeLimit,
+        adultPrice,
+        childAgeLimit,
+        childPrice,
+        infantAgeLimit,
+        infantPrice,
+        isCancelable,
+        isVat,
+        vat: isVat && vat,
+        base,
+        isSharedTransferAvailable,
+        sharedTransferPrice: isSharedTransferAvailable && sharedTransferPrice,
+        sharedTransferCost: isSharedTransferAvailable && sharedTransferCost,
+        isPrivateTransferAvailable,
+        privateTransfers,
+        isActive,
+        peakTime,
+        note,
+        childCost,
+        adultCost,
+        infantCost,
+      });
+      await newTicket.save();
+
+      res.status(200).json(newTicket);
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
+
+  getAllAttractions: async (req, res) => {
+    try {
+      const { skip = 0, limit = 10, search } = req.query;
+
+      const filters = { isDeleted: false };
+
+      if (search && search !== "") {
+        filters.title = { $regex: search, $options: "i" };
+      }
+
+      const attractions = await Attraction.aggregate([
+        { $match: filters },
+        {
+          $lookup: {
+            from: "destinations",
+            localField: "destination",
+            foreignField: "_id",
+            as: "destination",
+          },
+        },
+        {
+          $lookup: {
+            from: "attractionreviews",
+            localField: "_id",
+            foreignField: "attraction",
+            as: "reviews",
+          },
+        },
+        {
+          $lookup: {
+            from: "b2cattractionmarkups",
+            localField: "_id",
+            foreignField: "attraction",
+            as: "markup",
+          },
+        },
+        {
+          $set: {
+            totalRating: {
+              $sum: {
+                $map: {
+                  input: "$reviews",
+                  in: "$$this.rating",
                 },
-                { runValidators: true, new: true }
-            );
+              },
+            },
+            totalReviews: {
+              $size: "$reviews",
+            },
+            destination: { $arrayElemAt: ["$destination", 0] },
+            markup: { $arrayElemAt: ["$markup", 0] },
+          },
+        },
+        {
+          $project: {
+            title: 1,
+            bookingType: 1,
+            isOffer: 1,
+            offerAmountType: 1,
+            offerAmount: 1,
+            destination: 1,
+            totalReviews: 1,
+            averageRating: {
+              $cond: [
+                { $eq: ["$totalReviews", 0] },
+                0,
+                { $divide: ["$totalRating", "$totalReviews"] },
+              ],
+            },
+            createdAt: 1,
+            markup: 1,
+          },
+        },
+        {
+          $sort: { createdAt: -1 },
+        },
+        {
+          $skip: Number(limit) * Number(skip),
+        },
+        {
+          $limit: Number(limit),
+        },
+      ]);
 
-            if (!attraction) {
-                return sendErrorResponse(res, 404, "Attraction not found");
-            }
+      const totalAttractions = await Attraction.find(filters).count();
 
-            res.status(200).json(attraction);
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+      res.status(200).json({
+        attractions,
+        totalAttractions,
+        skip: Number(skip),
+        limit: Number(limit),
+      });
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
 
-    addAttractionActivity: async (req, res) => {
-        try {
-            const {
-                attraction,
-                name,
-                facilities,
-                adultAgeLimit,
-                adultPrice,
-                childAgeLimit,
-                childPrice,
-                infantAgeLimit,
-                infantPrice,
-                isCancelable,
-                isVat,
-                vat,
-                base,
-                isTransferAvailable,
-                privateTransferPrice,
-                sharedTransferPrice,
-                isActive,
-                peakTime,
-                note,
-                childCost,
-                adultCost,
-                infantCost,
-            } = req.body;
+  getInitialData: async (req, res) => {
+    try {
+      const categories = await AttractionCategory.find({});
 
-            const { _, error } = attractionActivitySchema.validate(req.body);
-            if (error) {
-                return sendErrorResponse(res, 400, error.details[0].message);
-            }
+      res.status(200).json({ categories });
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
 
-            if (!isValidObjectId(attraction)) {
-                return sendErrorResponse(res, 400, "Invalid attraction id!");
-            }
+  getSingleAttraction: async (req, res) => {
+    try {
+      const { id } = req.params;
 
-            const attr = await Attraction.findById(attraction);
-            if (!attr) {
-                return sendErrorResponse(res, 404, "Attraction not found");
-            }
+      if (!isValidObjectId(id)) {
+        return sendErrorResponse(res, 400, "Invalid attraction id");
+      }
 
-            const newTicket = new AttractionActivity({
-                attraction,
-                name,
-                facilities,
-                adultAgeLimit,
-                adultPrice,
-                childAgeLimit,
-                childPrice,
-                infantAgeLimit,
-                infantPrice,
-                isCancelable,
-                isVat,
-                vat: isVat && vat,
-                base,
-                isTransferAvailable,
-                privateTransferPrice:
-                    isTransferAvailable && privateTransferPrice,
-                sharedTransferPrice: isTransferAvailable && sharedTransferPrice,
-                isActive,
-                peakTime,
-                note,
-                childCost,
-                adultCost,
-                infantCost,
-            });
-            await newTicket.save();
+      const attraction = await Attraction.aggregate([
+        { $match: { _id: Types.ObjectId(id), isDeleted: false } },
+        {
+          $lookup: {
+            from: "attractionactivities",
+            foreignField: "attraction",
+            localField: "_id",
+            as: "activities",
+          },
+        },
+        {
+          $addFields: {
+            activities: {
+              $filter: {
+                input: "$activities",
+                as: "item",
+                cond: { $eq: ["$$item.isDeleted", false] },
+              },
+            },
+          },
+        },
+      ]);
 
-            res.status(200).json(newTicket);
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+      if (!attraction || attraction?.length < 1) {
+        return sendErrorResponse(res, 404, "Attraction not found");
+      }
 
-    getAllAttractions: async (req, res) => {
-        try {
-            const { skip = 0, limit = 10, search } = req.query;
+      res.status(200).json(attraction[0]);
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
 
-            const filters = { isDeleted: false };
+  deleteAttraction: async (req, res) => {
+    try {
+      const { id } = req.params;
 
-            if (search && search !== "") {
-                filters.title = { $regex: search, $options: "i" };
-            }
+      if (!isValidObjectId(id)) {
+        return sendErrorResponse(res, 400, "Invalid attraction id");
+      }
 
-            const attractions = await Attraction.aggregate([
-                { $match: filters },
-                {
-                    $lookup: {
-                        from: "destinations",
-                        localField: "destination",
-                        foreignField: "_id",
-                        as: "destination",
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "attractionreviews",
-                        localField: "_id",
-                        foreignField: "attraction",
-                        as: "reviews",
-                    },
-                },
-                {
-                    $lookup: {
-                        from: "b2cattractionmarkups",
-                        localField: "_id",
-                        foreignField: "attraction",
-                        as: "markup",
-                    },
-                },
-                {
-                    $set: {
-                        totalRating: {
-                            $sum: {
-                                $map: {
-                                    input: "$reviews",
-                                    in: "$$this.rating",
-                                },
-                            },
-                        },
-                        totalReviews: {
-                            $size: "$reviews",
-                        },
-                        destination: { $arrayElemAt: ["$destination", 0] },
-                        markup: { $arrayElemAt: ["$markup", 0] },
-                    },
-                },
-                {
-                    $project: {
-                        title: 1,
-                        bookingType: 1,
-                        isOffer: 1,
-                        offerAmountType: 1,
-                        offerAmount: 1,
-                        destination: 1,
-                        totalReviews: 1,
-                        averageRating: {
-                            $cond: [
-                                { $eq: ["$totalReviews", 0] },
-                                0,
-                                { $divide: ["$totalRating", "$totalReviews"] },
-                            ],
-                        },
-                        createdAt: 1,
-                        markup: 1,
-                    },
-                },
-                {
-                    $sort: { createdAt: -1 },
-                },
-                {
-                    $skip: Number(limit) * Number(skip),
-                },
-                {
-                    $limit: Number(limit),
-                },
-            ]);
+      const attraction = await Attraction.findByIdAndUpdate(id, {
+        isDeleted: true,
+      });
+      if (!attraction) {
+        return sendErrorResponse(res, 400, "Attraction not found");
+      }
 
-            const totalAttractions = await Attraction.find(filters).count();
+      res.status(200).json({
+        message: "Attraction successfully deleted",
+        _id: id,
+      });
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
 
-            res.status(200).json({
-                attractions,
-                totalAttractions,
-                skip: Number(skip),
-                limit: Number(limit),
-            });
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+  getSingleAttractionReviews: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { skip = 0, limit = 10 } = req.query;
 
-    getInitialData: async (req, res) => {
-        try {
-            const categories = await AttractionCategory.find({});
+      if (!isValidObjectId(id)) {
+        return sendErrorResponse(res, 400, "Invalid attraction id");
+      }
 
-            res.status(200).json({ categories });
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+      const attraction = await Attraction.findById(id).select("title");
+      if (!attraction) {
+        return sendErrorResponse(res, 404, "Attraction not found");
+      }
 
-    getSingleAttraction: async (req, res) => {
-        try {
-            const { id } = req.params;
+      const attractionReviews = await AttractionReview.find({
+        attraction: id,
+      })
+        .populate("user", "name avatar email")
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .skip(limit * skip)
+        .lean();
 
-            if (!isValidObjectId(id)) {
-                return sendErrorResponse(res, 400, "Invalid attraction id");
-            }
+      const totalAttractionReviews = await AttractionReview.find({
+        attraction: id,
+      }).count();
 
-            const attraction = await Attraction.aggregate([
-                { $match: { _id: Types.ObjectId(id), isDeleted: false } },
-                {
-                    $lookup: {
-                        from: "attractionactivities",
-                        foreignField: "attraction",
-                        localField: "_id",
-                        as: "activities",
-                    },
-                },
-                {
-                    $addFields: {
-                        activities: {
-                            $filter: {
-                                input: "$activities",
-                                as: "item",
-                                cond: { $eq: ["$$item.isDeleted", false] },
-                            },
-                        },
-                    },
-                },
-            ]);
+      res.status(200).json({
+        attractionReviews,
+        attraction,
+        totalAttractionReviews,
+        skip: Number(skip),
+        limit: Number(limit),
+      });
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
 
-            if (!attraction || attraction?.length < 1) {
-                return sendErrorResponse(res, 404, "Attraction not found");
-            }
+  getSingleActivity: async (req, res) => {
+    try {
+      const { activityId } = req.params;
 
-            res.status(200).json(attraction[0]);
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+      if (!isValidObjectId(activityId)) {
+        return sendErrorResponse(res, 400, "Invalid activity id");
+      }
 
-    deleteAttraction: async (req, res) => {
-        try {
-            const { id } = req.params;
+      const activity = await AttractionActivity.findOne({
+        isDeleted: false,
+        _id: activityId,
+      }).populate("attraction", "title bookingType");
 
-            if (!isValidObjectId(id)) {
-                return sendErrorResponse(res, 400, "Invalid attraction id");
-            }
+      if (!activity) {
+        return sendErrorResponse(res, 404, "Activity not found");
+      }
 
-            const attraction = await Attraction.findByIdAndUpdate(id, {
-                isDeleted: true,
-            });
-            if (!attraction) {
-                return sendErrorResponse(res, 400, "Attraction not found");
-            }
+      res.status(200).json(activity);
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
 
-            res.status(200).json({
-                message: "Attraction successfully deleted",
-                _id: id,
-            });
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+  updateActivity: async (req, res) => {
+    try {
+      const { activityId } = req.params;
+      const {
+        attraction,
+        name,
+        facilities,
+        adultAgeLimit,
+        adultPrice,
+        childAgeLimit,
+        childPrice,
+        infantAgeLimit,
+        infantPrice,
+        isCancelable,
+        isVat,
+        vat,
+        base,
+        isTransferAvailable,
+        privateTransferPrice,
+        sharedTransferPrice,
+        isActive,
+        peakTime,
+        note,
+        childCost,
+        adultCost,
+        infantCost,
+      } = req.body;
 
-    getSingleAttractionReviews: async (req, res) => {
-        try {
-            const { id } = req.params;
-            const { skip = 0, limit = 10 } = req.query;
+      const { _, error } = attractionActivitySchema.validate(req.body);
+      if (error) {
+        return sendErrorResponse(res, 400, error.details[0].message);
+      }
 
-            if (!isValidObjectId(id)) {
-                return sendErrorResponse(res, 400, "Invalid attraction id");
-            }
+      if (!isValidObjectId(activityId)) {
+        return sendErrorResponse(res, 400, "Invalid activity id");
+      }
 
-            const attraction = await Attraction.findById(id).select("title");
-            if (!attraction) {
-                return sendErrorResponse(res, 404, "Attraction not found");
-            }
+      const activity = await AttractionActivity.findOneAndUpdate(
+        {
+          isDeleted: false,
+          _id: activityId,
+        },
+        {
+          attraction,
+          name,
+          facilities,
+          adultAgeLimit,
+          adultPrice,
+          childAgeLimit,
+          childPrice,
+          infantAgeLimit,
+          infantPrice,
+          isCancelable,
+          isVat,
+          vat: isVat && vat,
+          base,
+          isTransferAvailable,
+          privateTransferPrice: isTransferAvailable && privateTransferPrice,
+          sharedTransferPrice: isTransferAvailable && sharedTransferPrice,
+          isActive,
+          peakTime,
+          note,
+          childCost,
+          adultCost,
+          infantCost,
+        },
+        { runValidators: true }
+      );
 
-            const attractionReviews = await AttractionReview.find({
-                attraction: id,
-            })
-                .populate("user", "name avatar email")
-                .sort({ createdAt: -1 })
-                .limit(limit)
-                .skip(limit * skip)
-                .lean();
+      if (!activity) {
+        return sendErrorResponse(res, 404, "Activity not found");
+      }
 
-            const totalAttractionReviews = await AttractionReview.find({
-                attraction: id,
-            }).count();
+      res.status(200).json({
+        message: "Activity successfully updated",
+        _id: activityId,
+      });
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
 
-            res.status(200).json({
-                attractionReviews,
-                attraction,
-                totalAttractionReviews,
-                skip: Number(skip),
-                limit: Number(limit),
-            });
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+  deleteActivity: async (req, res) => {
+    try {
+      const { activityId } = req.params;
 
-    getSingleActivity: async (req, res) => {
-        try {
-            const { activityId } = req.params;
+      if (!isValidObjectId(activityId)) {
+        return sendErrorResponse(res, 400, "Invalid activity id");
+      }
 
-            if (!isValidObjectId(activityId)) {
-                return sendErrorResponse(res, 400, "Invalid activity id");
-            }
+      const activity = await AttractionActivity.findOneAndUpdate(
+        {
+          isDeleted: false,
+          _id: activityId,
+        },
+        { isDeleted: true }
+      );
 
-            const activity = await AttractionActivity.findOne({
-                isDeleted: false,
-                _id: activityId,
-            }).populate("attraction", "title bookingType");
+      if (!activity) {
+        return sendErrorResponse(res, 404, "Activity not found");
+      }
 
-            if (!activity) {
-                return sendErrorResponse(res, 404, "Activity not found");
-            }
+      res.status(200).json({
+        message: "Activity successfully deleted",
+        _id: activityId,
+      });
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
 
-            res.status(200).json(activity);
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+  getSingleAttractionBasicData: async (req, res) => {
+    try {
+      const { id } = req.params;
 
-    updateActivity: async (req, res) => {
-        try {
-            const { activityId } = req.params;
-            const {
-                attraction,
-                name,
-                facilities,
-                adultAgeLimit,
-                adultPrice,
-                childAgeLimit,
-                childPrice,
-                infantAgeLimit,
-                infantPrice,
-                isCancelable,
-                isVat,
-                vat,
-                base,
-                isTransferAvailable,
-                privateTransferPrice,
-                sharedTransferPrice,
-                isActive,
-                peakTime,
-                note,
-                childCost,
-                adultCost,
-                infantCost,
-            } = req.body;
+      if (!isValidObjectId(id)) {
+        return sendErrorResponse(res, 400, "Invalid Attraction Id");
+      }
 
-            const { _, error } = attractionActivitySchema.validate(req.body);
-            if (error) {
-                return sendErrorResponse(res, 400, error.details[0].message);
-            }
+      const attraction = await Attraction.findOne({
+        isDeleted: false,
+        _id: id,
+      }).select("title bookingType");
+      if (!attraction) {
+        return sendErrorResponse(res, 404, "Attraction not found");
+      }
 
-            if (!isValidObjectId(activityId)) {
-                return sendErrorResponse(res, 400, "Invalid activity id");
-            }
+      res.status(200).json(attraction);
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
 
-            const activity = await AttractionActivity.findOneAndUpdate(
-                {
-                    isDeleted: false,
-                    _id: activityId,
-                },
-                {
-                    attraction,
-                    name,
-                    facilities,
-                    adultAgeLimit,
-                    adultPrice,
-                    childAgeLimit,
-                    childPrice,
-                    infantAgeLimit,
-                    infantPrice,
-                    isCancelable,
-                    isVat,
-                    vat: isVat && vat,
-                    base,
-                    isTransferAvailable,
-                    privateTransferPrice:
-                        isTransferAvailable && privateTransferPrice,
-                    sharedTransferPrice:
-                        isTransferAvailable && sharedTransferPrice,
-                    isActive,
-                    peakTime,
-                    note,
-                    childCost,
-                    adultCost,
-                    infantCost,
-                },
-                { runValidators: true }
-            );
+  deleteAttractionReview: async (req, res) => {
+    try {
+      const { reviewId } = req.params;
 
-            if (!activity) {
-                return sendErrorResponse(res, 404, "Activity not found");
-            }
+      if (!isValidObjectId(reviewId)) {
+        return sendErrorResponse(res, 400, "Invalid Review Id");
+      }
 
-            res.status(200).json({
-                message: "Activity successfully updated",
-                _id: activityId,
-            });
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+      const review = await AttractionReview.findByIdAndDelete(reviewId);
 
-    deleteActivity: async (req, res) => {
-        try {
-            const { activityId } = req.params;
+      if (!review) {
+        return sendErrorResponse(res, 404, "Review not found");
+      }
 
-            if (!isValidObjectId(activityId)) {
-                return sendErrorResponse(res, 400, "Invalid activity id");
-            }
-
-            const activity = await AttractionActivity.findOneAndUpdate(
-                {
-                    isDeleted: false,
-                    _id: activityId,
-                },
-                { isDeleted: true }
-            );
-
-            if (!activity) {
-                return sendErrorResponse(res, 404, "Activity not found");
-            }
-
-            res.status(200).json({
-                message: "Activity successfully deleted",
-                _id: activityId,
-            });
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
-
-    getSingleAttractionBasicData: async (req, res) => {
-        try {
-            const { id } = req.params;
-
-            if (!isValidObjectId(id)) {
-                return sendErrorResponse(res, 400, "Invalid Attraction Id");
-            }
-
-            const attraction = await Attraction.findOne({
-                isDeleted: false,
-                _id: id,
-            }).select("title bookingType");
-            if (!attraction) {
-                return sendErrorResponse(res, 404, "Attraction not found");
-            }
-
-            res.status(200).json(attraction);
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
-
-    deleteAttractionReview: async (req, res) => {
-        try {
-            const { reviewId } = req.params;
-
-            if (!isValidObjectId(reviewId)) {
-                return sendErrorResponse(res, 400, "Invalid Review Id");
-            }
-
-            const review = await AttractionReview.findByIdAndDelete(reviewId);
-
-            if (!review) {
-                return sendErrorResponse(res, 404, "Review not found");
-            }
-
-            res.status(200).json({
-                message: "Review successfully deleted",
-                reviewId,
-            });
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
+      res.status(200).json({
+        message: "Review successfully deleted",
+        reviewId,
+      });
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
 };
