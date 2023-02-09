@@ -4,7 +4,7 @@ const { generateUniqueString } = require("../utils");
 const { sendMobileOtp, sendEmail, sendErrorResponse } = require("../helpers");
 const { B2BWallet, B2BTransaction, VisaType, Country, B2CVisaApplication, B2CTransaction, User, VisaDocument } = require("../models");
 const { b2cVisaApplicationSchema, visaOrderCaptureSchema } = require("../validations/b2cVisaApplication.schema");
-const { createOrder, fetchOrder, fetchPayment } = require("../utils/paypal");
+// const { createOrder, fetchOrder, fetchPayment } = require("../utils/paypal");
 const { convertCurrency } = require("../b2b/helpers/currencyHelpers");
 const {
     completeOrderAfterPayment,

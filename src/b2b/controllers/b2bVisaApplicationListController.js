@@ -74,5 +74,22 @@ module.exports = {
 
 
         }
+    },
+
+    visaSingleTraveller : async(req,res)=>{
+
+        try{
+
+            const{ applicationId , travellerId} = req.params
+           
+            const traveller = await VisaApplication.findOne({ _id :applicationId  ,reseller : req.reseller._id , 'travellers._id': travellerId });
+             
+            console.log(traveller , "traveller")
+
+            res.status(200).json(traveller)
+        }catch(err){
+
+
+        }
     }
 }
