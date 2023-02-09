@@ -82,19 +82,27 @@ module.exports = {
 
             const{ applicationId , travellerId} = req.params
            
-            const traveller = await VisaApplication.findOne({ 'travellers._id': travellerId });
+            const visaApplication = await VisaApplication.findOne({_id : applicationId});
              
-             if(!traveller){
+             if(!visaApplication){
+
+                return sendErrorResponse(res, 400, "No Visa Application Found Available");
+
+             }
+
+             const filteredTraveller = visaApplication.travellers.filter(traveller => {
+                return traveller._id == travellerId;
+            });
+
+            if(!filteredTraveller){
 
                 return sendErrorResponse(res, 400, "No Traveller Found Available");
 
              }
-             const filteredTraveller = traveller.travellers.filter(traveller => {
-                return traveller._id == travellerId;
-            });
 
 
             res.status(200).json(...filteredTraveller)
+            
         }catch(err){
 
             sendErrorResponse(res, 500, err);
