@@ -309,6 +309,8 @@ module.exports = {
                 isSharedTransferAvailable,
                 sharedTransferPrice,
                 sharedTransferCost,
+                isPrivateTransferAvailable,
+                privateTransfers,
                 isActive,
                 peakTime,
                 note,
@@ -331,9 +333,16 @@ module.exports = {
                 return sendErrorResponse(res, 404, "Attraction not found");
             }
 
+            let isCostNee = true;
+            if (attr.bookingType === "booking" && activityType === "normal") {
+                noCostNeeded = false
+            } else {
+            }
+
             const newTicket = new AttractionActivity({
                 attraction,
                 name,
+                activityType,
                 facilities,
                 adultAgeLimit,
                 adultPrice,
@@ -345,10 +354,13 @@ module.exports = {
                 isVat,
                 vat: isVat && vat,
                 base,
-                isTransferAvailable,
-                privateTransferPrice:
-                    isTransferAvailable && privateTransferPrice,
-                sharedTransferPrice: isTransferAvailable && sharedTransferPrice,
+                isSharedTransferAvailable,
+                sharedTransferPrice:
+                    isSharedTransferAvailable && sharedTransferPrice,
+                sharedTransferCost:
+                    isSharedTransferAvailable && sharedTransferCost,
+                isPrivateTransferAvailable,
+                privateTransfers,
                 isActive,
                 peakTime,
                 note,
