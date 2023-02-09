@@ -84,11 +84,16 @@ module.exports = {
            
             const traveller = await VisaApplication.findOne({ _id :applicationId  ,reseller : req.reseller._id , 'travellers._id': travellerId });
              
-            console.log(traveller , "traveller")
+             if(!traveller){
+
+                return sendErrorResponse(res, 400, "No Traveller Found Available");
+
+             }
 
             res.status(200).json(traveller)
         }catch(err){
 
+            sendErrorResponse(res, 500, err);
 
         }
     }
