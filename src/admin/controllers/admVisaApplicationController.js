@@ -212,6 +212,8 @@ module.exports= {
             });
   
             console.log(wallet , "wallet")
+            transaction.status = "success"
+            await transaction.save()
 
           }
          
@@ -228,8 +230,7 @@ module.exports= {
 
           sendVisaApplicationApproveEmail(visaApplication , filteredTraveller)
 
-          transaction.status = "success"
-         await transaction.save()
+        
 
 
           await  visaApplication.save()

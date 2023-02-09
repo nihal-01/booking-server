@@ -4,7 +4,11 @@ const { generateUniqueString } = require("../utils");
 const { sendMobileOtp, sendEmail, sendErrorResponse } = require("../helpers");
 const { B2BWallet, B2BTransaction, VisaType, Country, B2CVisaApplication, B2CTransaction, User, VisaDocument } = require("../models");
 const { b2cVisaApplicationSchema, visaOrderCaptureSchema } = require("../validations/b2cVisaApplication.schema");
-const { createOrder } = require("../utils/paypal");
+const { createOrder, fetchOrder, fetchPayment } = require("../utils/paypal");
+const { convertCurrency } = require("../b2b/helpers/currencyHelpers");
+const {
+    completeOrderAfterPayment,
+} = require("../helpers/attractionOrderHelpers");
 
 
 module.exports = {
@@ -183,6 +187,11 @@ module.exports = {
         (visaTypeList[0].totalPrice - visaTypeList[0].purchaseCost) *
         Number(noOfTravellers);
 
+        
+      let totalAmount =
+      visaTypeList[0].totalAmount +
+      (visaTypeList[0]?.insurance + visaTypeList[0]?.tax) * Number(noOfTravellers);
+
       console.log(visaTypeList[0], "visaTypeList[0]");
 
       let user;
@@ -229,8 +238,8 @@ module.exports = {
       const newVisaApplication = new B2CVisaApplication({
         visaType,
         visaPrice: visaTypeList[0].totalPrice || 0,
-        totalAmount: visaTypeList[0].totalAmount || 0,
-        profit : profit,
+        totalAmount:totalAmount || 0,
+        profit : profit || 0,
         clientMarkup: visaTypeList[0].clientMarkup || 0,
         email,
         contactNo,
@@ -276,58 +285,89 @@ module.exports = {
             );
             
           }
-          
-          console.log(visaApplication.totalAmount , "visaApplication.totalAmount")
-          
-        let amount = visaApplication.totalAmount
 
-        const newTransation = new B2CTransaction({
-            transactionType: "deduct",
-            amount,
-            paymentProcessor,
-            status: "pending",
-            user : visaApplication.user
-        });
-        
-
-        let resultFinal;
-
-        if (paymentProcessor === "paypal") {
-
-
-            const currency = "USD";
-            const response = await createOrder(amount, currency);
-           
-            console.log(response , "response")
-            newTransation.paymentOrderId = response.result.id;
-            resultFinal = response.result;
-
-            if (response.statusCode !== 201) {
-                newTransation.status = "failed";
-                await newTransation.save();
-
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "Something went wrong while fetching order! Please try again later"
-                );
-            }
-        } else if (paymentProcessor === "razorpay") {
-        } else {
+          if(visaApplication.isPayed == true){
             return sendErrorResponse(
-                res,
-                400,
-                "Invalid payment processor. Please select a valid one"
-            );
+              res,
+              400,
+              "Visa Application Already Payed"
+              );
+          }
+
+
+            let totalAmount = visaApplication.totalAmount;
+
+            const newTransaction = new B2CTransaction({
+                user: visaApplication.user,
+                amount: visaApplication?.totalAmount,
+                status: "pending",
+                transactionType: "deduct",
+                paymentProcessor,
+                orderId: visaApplication?._id,
+            });
+            await newTransaction.save();
+
+            if (paymentProcessor === "paypal") {
+                const currency = "USD";
+                const totalAmountUSD = await convertCurrency(
+                    totalAmount,
+                    currency
+                );
+                console.log(totalAmountUSD);
+                const response = await createOrder(totalAmountUSD, currency);
+
+                if (response.statusCode !== 201) {
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        "Something went wrong while fetching order! Please try again later"
+                    );
+                }
+
+                return res.status(200).json(response.result);
+            } else if (paymentProcessor === "razorpay") {
+                const currency = "INR";
+                const totalAmountINR = await convertCurrency(
+                    totalAmount,
+                    currency
+                );
+                const options = {
+                    amount: totalAmountINR * 100,
+                    currency,
+                };
+                const order = await instance.orders.create(options);
+                return res.status(200).json(order);
+            } else if (paymentProcessor === "ccavenue") {
+                let body = "";
+                body += {
+                    merchant_id: process.env.CCAVENUE_MERCHANT_ID,
+                    order_id: visaApplication?._id,
+                    currency: "AED",
+                    amount: Number(visaApplication?.totalAmount),
+                    redirect_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
+                    cancel_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
+                    language: "EN",
+                };
+                let accessCode = process.env.CCAVENUE_ACCESS_CODE;
+
+                const encRequest = ccav.encrypt(body);
+                const formbody =
+                    '<form id="nonseamless" method="post" name="redirect" action="https://secure.ccavenue.ae/transaction/transaction.do?command=initiateTransaction"/> <input type="hidden" id="encRequest" name="encRequest" value="' +
+                    encRequest +
+                    '"><input type="hidden" name="access_code" id="access_code" value="' +
+                    accessCode +
+                    '"><script language="javascript">document.redirect.submit();</script></form>';
+
+                res.setHeader("Content-Type", "text/html");
+                res.write(formbody);
+                res.end();
+                return;
+            } else {
+                return sendErrorResponse(res, 400, "Invalid payment processor");
+            }
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
         }
-
-        await newTransation.save();
-        res.status(200).json(resultFinal);
-
-    } catch (err) {
-        // handle transaction fail here
-        sendErrorResponse(res, 500, err);
-    }
   },
   
 
@@ -337,14 +377,14 @@ module.exports = {
 
         const { paymentId, orderId } = req.body;
 
-        const { _, error } = visaOrderCaptureSchema.validate(
-            req.body
-        );
+        // const { _, error } = visaOrderCaptureSchema.validate(
+        //     req.body
+        // );
 
 
-        if (error) {
-            return sendErrorResponse(res, 400, error.details[0].message);
-        }
+        // if (error) {
+        //     return sendErrorResponse(res, 400, error.details[0].message);
+        // }
 
         if (!isValidObjectId(orderId)) {
             return sendErrorResponse(res, 400, "Invalid order id");
@@ -361,25 +401,32 @@ module.exports = {
           );
       }
 
+      if (visaApplication.status === "submitted") {
+        return sendErrorResponse(
+            res,
+            400,
+            "This order already completed, Thank you. Check with our team if you paid multiple times."
+        );
+    }
+
         const transaction = await B2CTransaction.findOne({
             paymentOrderId: orderId,
         });
 
         if (!transaction) {
-            return sendErrorResponse(
-                res,
-                400,
-                "transation not found!. check with the team if amount is debited from your bank!"
-            );
-        }
+          const transaction = new B2CTransaction({
+              user: visaApplication.user,
+              amount: visaApplication?.totalAmount,
+              status: "pending",
+              transactionType: "deduct",
+              paymentProcessor: "paypal",
+              orderId: visaApplication?._id,
+          });
+          await transaction.save();
 
-        if (transaction.status === "success") {
-            return sendErrorResponse(
-                res,
-                400,
-                "this transaction already completed, Thank you"
-            );
-        }
+      }
+      
+     
 
         const orderObject = await fetchOrder(orderId);
 
@@ -422,7 +469,10 @@ module.exports = {
                     400,
                     "Paypal payment status is not Completed. Please complete your payment!"
                 );
-            } else {
+            } 
+
+          }
+
 
                 transaction.status = "success";
                 visaApplication.isPayed = true
@@ -434,11 +484,11 @@ module.exports = {
 
                 res.status(200).json({ visaApplication , status : "Transation Success" })
 
-            }
+            // }
 
 
     
-        }
+        // }
 
     }catch(err){
 
@@ -446,6 +496,124 @@ module.exports = {
 
     }
   },
+
+
+  captureCCAvenueAttractionPayment: async (req, res) => {
+    try {
+        let ccavEncResponse = "";
+        ccavEncResponse += req.body;
+
+        const ccavPOST = qs.parse(ccavEncResponse);
+        const encryption = ccavPOST.encResp;
+        const ccavResponse = ccav.decrypt(encryption);
+
+        const visaApplication = await B2CVisaApplication.findOne({
+            _id: req.body?.order_id,
+        });
+        if (!visaApplication) {
+            return sendErrorResponse(
+                res,
+                404,
+                "visaApplication  not found"
+            );
+        }
+
+        let pData = "";
+        pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
+        pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
+        pData = pData.replace(/&/gi, "</td></tr><tr><td>");
+        pData = pData + "</td></tr></table>";
+        const htmlcode =
+            '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Response Handler</title></head><body><center><font size="4" color="blue"><b>Response Page</b></font><br>' +
+            pData +
+            "</center><br></body></html>";
+        res.writeHeader(200, { "Content-Type": "text/html" });
+        res.write(htmlcode);
+        res.end();
+    } catch (err) {
+        console.log(err);
+        sendErrorResponse(res, 500, err);
+    }
+},
+
+  captureRazorpayAttractionPayment: async (req, res) => {
+    try {
+        const {
+            razorpay_order_id,
+            transactionid,
+            razorpay_signature,
+            orderId,
+        } = req.body;
+
+        if (!isValidObjectId(orderId)) {
+            return sendErrorResponse(res, 400, "invalid order id");
+        }
+
+        const visaApplication = await B2CVisaApplication.findOne({
+            _id: orderId,
+        });
+        if (!visaApplication) {
+            return sendErrorResponse(
+                res,
+                400,
+                "visaApplication order not found!. Please create an order first. Check with our team if amount is debited from your bank!"
+            );
+        }
+
+        if (visaApplication.isPayed === true) {
+            return sendErrorResponse(
+                res,
+                400,
+                "This order already completed, Thank you. Check with our team if you paid multiple times."
+            );
+        }
+
+        let transaction = await B2CTransaction.findOne({
+            paymentProcessor: "razorpay",
+            orderId: attractionOrder?._id,
+            status: "pending",
+        });
+        if (!transaction) {
+            const newTransaction = new B2CTransaction({
+                user: visaApplication.user,
+                amount: visaApplication?.totalAmount,
+                status: "pending",
+                transactionType: "deduct",
+                paymentProcessor: "razorpay",
+                orderId: visaApplication?._id,
+            });
+            await newTransaction.save();
+        }
+
+        const generated_signature = crypto.createHmac(
+            "sha256",
+            process.env.RAZORPAY_KEY_SECRET
+        );
+        generated_signature.update(razorpay_order_id + "|" + transactionid);
+
+        if (generated_signature.digest("hex") !== razorpay_signature) {
+            transaction.status = "failed";
+            await transaction.save();
+            // visaApplication.orderStatus = "failed";
+            // await attractionOrder.save();
+
+            return sendErrorResponse(res, 400, "Transaction failed");
+        }
+
+        transaction.status = "success";
+        await transaction.save();
+        visaApplication.isPayed =  true;
+        await visaApplication.save();
+
+        
+
+        return res.status(200).json({visaApplication , 
+            message: "Transaction Successful",
+        });
+    } catch (err) {
+        sendErrorResponse(res, 400, err);
+    }
+},
 
  
 
