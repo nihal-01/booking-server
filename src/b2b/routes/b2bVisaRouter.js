@@ -53,7 +53,7 @@ const { b2bAuth } = require("../middlewares");
 router.post("/create", b2bAuth , applyVisa);
 router.post("/payment/:orderId", b2bAuth , completeVisaPaymentOrder);
 router.post('/document/:orderId' ,b2bAuth , upload ,  completeVisaDocumentOrder )
-router.post('/document/reapply/:orderId' ,b2bAuth , upload ,  completeVisaReapplyDocumentOrder )
+router.post('/:orderId/reapply/:travellerId' ,b2bAuth , upload ,  completeVisaReapplyDocumentOrder )
 router.get('/invoice/:orderId' ,b2bAuth ,   visaApplicationInvoice )
 
 

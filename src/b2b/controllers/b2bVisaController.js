@@ -12,7 +12,7 @@ const sendApplicationEmail = require("../helpers/sendVisaApplicationEmail");
 const sendVisaOrderOtp = require("../helpers/sendVisaOrderEmail");
 const { B2BWallet, B2BTransaction } = require("../models");
 const {
-  visaApplicationSchema,
+  visaApplicationSchema, visaReapplySchema,
 } = require("../validations/b2bVisaApplication.schema");
 
 module.exports = {
@@ -535,9 +535,28 @@ module.exports = {
 
   completeVisaReapplyDocumentOrder: async (req, res) => {
     try {
-      const { travellersId } = req.body;
+      const{travellerId} = req.params
+      const {orderId} = req.params
+      const { 
+        title,
+      firstName,
+      lastName,
+      dateOfBirth,
+      expiryDate ,
+      country,
+      passportNo,
+      contactNo,
+      email } = req.body
 
-      const { orderId } = req.params;
+      const { _, error } = visaReapplySchema.validate(req.body);
+      if (error) {
+        return sendErrorResponse(
+          res,
+          400,
+          error.details ? error?.details[0]?.message : error.message
+        );
+      }
+
 
       if (!isValidObjectId(orderId)) {
         return sendErrorResponse(res, 400, "invalid order id");
@@ -551,7 +570,6 @@ module.exports = {
         populate: { path: "visa", populate: { path: "country" } },
       });
 
-      console.log(visaApplication.visaType.visa, "visaApplication");
 
       if (!visaApplication) {
         return sendErrorResponse(res, 404, "Visa Application Not Found");
@@ -634,16 +652,16 @@ module.exports = {
       const photos = [];
       let promises = [];
 
-      for (let i = 0; i < passportFirstPagePhotos.length; i++) {
+      // for (let i = 0; i < passportFirstPagePhotos.length; i++) {
         const visaDocument = new VisaDocument({
           passportFistPagePhoto:
-            "/" + passportFirstPagePhotos[i]?.path?.replace(/\\/g, "/"),
+            "/" + passportFirstPagePhotos[0]?.path?.replace(/\\/g, "/"),
           passportLastPagePhoto:
-            "/" + passportLastPagePhotos[i]?.path?.replace(/\\/g, "/"),
+            "/" + passportLastPagePhotos[0]?.path?.replace(/\\/g, "/"),
           passportSizePhoto:
-            "/" + passportSizePhotos[i]?.path?.replace(/\\/g, "/"),
-          supportiveDoc1: "/" + supportiveDoc1s[i]?.path?.replace(/\\/g, "/"),
-          supportiveDoc2: "/" + supportiveDoc2s[i]?.path?.replace(/\\/g, "/"),
+            "/" + passportSizePhotos[0]?.path?.replace(/\\/g, "/"),
+          supportiveDoc1: "/" + supportiveDoc1s[0]?.path?.replace(/\\/g, "/"),
+          supportiveDoc2: "/" + supportiveDoc2s[0]?.path?.replace(/\\/g, "/"),
         });
 
         promises.push(
@@ -659,15 +677,26 @@ module.exports = {
                 {
                   _id: id,
                   status: "submitted",
-                  "travellers._id": travellersId[i],
+                  "travellers._id": travellerId,
                 },
-                { $set: { "travellers.$.documents": document._id, status: "initated" } }
+                { $set: { 
+                 "travellers.$.documents": document._id, 
+                "travellers.$.title" : title ,
+                "travellers.$.firstName" : firstName,
+                "travellers.$.lastName" : lastName,
+                "travellers.$.dateOfBirth" : dateOfBirth,
+                "travellers.$.expiryDate" : expiryDate ,
+                "travellers.$.country" : country,
+                "travellers.$.passportNo" :  passportNo,
+                "travellers.$.contactNo" : contactNo,
+                "travellers.$.email" : email,
+                "travellers.$.isStatus" : "initated" } }
               );
               resolve();
             });
           })
         );
-      }
+      // }
 
       await Promise.all(promises);
 

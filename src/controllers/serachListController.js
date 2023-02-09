@@ -33,7 +33,6 @@ module.exports = {
 
             let totalDestination = destinations.length
              
-             console.log(destinations,attractions )
 
             res.status(200).json({attractions ,totoalAttraction , destinations , totalDestination})
              
