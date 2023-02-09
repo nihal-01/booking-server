@@ -9,6 +9,7 @@ const attractionsCategoriesRouter = require("./attractionsCategoriesRouter");
 const attractionsOrdersRouter = require("./attractionsOrdersRouter");
 const visaApplicationRouter = require('./visaApplicationRouter')
 const visaListRouter = require('./visaListRouter')
+const searchListRouter = require('./searchListRouter')
 
 module.exports = {
     homeRouter,
@@ -21,5 +22,6 @@ module.exports = {
     attractionsCategoriesRouter,
     attractionsOrdersRouter,
     visaApplicationRouter,
-    visaListRouter
+    visaListRouter,
+    searchListRouter
 };

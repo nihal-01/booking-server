@@ -23,11 +23,16 @@ module.exports = {
                 filters2.name = { $regex: search, $options: "i" };
             }
 
-             let attractions =  await Attraction.find(filters1).populate('destination')
-             let destinations =  await Attraction.find(filters2)
+            let attractions = await Attraction.find(filters1)
+            .select("title")
+            .populate("destination", "name");
+            
+            let destinations =  await Attraction.find(filters2).select("name")
              
+            
 
-
+            res.status(200).json({attractions , destinations})
+             
 
         }catch( err){
 
