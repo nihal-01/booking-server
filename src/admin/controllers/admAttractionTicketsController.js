@@ -284,4 +284,35 @@ module.exports = {
             sendErrorResponse(res, 400, err);
         }
     },
+
+    singleAttractionTicket : async(req,res)=>{
+
+        try{
+         
+            const {id} = req.params
+            
+            const ticket = await AttractionTicket.findOne({
+                _id : id
+            }).populate({
+                path: "activity",
+                populate: { path: "attraction", populate: { path: "destination" } },
+              });
+             
+    
+              if(!ticket){
+        
+                
+                    return sendErrorResponse(res, 400, "Ticket Not Found ");
+                  
+   
+              }
+            res.status(200).json(ticket)
+    
+        }catch(err){
+    
+            sendErrorResponse(res, 500, err);
+    
+    
+        }
+      }
 };

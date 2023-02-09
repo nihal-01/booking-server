@@ -46,7 +46,7 @@ const upload = multer({
 
 
 
-const { capturePayalVisaApplication, visaApplicationList ,visaApplicationInvoice, applyVisa , initiatePayment , completeVisaDocumentOrder} = require("../controllers/visaController");
+const { capturePayalVisaApplication,singleVisaApplication, visaApplicationList ,visaApplicationInvoice, applyVisa , initiatePayment , completeVisaDocumentOrder} = require("../controllers/visaController");
 const {  userAuthOrNot, userAuth } = require("../middlewares");
 
 
@@ -56,6 +56,8 @@ router.post("/capture/paypal/:orderId",  capturePayalVisaApplication);
 router.post('/document/:orderId' , upload ,  completeVisaDocumentOrder )
 router.get("/invoice/:orderId" , visaApplicationInvoice )
 router.get("/list" ,userAuth , visaApplicationList )
+router.get("/single/:id" ,userAuth , singleVisaApplication )
+
 
 
 module.exports = router;
