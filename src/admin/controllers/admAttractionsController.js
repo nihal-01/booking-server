@@ -294,7 +294,7 @@ module.exports = {
             const {
                 attraction,
                 name,
-                facilities,
+                description,
                 activityType,
                 adultAgeLimit,
                 adultPrice,
@@ -335,7 +335,7 @@ module.exports = {
 
             let isCostNee = true;
             if (attr.bookingType === "booking" && activityType === "normal") {
-                noCostNeeded = false
+                noCostNeeded = false;
             } else {
             }
 
@@ -343,7 +343,7 @@ module.exports = {
                 attraction,
                 name,
                 activityType,
-                facilities,
+                description,
                 adultAgeLimit,
                 adultPrice,
                 childAgeLimit,
@@ -616,7 +616,7 @@ module.exports = {
             const {
                 attraction,
                 name,
-                facilities,
+                description,
                 adultAgeLimit,
                 adultPrice,
                 childAgeLimit,
@@ -655,7 +655,7 @@ module.exports = {
                 {
                     attraction,
                     name,
-                    facilities,
+                    description,
                     adultAgeLimit,
                     adultPrice,
                     childAgeLimit,

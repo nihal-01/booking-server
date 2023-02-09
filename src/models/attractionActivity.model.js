@@ -24,9 +24,8 @@ const attractionActivitySchema = new Schema(
             required: true,
             enum: ["normal", "transfer"],
         },
-        facilities: {
+        description: {
             type: String,
-            required: true,
         },
         adultAgeLimit: {
             type: Number,
