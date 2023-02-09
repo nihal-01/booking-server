@@ -9,7 +9,6 @@ const {
     admBlogsRouter,
     admBlogCategoriesRouter,
     admSubscribersRouter,
-    admAttractionsTicketsRouter,
     admCountriesRouter,
     admDestinationsRouter,
     admGeneralRouter,
