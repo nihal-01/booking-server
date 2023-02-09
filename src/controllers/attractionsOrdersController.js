@@ -599,49 +599,49 @@ module.exports = {
                 await transaction.save();
             }
 
-            // const orderObject = await fetchOrder(paymentOrderId);
+            const orderObject = await fetchOrder(paymentOrderId);
 
-            // if (orderObject.statusCode === "500") {
-            //     transaction.status = "failed";
-            //     await transaction.save();
+            if (orderObject.statusCode === "500") {
+                transaction.status = "failed";
+                await transaction.save();
 
-            //     return sendErrorResponse(
-            //         res,
-            //         400,
-            //         "Error while fetching order status from paypal. Check with XYZ team if amount is debited from your bank!"
-            //     );
-            // } else if (orderObject.status !== "COMPLETED") {
-            //     transaction.status = "failed";
-            //     await transaction.save();
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "Error while fetching order status from paypal. Check with XYZ team if amount is debited from your bank!"
+                );
+            } else if (orderObject.status !== "COMPLETED") {
+                transaction.status = "failed";
+                await transaction.save();
 
-            //     return sendErrorResponse(
-            //         res,
-            //         400,
-            //         "Paypal order status is not Completed. Check with XYZ team if amount is debited from your bank!"
-            //     );
-            // } else {
-            //     const paymentObject = await fetchPayment(paymentId);
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "Paypal order status is not Completed. Check with XYZ team if amount is debited from your bank!"
+                );
+            } else {
+                const paymentObject = await fetchPayment(paymentId);
 
-            //     if (paymentObject.statusCode == "500") {
-            //         transaction.status = "failed";
-            //         await transaction.save();
+                if (paymentObject.statusCode == "500") {
+                    transaction.status = "failed";
+                    await transaction.save();
 
-            //         return sendErrorResponse(
-            //             res,
-            //             400,
-            //             "Error while fetching payment status from paypal. Check with XYZ team if amount is debited from your bank!"
-            //         );
-            //     } else if (paymentObject.result.status !== "COMPLETED") {
-            //         transaction.status = "failed";
-            //         await transaction.save();
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        "Error while fetching payment status from paypal. Check with XYZ team if amount is debited from your bank!"
+                    );
+                } else if (paymentObject.result.status !== "COMPLETED") {
+                    transaction.status = "failed";
+                    await transaction.save();
 
-            //         return sendErrorResponse(
-            //             res,
-            //             400,
-            //             "Paypal payment status is not Completed. Please complete your payment!"
-            //         );
-            //     }
-            // }
+                    return sendErrorResponse(
+                        res,
+                        400,
+                        "Paypal payment status is not Completed. Please complete your payment!"
+                    );
+                }
+            }
 
             transaction.status = "success";
             await transaction.save();

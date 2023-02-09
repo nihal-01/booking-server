@@ -74,5 +74,39 @@ module.exports = {
 
 
         }
+    },
+
+    visaSingleTraveller : async(req,res)=>{
+
+        try{
+
+            const{ applicationId , travellerId} = req.params
+           
+            const visaApplication = await VisaApplication.findOne({_id : applicationId});
+             
+             if(!visaApplication){
+
+                return sendErrorResponse(res, 400, "No Visa Application Found Available");
+
+             }
+
+             const filteredTraveller = visaApplication.travellers.filter(traveller => {
+                return traveller._id == travellerId;
+            });
+
+            if(!filteredTraveller){
+
+                return sendErrorResponse(res, 400, "No Traveller Found Available");
+
+             }
+
+
+            res.status(200).json(...filteredTraveller)
+            
+        }catch(err){
+
+            sendErrorResponse(res, 500, err);
+
+        }
     }
 }

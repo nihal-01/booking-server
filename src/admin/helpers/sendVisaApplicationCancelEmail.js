@@ -1,23 +1,23 @@
 const { sendEmail } = require("../../helpers");
 
-const sendVisaApplicationApproveEmail = (visaApplication ,filteredTraveller ) => {
+const sendVisaApplicationRejectionEmail = (visaApplication ,filteredTraveller , reason ) => {
 
   try {
     sendEmail(
         visaApplication.email,
-      "Visa Application Cancellation Email",
+      "Visa Application Rejection Email",
        `<body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5;">
        <div style="background-color: #333; color: #fff; padding: 20px; text-align: center;">
          <h1 style="margin: 0;">Visa Application Cancelled</h1>
        </div>
        <div style="background-color: #f7f7f7; padding: 20px;">
-         <p style="font-size: 18px; font-weight: bold;">Dear ${visaApplication.country.countryName},</p>
-         <p style="margin-top: 20px;">Your Visa is Cancelled. Your visa  details are as follows:</p>
+         <p style="font-size: 18px; font-weight: bold;">Dear ${visaApplication.visaType.visa.country.countryName},</p>
+         <p style="margin-top: 20px;">Your Visa is Rejected. Your visa  details are as follows:</p>
          <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
            <tr style="background-color: #eee;">
             
              <td style="padding: 10px; border: 1px solid #ddd;">Reference Number:</td>
-             <td style="padding: 10px; border: 1px solid #ddd;">${visaApplication.referenceNo}</td>
+             <td style="padding: 10px; border: 1px solid #ddd;">${visaApplication.referenceNumber}</td>
            </tr>
            <tr >
              <td style="padding: 10px; border: 1px solid #ddd;">Travellers Name:</td>
@@ -34,7 +34,7 @@ const sendVisaApplicationApproveEmail = (visaApplication ,filteredTraveller ) =>
          </tr>
          <tr >
            <td style="padding: 10px; border: 1px solid #ddd;">Reason :</td>
-           <td style="padding: 10px; border: 1px solid #ddd;">${filteredTraveller[0]?.reason}</td>
+           <td style="padding: 10px; border: 1px solid #ddd;">${reason}</td>
          </tr>
          
          </table>
@@ -53,4 +53,4 @@ const sendVisaApplicationApproveEmail = (visaApplication ,filteredTraveller ) =>
   }
 };
 
-module.exports = sendVisaApplicationApproveEmail;
+module.exports = sendVisaApplicationRejectionEmail;

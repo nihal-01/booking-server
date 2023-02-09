@@ -109,14 +109,22 @@ const b2cVisaApplicationSchema = new Schema(
                         type: String,
                         required: true,
                     },
-                    isApproved: {
+                    isStatus: {
                         type: String,
-                        default: false,
+                      enum: ["initiated", "approved", "rejected"],
+                      default: "initiated",
+
                     },
                     visaUpload: {
                         type:String,
                         required: function () {
-                            return this.isApproved === true;
+                            return this.isStatus=== "approved";
+                        },
+                    },
+                        reason: {
+                        type:String,
+                        required: function () {
+                            return this.isStatus=== "rejected";
                         },
                     },
                     
