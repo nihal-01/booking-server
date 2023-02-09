@@ -26,12 +26,16 @@ module.exports = {
             let attractions = await Attraction.find(filters1)
             .select("title")
             .populate("destination", "name");
+
+            let totoalAttraction = attractions.length
             
             let destinations =  await Destination.find(filters2).select("name")
+
+            let totalDestination = destinations.length
              
              console.log(destinations,attractions )
 
-            res.status(200).json({attractions , destinations})
+            res.status(200).json({attractions ,totoalAttraction , destinations , totalDestination})
              
 
         }catch( err){
