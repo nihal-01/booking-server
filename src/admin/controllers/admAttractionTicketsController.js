@@ -81,7 +81,8 @@ module.exports = {
                                 validity: ticketsList[i]?.validity,
                                 validTill: dateString,
                                 details: ticketsList[i]?.details,
-                                ticketFor: ticketsList[i]?.ticketFor,
+                                ticketFor:
+                                    ticketsList[i]?.ticketFor?.toLowerCase(),
                                 ticketCost: ticketsList[i]?.ticketCost,
                             });
                             await newTicket.save();
