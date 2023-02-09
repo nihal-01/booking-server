@@ -10,9 +10,11 @@ module.exports= {
 
     listAllVisaApplication: async (req, res) => {
         try {
-          const { skip = 0, limit = 10, status ,referenceNumber } = req.query;
+          const { skip = 0, limit = 10, status ,referenceNumber ,orderedBy } = req.query;
           
           let query = { };
+
+          console.log(orderedBy ,"orderedBy")
            
 
           if (referenceNumber && referenceNumber !== "") {
@@ -22,8 +24,9 @@ module.exports= {
           if (status && status !== "all") {
             query.status = status;
           }
-    
-          const visaApplications = await VisaApplication.find(query)
+          
+          if(orderedBy == "b2b"){
+            const visaApplications = await VisaApplication.find(query)
           .populate({
             path: 'visaType',
             populate: {
@@ -53,7 +56,43 @@ module.exports= {
             limit: Number(limit),
             totalVisaApplications,
           });
+
+          }else{
+
+            const visaApplications = await B2CVisaApplication.find(query)
+          .populate({
+            path: 'visaType',
+            populate: {
+              path: 'visa',
+              populate : {
+                path : 'country'
+              }
+
+            }
+          })
+            .sort({
+              createdAt: -1,
+            })
+            .limit(limit)
+            .skip(limit * skip);
+    
+          if (!visaApplications) {
+            return sendErrorResponse(res, 400, "VisaApplication Not Found ");
+          }
+    
+    
+          const totalVisaApplications = await VisaApplication.find(query).count();
+    
+          res.status(200).json({
+            visaApplications,
+            skip: Number(skip),
+            limit: Number(limit),
+            totalVisaApplications,
+          });
+          }
+          
         } catch (err) {
+          console.log(err , "error")
           sendErrorResponse(res, 500, err);
         }
       },

@@ -811,6 +811,34 @@ module.exports = {
       sendErrorResponse(res, 500, err);
 
     }
+  },
+
+  singleVisaApplication : async(req,res)=>{
+
+    try{
+
+      const {id} = req.params
+
+      const visaApplication = await B2CVisaApplication.findOne({
+        user : req.user._id,
+        _id : id
+      }).populate({
+        path: "visaType",
+        populate: { path: "visa", populate: { path: "country" } },
+      });
+
+      if (!visaApplication) {
+        return sendErrorResponse(res, 404, "visa application  not found");
+      }
+
+
+      res.status(200).json(visaApplication)
+
+    }catch(err){
+
+      sendErrorResponse(res, 500, err);
+
+    }
   }
 
 };

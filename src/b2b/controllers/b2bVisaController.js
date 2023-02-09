@@ -538,7 +538,7 @@ module.exports = {
       const{travellerId} = req.params
       const {orderId} = req.params
       const { 
-        title,
+      title,
       firstName,
       lastName,
       dateOfBirth,
@@ -708,8 +708,13 @@ module.exports = {
         visaApplication,
       });
 
-      l;
-    } catch (err) {}
+      
+    } catch (err) {
+   
+      sendErrorResponse(res, 500, err);
+
+
+    }
   },
 
   visaApplicationInvoice : async(req,res)=>{

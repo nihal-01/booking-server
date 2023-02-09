@@ -33,6 +33,7 @@ const {
     admVisaApplicationRouter,
     admVisaMarkupRouter,
     admB2bWalletsRouter,
+    admAttractionsTicketsRouter
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
