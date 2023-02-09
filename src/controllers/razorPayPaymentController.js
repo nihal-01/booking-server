@@ -5,7 +5,7 @@ const crypto = require("crypto");
 module.exports = {
   setOrder: async (req, res) => {
     try {
-      const { price } = req.body;
+      const { visaOrderId } = req.body;
       const options = {
         amount: price * 100,
         currency: "AED",
@@ -19,7 +19,7 @@ module.exports = {
       const order = await instance.orders.create(options);
       return res.status(200).send({ success: true, order: order });
     } catch (error) {
-      sendErrorResponse(res, 500, error.message);
+      sendErrorResponse(res, 500, error);
     }
   },
   verifyPayment: async (req, res) => {
@@ -40,7 +40,7 @@ module.exports = {
 
       return res.status(400).send({ isValid: false });
     } catch (error) {
-      sendErrorResponse(res, 500, error.message);
+      sendErrorResponse(res, 500, error);
     }
   },
 };

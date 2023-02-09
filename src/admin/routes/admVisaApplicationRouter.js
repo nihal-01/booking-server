@@ -48,6 +48,6 @@ router.patch(
   upload.single("pdfFile"),
   approveVisaApplicationStatus
 );
-router.patch("/:id/approve", cancelVisaApplicationStatus);
+router.patch("/:id/reject/:travellerId", cancelVisaApplicationStatus);
 
 module.exports = router;

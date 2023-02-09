@@ -59,6 +59,6 @@ router.post(
   upload,
   completeVisaReapplyDocumentOrder
 );
-router.get("/invoice/:orderId", b2bAuth, visaApplicationInvoice);
+// router.get("/invoice/:orderId", b2bAuth, visaApplicationInvoice);
 
 module.exports = router;

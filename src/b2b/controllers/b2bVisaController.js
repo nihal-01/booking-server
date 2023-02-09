@@ -256,6 +256,8 @@ module.exports = {
         },
       ]);
 
+      console.log(visaTypeList , "visaTypeList")
+
       let profit =
         (visaTypeList[0].visaPrice - visaTypeList[0].purchaseCost) *
         noOfTravellers;
@@ -304,9 +306,9 @@ module.exports = {
       const { orderId } = req.params;
       const { otp } = req.body;
 
-      if (!isValidObjectId(orderId)) {
-        return sendErrorResponse(res, 400, "invalid order id");
-      }
+      // if (!isValidObjectId(orderId)) {
+      //   return sendErrorResponse(res, 400, "invalid order id");
+      // }
 
       console.log(otp )
 
