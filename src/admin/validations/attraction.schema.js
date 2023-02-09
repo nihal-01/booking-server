@@ -161,7 +161,7 @@ const attractionActivitySchema = Joi.object({
     infantCost: Joi.number().allow("", null),
     isTransferAvailable: Joi.boolean().allow("", null),
     privateTransferPrice: Joi.number().allow("", null),
-    sharedTransferPrice: Joi.number().allow("", null)
+    sharedTransferPrice: Joi.number().allow("", null),
 });
 
 const attractionTicketUploadSchema = Joi.object({
