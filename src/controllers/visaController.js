@@ -355,7 +355,7 @@ module.exports = {
 
   capturePayalVisaApplication: async (req, res) => {
     try {
-      const { paymentId, orderId } = req.body;
+      const { paymentId, orderId, paymentOrderId } = req.body;
 
       // const { _, error } = visaOrderCaptureSchema.validate(
       //     req.body
@@ -386,7 +386,6 @@ module.exports = {
       const transaction = await B2CTransaction.findOne({
         paymentOrderId: orderId,
       });
-
       if (!transaction) {
         const transaction = new B2CTransaction({
           user: visaApplication.user,
@@ -399,7 +398,7 @@ module.exports = {
         await transaction.save();
       }
 
-      const orderObject = await fetchOrder(orderId);
+      const orderObject = await fetchOrder(paymentOrderId);
 
       if (orderObject.statusCode == "500") {
         transaction.status = "failed";
@@ -447,7 +446,7 @@ module.exports = {
       visaApplication.isPayed = true;
       visaApplication.save();
 
-      transaction.paymentDetails = paymentObject?.result;
+      // transaction.paymentDetails = paymentObject?.result;
       await transaction.save();
 
       res.status(200).json({ visaApplication, status: "Transation Success" });
