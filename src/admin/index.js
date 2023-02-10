@@ -9,6 +9,7 @@ const {
     admBlogsRouter,
     admBlogCategoriesRouter,
     admSubscribersRouter,
+    admAttractionsTicketsRouter,
     admCountriesRouter,
     admDestinationsRouter,
     admGeneralRouter,
@@ -32,7 +33,6 @@ const {
     admVisaApplicationRouter,
     admVisaMarkupRouter,
     admB2bWalletsRouter,
-    admAttractionsTicketsRouter
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);

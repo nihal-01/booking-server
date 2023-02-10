@@ -99,36 +99,65 @@ module.exports= {
     
       listSingleVisaApplication: async (req, res) => {
         try {
-          const { id } = req.params;
+          const { id , orderedBy} = req.params;
     
           if (!isValidObjectId(id)) {
             return sendErrorResponse(res, 400, "Invalid VisaApplication id");
           }
     
           let query = { _id: id };
-    
-          const visaApplication = await VisaApplication.findOne(query).populate(
-            "reseller travellers.documents travellers.country"
-          ).populate({
-            path: 'visaType',
-            populate: {
-              path: 'visa',
-              populate : {
-                path : 'country',
-                select : "countryName"
-              }
 
+          if(orderedBy == "b2b"){
+             
+
+            const visaApplication = await VisaApplication.findOne(query).populate(
+              "reseller travellers.documents travellers.country"
+            ).populate({
+              path: 'visaType',
+              populate: {
+                path: 'visa',
+                populate : {
+                  path : 'country',
+                  select : "countryName"
+                }
+  
+              }
+            })
+      
+            if (!visaApplication) {
+              return sendErrorResponse(res, 400, "VisaApplication Not Found ");
             }
-          })
-    
-          if (!visaApplication) {
-            return sendErrorResponse(res, 400, "VisaApplication Not Found ");
+      
+            res.status(200).json(visaApplication);
+          }else{
+
+            const visaApplication = await B2CVisaApplication.findOne(query).populate(
+              "user travellers.documents travellers.country"
+            ).populate({
+              path: 'visaType',
+              populate: {
+                path: 'visa',
+                populate : {
+                  path : 'country',
+                  select : "countryName"
+                }
+  
+              }
+            })
+      
+            if (!visaApplication) {
+              return sendErrorResponse(res, 400, "VisaApplication Not Found ");
+            }
+      
+            res.status(200).json(visaApplication);
           }
     
-          res.status(200).json(visaApplication);
+          
 
 
         } catch (err) {
+
+          console.log(err , "error")
           sendErrorResponse(res, 500, err);
         }
       },
@@ -140,6 +169,8 @@ module.exports= {
           const {id} = req.params
           const {travellerId} = req.params
           const {orderedBy} = req.body
+
+          console.log(orderedBy , id )
         
 
 
@@ -147,13 +178,25 @@ module.exports= {
           if (!isValidObjectId(id)) {
             return sendErrorResponse(res, 400, "Invalid VisaApplication id");
           }
+          
 
+          console.log(req.file , "req.file?.path")
           let visa;
           if (req.file?.path) {
             visa = "/" + req.file.path.replace(/\\/g, "/");
-          }          
+          }         
 
-          if (orderedBy  == "B2B" ){
+          console.log(visa , "visa")
+          
+
+          if(!visa){
+            return sendErrorResponse(res, 400, "Pdf Not Uploaded");
+
+          }
+         
+          if (orderedBy  == "b2b" ){
+
+            console.log("call reached")
 
             let query = { _id: id , status : "submitted" };
 
@@ -287,7 +330,9 @@ module.exports= {
 
 
             let query = { _id: id , status : "submitted" };
+             
 
+            console.log("call reached")
             const visaApplication = await B2CVisaApplication.findOne(query).populate(
               "user travellers.documents travellers.country"
             ).populate({
@@ -301,6 +346,7 @@ module.exports= {
   
               }
             })
+            console.log(visaApplication , "visaApplication")
              
             if (!visaApplication) {
               return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
@@ -362,7 +408,7 @@ module.exports= {
             return sendErrorResponse(res, 400, "Invalid VisaApplication id");
           }
 
-          if (orderedBy == 'B2B'){
+          if (orderedBy == 'b2b'){
             let query = { _id: id , status : "submitted" };
 
           const visaApplication = await VisaApplication.findOne(query).populate(
@@ -411,7 +457,7 @@ module.exports= {
 
             let query = { _id: id , status : "submitted" };
 
-          const visaApplication = await VisaApplication.findOne(query).populate(
+          const visaApplication = await B2CVisaApplication.findOne(query).populate(
             "user travellers.documents travellers.country"
           ).populate({
             path: 'visaType',
@@ -458,7 +504,7 @@ module.exports= {
 
 
         }catch(err){
-
+           
           sendErrorResponse(res, 500, err);
 
         }

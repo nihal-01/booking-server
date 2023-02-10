@@ -548,13 +548,23 @@ module.exports = {
       contactNo,
       email } = req.body
 
-      const { _, error } = visaReapplySchema.validate(req.body);
-      if (error) {
-        return sendErrorResponse(
-          res,
-          400,
-          error.details ? error?.details[0]?.message : error.message
-        );
+      // const { _, error } = visaReapplySchema.validate(req.body);
+      // if (error) {
+      //   return sendErrorResponse(
+      //     res,
+      //     400,
+      //     error.details ? error?.details[0]?.message : error.message
+      //   );
+      // }
+
+      let parsedDateOfBirth;
+      if (dateOfBirth) {
+        parsedDateOfBirth = JSON.parse(dateOfBirth);
+      }
+
+      let parsedExpiryDate;
+      if (dateOfBirth) {
+        parsedExpiryDate = JSON.parse(expiryDate);
       }
 
 
@@ -684,8 +694,8 @@ module.exports = {
                 "travellers.$.title" : title ,
                 "travellers.$.firstName" : firstName,
                 "travellers.$.lastName" : lastName,
-                "travellers.$.dateOfBirth" : dateOfBirth,
-                "travellers.$.expiryDate" : expiryDate ,
+                "travellers.$.dateOfBirth" : parsedDateOfBirth,
+                "travellers.$.expiryDate" : parsedExpiryDate ,
                 "travellers.$.country" : country,
                 "travellers.$.passportNo" :  passportNo,
                 "travellers.$.contactNo" : contactNo,
