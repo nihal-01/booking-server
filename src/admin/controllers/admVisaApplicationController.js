@@ -24,8 +24,50 @@ module.exports= {
           if (status && status !== "all") {
             query.status = status;
           }
-          
+
           if(orderedBy == "b2b"){
+            query.orderedBy == "b2b"
+          }else if (orderedBy == "subAgent"){
+            query.orderedBy == "sub-agent"
+
+          }
+          
+          if(orderedBy == "b2c"){
+            const visaApplications = await B2CVisaApplication.find(query)
+            .populate({
+              path: 'visaType',
+              populate: {
+                path: 'visa',
+                populate : {
+                  path : 'country'
+                }
+  
+              }
+            })
+              .sort({
+                createdAt: -1,
+              })
+              .limit(limit)
+              .skip(limit * skip);
+      
+            if (!visaApplications) {
+              return sendErrorResponse(res, 400, "VisaApplication Not Found ");
+            }
+      
+      
+            const totalVisaApplications = await VisaApplication.find(query).count();
+      
+            res.status(200).json({
+              visaApplications,
+              skip: Number(skip),
+              limit: Number(limit),
+              totalVisaApplications,
+            });
+            }
+
+          else{
+
+            
             const visaApplications = await VisaApplication.find(query)
           .populate({
             path: 'visaType',
@@ -56,40 +98,9 @@ module.exports= {
             limit: Number(limit),
             totalVisaApplications,
           });
-
-          }else{
-
-            const visaApplications = await B2CVisaApplication.find(query)
-          .populate({
-            path: 'visaType',
-            populate: {
-              path: 'visa',
-              populate : {
-                path : 'country'
-              }
-
-            }
-          })
-            .sort({
-              createdAt: -1,
-            })
-            .limit(limit)
-            .skip(limit * skip);
-    
-          if (!visaApplications) {
-            return sendErrorResponse(res, 400, "VisaApplication Not Found ");
           }
-    
-    
-          const totalVisaApplications = await VisaApplication.find(query).count();
-    
-          res.status(200).json({
-            visaApplications,
-            skip: Number(skip),
-            limit: Number(limit),
-            totalVisaApplications,
-          });
-          }
+
+          
           
         } catch (err) {
           console.log(err , "error")
@@ -194,7 +205,7 @@ module.exports= {
 
           }
          
-          if (orderedBy  == "b2b" ){
+          if (orderedBy  == "b2c" ){
 
             console.log("call reached")
 

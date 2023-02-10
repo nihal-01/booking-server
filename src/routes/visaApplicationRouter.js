@@ -46,13 +46,15 @@ const upload = multer({
 
 
 
-const { capturePayalVisaApplication,singleVisaApplication, visaApplicationList ,visaApplicationInvoice, applyVisa , initiatePayment , completeVisaDocumentOrder} = require("../controllers/visaController");
+const { capturePayalVisaApplication,captureCCAvenueAttractionPayment, captureRazorpayAttractionPayment ,singleVisaApplication, visaApplicationList ,visaApplicationInvoice, applyVisa , initiatePayment , completeVisaDocumentOrder} = require("../controllers/visaController");
 const {  userAuthOrNot, userAuth } = require("../middlewares");
 
 
 router.post("/create", userAuthOrNot ,  applyVisa);
 router.post("/initiate/:orderId",  initiatePayment);
 router.post("/capture/paypal/:orderId",  capturePayalVisaApplication);
+router.post("/ccavenue/capture", captureCCAvenueAttractionPayment);
+router.post("/razorpay/capture", captureRazorpayAttractionPayment);
 router.post('/document/:orderId' , upload ,  completeVisaDocumentOrder )
 router.get("/invoice/:orderId" , visaApplicationInvoice )
 router.get("/list" ,userAuth , visaApplicationList )

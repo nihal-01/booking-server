@@ -792,12 +792,46 @@ module.exports = {
 
     try{
 
-      const visaApplication = await B2CVisaApplication.find({
-        user : req.user._id
-      }).populate({
-        path: "visaType",
-        populate: { path: "visa", populate: { path: "country" } },
-      });
+      const visaApplication = await B2CVisaApplication.aggregate([
+        {
+          $match:{
+            user:req.user._id
+          },
+
+        },       
+          {
+            $lookup: {
+              from: "visatypes",
+              localField: "visaType",
+              foreignField: "_id",
+              as: "visaType",
+            },
+          },
+          {
+            $lookup: {
+              from: "visas",
+              localField: "visaType.visa",
+              foreignField: "_id",
+              as: "visa",
+            },
+          },
+          {
+            $set: {
+              visaType: { $arrayElemAt: ["$visaType.name", 0] },
+              visa: { $arrayElemAt: ["$visa.name", 0] },
+
+            },
+          },
+          {
+            $unwind : "$travellers"
+          }
+          // },{
+          //   $project : {
+          //     visaType : 1 , visa : 1
+          //   }
+          // }    
+      ])
+      
 
       if (!visaApplication) {
         return sendErrorResponse(res, 404, "visa application  not found");
