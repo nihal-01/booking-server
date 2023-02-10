@@ -139,15 +139,16 @@ const attractionActivitySchema = Joi.object({
         otherwise: Joi.number().allow("", null),
     }),
     isPrivateTransferAvailable: Joi.boolean().required(),
-    privateTransfers: Joi.when("isPrivateTransferAvailable", {
+    privateTransfers: Joi.array().when("isPrivateTransferAvailable", {
         is: Joi.boolean().valid(true),
         then: Joi.array()
             .items(
                 Joi.object({
                     name: Joi.string().required(),
-                    maxCapacity: Joi.string().required(),
+                    maxCapacity: Joi.number().required(),
                     price: Joi.number().required(),
                     cost: Joi.number().required(),
+                    _id: Joi.string().allow("", null),
                 })
             )
             .min(1),
@@ -159,9 +160,6 @@ const attractionActivitySchema = Joi.object({
     childCost: Joi.number().allow("", null),
     adultCost: Joi.number().allow("", null),
     infantCost: Joi.number().allow("", null),
-    isTransferAvailable: Joi.boolean().allow("", null),
-    privateTransferPrice: Joi.number().allow("", null),
-    sharedTransferPrice: Joi.number().allow("", null),
 });
 
 const attractionTicketUploadSchema = Joi.object({

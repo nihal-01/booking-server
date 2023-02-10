@@ -79,6 +79,7 @@ module.exports = {
                 const attraction = await Attraction.findOne({
                     _id: activity.attraction,
                     isDeleted: false,
+                    isActive: true,
                 });
                 if (!attraction) {
                     return sendErrorResponse(res, 500, "Attraction not found!");

@@ -196,6 +196,11 @@ const attractionSchema = new Schema(
             required: true,
             default: false,
         },
+        isActive: {
+            type: Boolean,
+            required: true,
+            default: true,
+        },
         isCombo: {
             type: Boolean,
             required: true,

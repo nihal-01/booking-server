@@ -53,19 +53,15 @@ const attractionActivitySchema = new Schema(
         },
         infantPrice: {
             type: Number,
-            default: 0,
         },
         adultCost: {
             type: Number,
-            default: 0,
         },
         childCost: {
             type: Number,
-            default: 0,
         },
         infantCost: {
             type: Number,
-            default: 0,
         },
         isVat: {
             type: Boolean,
@@ -106,6 +102,7 @@ const attractionActivitySchema = new Schema(
         privateTransfers: {
             type: [
                 {
+                    name: { type: String, required: true },
                     maxCapacity: { type: Number, required: true },
                     price: { type: Number, required: true },
                     cost: { type: Number, required: true },

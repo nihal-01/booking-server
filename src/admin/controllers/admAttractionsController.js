@@ -6,24 +6,12 @@ const {
     AttractionCategory,
     AttractionActivity,
     Destination,
-    AttractionOrder,
     AttractionReview,
 } = require("../../models");
 const {
     attractionSchema,
     attractionActivitySchema,
 } = require("../validations/attraction.schema");
-const { getDates } = require("../../utils");
-
-const weekday = [
-    "sunday",
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-];
 
 module.exports = {
     createNewAttraction: async (req, res) => {
@@ -145,6 +133,7 @@ module.exports = {
                 isApiConnected,
                 isCombo,
                 bookingPriorDays,
+                isActive: true,
             });
             await newAttraction.save();
 
@@ -333,44 +322,52 @@ module.exports = {
                 return sendErrorResponse(res, 404, "Attraction not found");
             }
 
-            let isCostNee = true;
-            if (attr.bookingType === "booking" && activityType === "normal") {
-                noCostNeeded = false;
-            } else {
-            }
-
-            const newTicket = new AttractionActivity({
+            const newActivity = new AttractionActivity({
                 attraction,
                 name,
                 activityType,
                 description,
+                adultPrice: activityType === "normal" ? adultPrice : undefined,
+                childPrice: activityType === "normal" ? childPrice : undefined,
+                infantPrice:
+                    activityType === "normal" ? infantPrice : undefined,
                 adultAgeLimit,
-                adultPrice,
                 childAgeLimit,
-                childPrice,
                 infantAgeLimit,
-                infantPrice,
                 isCancelable,
                 isVat,
-                vat: isVat && vat,
+                vat: isVat ? vat : undefined,
                 base,
                 isSharedTransferAvailable,
-                sharedTransferPrice:
-                    isSharedTransferAvailable && sharedTransferPrice,
-                sharedTransferCost:
-                    isSharedTransferAvailable && sharedTransferCost,
+                sharedTransferPrice: isSharedTransferAvailable
+                    ? sharedTransferPrice
+                    : undefined,
+                sharedTransferCost: isSharedTransferAvailable
+                    ? sharedTransferCost
+                    : undefined,
                 isPrivateTransferAvailable,
-                privateTransfers,
+                privateTransfers: isPrivateTransferAvailable
+                    ? privateTransfers
+                    : undefined,
                 isActive,
                 peakTime,
                 note,
-                childCost,
-                adultCost,
-                infantCost,
+                childCost:
+                    attr.bookingType === "booking" && activityType === "normal"
+                        ? childCost
+                        : undefined,
+                adultCost:
+                    attr.bookingType === "booking" && activityType === "normal"
+                        ? adultCost
+                        : undefined,
+                infantCost:
+                    attr.bookingType === "booking" && activityType === "normal"
+                        ? infantCost
+                        : undefined,
             });
-            await newTicket.save();
+            await newActivity.save();
 
-            res.status(200).json(newTicket);
+            res.status(200).json(newActivity);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
@@ -447,6 +444,7 @@ module.exports = {
                         },
                         createdAt: 1,
                         markup: 1,
+                        isActive: 1,
                     },
                 },
                 {
@@ -617,6 +615,7 @@ module.exports = {
                 attraction,
                 name,
                 description,
+                activityType,
                 adultAgeLimit,
                 adultPrice,
                 childAgeLimit,
@@ -627,9 +626,11 @@ module.exports = {
                 isVat,
                 vat,
                 base,
-                isTransferAvailable,
-                privateTransferPrice,
+                isSharedTransferAvailable,
                 sharedTransferPrice,
+                sharedTransferCost,
+                isPrivateTransferAvailable,
+                privateTransfers,
                 isActive,
                 peakTime,
                 note,
@@ -643,6 +644,11 @@ module.exports = {
                 return sendErrorResponse(res, 400, error.details[0].message);
             }
 
+            const attr = await Attraction.findById(attraction);
+            if (!attr) {
+                return sendErrorResponse(res, 404, "Attraction not found");
+            }
+
             if (!isValidObjectId(activityId)) {
                 return sendErrorResponse(res, 400, "Invalid activity id");
             }
@@ -653,30 +659,48 @@ module.exports = {
                     _id: activityId,
                 },
                 {
-                    attraction,
                     name,
+                    activityType,
                     description,
+                    adultPrice: activityType === "normal" ? adultPrice : "",
+                    childPrice: activityType === "normal" ? childPrice : "",
+                    infantPrice: activityType === "normal" ? infantPrice : "",
                     adultAgeLimit,
-                    adultPrice,
                     childAgeLimit,
-                    childPrice,
                     infantAgeLimit,
-                    infantPrice,
                     isCancelable,
                     isVat,
-                    vat: isVat && vat,
+                    vat: isVat ? vat : "",
                     base,
-                    isTransferAvailable,
-                    privateTransferPrice:
-                        isTransferAvailable && privateTransferPrice,
-                    sharedTransferPrice:
-                        isTransferAvailable && sharedTransferPrice,
+                    isSharedTransferAvailable,
+                    sharedTransferPrice: isSharedTransferAvailable
+                        ? sharedTransferPrice
+                        : "",
+                    sharedTransferCost: isSharedTransferAvailable
+                        ? sharedTransferCost
+                        : "",
+                    isPrivateTransferAvailable,
+                    privateTransfers: isPrivateTransferAvailable
+                        ? privateTransfers
+                        : undefined,
                     isActive,
                     peakTime,
                     note,
-                    childCost,
-                    adultCost,
-                    infantCost,
+                    childCost:
+                        attr.bookingType === "booking" &&
+                        activityType === "normal"
+                            ? childCost
+                            : undefined,
+                    adultCost:
+                        attr.bookingType === "booking" &&
+                        activityType === "normal"
+                            ? adultCost
+                            : undefined,
+                    infantCost:
+                        attr.bookingType === "booking" &&
+                        activityType === "normal"
+                            ? infantCost
+                            : undefined,
                 },
                 { runValidators: true }
             );
@@ -762,6 +786,39 @@ module.exports = {
             res.status(200).json({
                 message: "Review successfully deleted",
                 reviewId,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    updateAttractionIsActiveOrNot: async (req, res) => {
+        try {
+            const { isActive } = req.body;
+            const { id } = req.params;
+
+            if (!isValidObjectId) {
+                return sendErrorResponse(res, 400, "invalid attraction id");
+            }
+
+            const attraction = await Attraction.findOneAndUpdate(
+                { _id: id, isDeleted: false },
+                { isActive },
+                { runValidators: true }
+            );
+
+            if (!attraction) {
+                return sendErrorResponse(
+                    res,
+                    404,
+                    "attraction not found or deleted."
+                );
+            }
+
+            res.status(200).json({
+                message: "attraction's status updated successfully",
+                _id: id,
+                isActive,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);

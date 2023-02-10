@@ -36,18 +36,23 @@ const b2battractionOrderSchema = new Schema(
                     },
                     adultsCount: {
                         type: Number,
+                        required: true,
                     },
                     childrenCount: {
                         type: Number,
+                        required: true,
                     },
                     infantCount: {
                         type: Number,
+                        required: true,
                     },
-                    totalPurchaseCost: {
+                    purchaseCost: {
                         type: Number,
+                        required: true,
                     },
                     profit: {
                         type: Number,
+                        required: true,
                     },
                     transferType: {
                         type: String,
@@ -55,7 +60,6 @@ const b2battractionOrderSchema = new Schema(
                         enum: ["without", "private", "shared"],
                         required: true,
                     },
-                    offerAmount: { type: Number, required: true },
                     amount: { type: Number, required: true },
                     adultTickets: { type: [] },
                     childTickets: { type: [] },
@@ -115,10 +119,6 @@ const b2battractionOrderSchema = new Schema(
                     },
                 },
             ],
-        },
-        totalOffer: {
-            type: Number,
-            required: true,
         },
         totalAmount: {
             type: Number,
