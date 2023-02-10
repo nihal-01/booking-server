@@ -147,7 +147,7 @@ const visaApplicationSchema = new Schema(
                         type: Schema.Types.ObjectId,
                         ref: "VisaDocument",
                         required: function () {
-                            return this.isDocumentUplaoded === true;
+                            return this.isStatus === "approved";
                         },
                     },
                 },
