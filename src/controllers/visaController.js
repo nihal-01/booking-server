@@ -851,15 +851,18 @@ module.exports = {
 
     try{
 
-      const {id} = req.params
+      const {orderId , travellerId} = req.params
 
-      const visaApplication = await B2CVisaApplication.findOne({
-        user : req.user._id,
-        _id : id
-      }).populate({
-        path: "visaType",
-        populate: { path: "visa", populate: { path: "country" } },
-      });
+      
+      const visaApplication = await B2CVisaApplication.findOne(
+        {
+            _id: orderId,
+            user : req.user._id,
+        },
+        { travellers: { $elemMatch: { _id: travellerId } } }
+    ).populate("visaType")
+      
+    
 
       if (!visaApplication) {
         return sendErrorResponse(res, 404, "visa application  not found");

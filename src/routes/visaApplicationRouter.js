@@ -58,7 +58,7 @@ router.post("/razorpay/capture", captureRazorpayAttractionPayment);
 router.post('/document/:orderId' , upload ,  completeVisaDocumentOrder )
 router.get("/invoice/:orderId" , visaApplicationInvoice )
 router.get("/list" ,userAuth , visaApplicationList )
-router.get("/single/:id" ,userAuth , singleVisaApplication )
+router.get("/:orderId/single/:travellerId" ,userAuth , singleVisaApplication )
 
 
 

@@ -13,12 +13,12 @@ module.exports = {
             let {search} = req.query
              
 
-            let filters1 = {}
+            let filters1 = { isDeleted : false}
             if (search && search !== "") {
                 filters1.title = { $regex: search, $options: "i" };
             }
 
-            let filters2 = {}
+            let filters2 = { isDeleted : false}
             if (search && search !== "") {
                 filters2.name = { $regex: search, $options: "i" };
             }

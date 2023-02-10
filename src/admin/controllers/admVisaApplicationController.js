@@ -26,11 +26,13 @@ module.exports= {
           }
 
           if(orderedBy == "b2b"){
-            query.orderedBy == "b2b"
+            query.orderedBy = "reseller"
           }else if (orderedBy == "subAgent"){
-            query.orderedBy == "sub-agent"
+            query.orderedBy = "sub-agent"
 
           }
+
+          console.log(query , "query")
           
           if(orderedBy == "b2c"){
             const visaApplications = await B2CVisaApplication.find(query)
@@ -119,28 +121,13 @@ module.exports= {
           let query = { _id: id };
 
           if(orderedBy == "b2b"){
-             
+            query.orderedBy = "reseller"
+          }else if (orderedBy == "subAgent"){
+            query.orderedBy = "sub-agent"
 
-            const visaApplication = await VisaApplication.findOne(query).populate(
-              "reseller travellers.documents travellers.country"
-            ).populate({
-              path: 'visaType',
-              populate: {
-                path: 'visa',
-                populate : {
-                  path : 'country',
-                  select : "countryName"
-                }
-  
-              }
-            })
-      
-            if (!visaApplication) {
-              return sendErrorResponse(res, 400, "VisaApplication Not Found ");
-            }
-      
-            res.status(200).json(visaApplication);
-          }else{
+          }
+
+          if(orderedBy == "b2c"){
 
             const visaApplication = await B2CVisaApplication.findOne(query).populate(
               "user travellers.documents travellers.country"
@@ -162,9 +149,33 @@ module.exports= {
       
             res.status(200).json(visaApplication);
           }
-    
-          
+             
 
+          
+          else{
+
+         
+            const visaApplication = await VisaApplication.findOne(query).populate(
+              "reseller travellers.documents travellers.country"
+            ).populate({
+              path: 'visaType',
+              populate: {
+                path: 'visa',
+                populate : {
+                  path : 'country',
+                  select : "countryName"
+                }
+  
+              }
+            })
+      
+            if (!visaApplication) {
+              return sendErrorResponse(res, 400, "VisaApplication Not Found ");
+            }
+      
+            res.status(200).json(visaApplication);
+          
+          }
 
         } catch (err) {
 
@@ -180,10 +191,16 @@ module.exports= {
           const {id} = req.params
           const {travellerId} = req.params
           const {orderedBy} = req.body
+          
 
-          console.log(orderedBy , id )
-        
+          let query = { _id: id , status : "submitted" };
 
+          if(orderedBy == "b2b"){
+            query.orderedBy = "reseller"
+          }else if (orderedBy == "subAgent"){
+            query.orderedBy = "sub-agent"
+
+          }        
 
 
           if (!isValidObjectId(id)) {
@@ -205,11 +222,66 @@ module.exports= {
 
           }
          
-          if (orderedBy  == "b2c" ){
+          if (orderedBy  == "b2c"  ){
+
+            
+             
 
             console.log("call reached")
+            const visaApplication = await B2CVisaApplication.findOne(query).populate(
+              "user travellers.documents travellers.country"
+            ).populate({
+              path: 'visaType',
+              populate: {
+                path: 'visa',
+                populate : {
+                  path : 'country',
+                  select : "countryName"
+                }
+  
+              }
+            })
+            console.log(visaApplication , "visaApplication")
+             
+            if (!visaApplication) {
+              return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
+            }
+  
+            if (visaApplication.isPayed == false) {
+              return sendErrorResponse(res, 400, "VisaApplication Amount Payed ");
+            }
+            
+            if(visaApplication.status == "approved"){
+              return sendErrorResponse(res, 400, "VisaApplication Already Approved");
+  
+            }
+  
+            console.log(visa , "visaaa")
+  
+            let upload = await B2CVisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
+            { $set: { "travellers.$.visaUpload": visa  , "travellers.$.isStatus" : "approved" }})
+           
+  
 
-            let query = { _id: id , status : "submitted" };
+           
+            const filteredTraveller = visaApplication.travellers.filter(traveller => {
+              return traveller._id == travellerId;
+          });
+   
+            sendVisaApplicationApproveEmail(visaApplication , filteredTraveller)
+  
+            
+            await  visaApplication.save()
+  
+  
+            res.status(200).json({status: true ,message : "Visa Uploaded Succesfully " })
+          
+
+           
+
+          }else{
+             
+            
 
             const visaApplication = await VisaApplication.findOne(query).populate(
               "reseller travellers.documents travellers.country"
@@ -337,62 +409,7 @@ module.exports= {
   
             res.status(200).json({status: true ,message : "Visa Uploaded Succesfully " })
 
-          }else{
-
-
-            let query = { _id: id , status : "submitted" };
-             
-
-            console.log("call reached")
-            const visaApplication = await B2CVisaApplication.findOne(query).populate(
-              "user travellers.documents travellers.country"
-            ).populate({
-              path: 'visaType',
-              populate: {
-                path: 'visa',
-                populate : {
-                  path : 'country',
-                  select : "countryName"
-                }
-  
-              }
-            })
-            console.log(visaApplication , "visaApplication")
-             
-            if (!visaApplication) {
-              return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
-            }
-  
-            if (visaApplication.isPayed == false) {
-              return sendErrorResponse(res, 400, "VisaApplication Amount Payed ");
-            }
-            
-            if(visaApplication.status == "approved"){
-              return sendErrorResponse(res, 400, "VisaApplication Already Approved");
-  
-            }
-  
-            console.log(visa , "visaaa")
-  
-            let upload = await B2CVisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
-            { $set: { "travellers.$.visaUpload": visa  , "travellers.$.isStatus" : "approved" }})
-           
-  
-
-           
-            const filteredTraveller = visaApplication.travellers.filter(traveller => {
-              return traveller._id == travellerId;
-          });
-   
-            sendVisaApplicationApproveEmail(visaApplication , filteredTraveller)
-  
-            
-            await  visaApplication.save()
-  
-  
-            res.status(200).json({status: true ,message : "Visa Uploaded Succesfully " })
-          }
-
+        }
          
 
         }catch(err){
@@ -451,7 +468,7 @@ module.exports= {
          
 
           let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
-          { $set: { "travellers.$.reason": reason  , "travellers.$.isStatus" : "rejected"} })
+          { $set: { "travellers.$.reason": reason  , "travellers.$.isStatus" : "rejected" } })
        
           console.log(upload)
 
