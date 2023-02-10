@@ -102,7 +102,7 @@ const attractionActivitySchema = Joi.object({
     attraction: Joi.string().required(),
     name: Joi.string().required(),
     activityType: Joi.string().valid("normal", "transfer").required(),
-    facilities: Joi.string().required(),
+    description: Joi.string().allow("", null),
     adultAgeLimit: Joi.number().required(),
     childAgeLimit: Joi.number().required(),
     infantAgeLimit: Joi.number().required(),
@@ -131,12 +131,12 @@ const attractionActivitySchema = Joi.object({
     sharedTransferPrice: Joi.when("isSharedTransferAvailable", {
         is: Joi.boolean().valid(true),
         then: Joi.number().required(),
-        otherwise: Joi.string().allow("", null),
+        otherwise: Joi.number().allow("", null),
     }),
     sharedTransferCost: Joi.when("isSharedTransferAvailable", {
         is: Joi.boolean().valid(true),
         then: Joi.number().required(),
-        otherwise: Joi.string().allow("", null),
+        otherwise: Joi.number().allow("", null),
     }),
     isPrivateTransferAvailable: Joi.boolean().required(),
     privateTransfers: Joi.when("isPrivateTransferAvailable", {
@@ -159,6 +159,9 @@ const attractionActivitySchema = Joi.object({
     childCost: Joi.number().allow("", null),
     adultCost: Joi.number().allow("", null),
     infantCost: Joi.number().allow("", null),
+    isTransferAvailable: Joi.boolean().allow("", null),
+    privateTransferPrice: Joi.number().allow("", null),
+    sharedTransferPrice: Joi.number().allow("", null),
 });
 
 const attractionTicketUploadSchema = Joi.object({
