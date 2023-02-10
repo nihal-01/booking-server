@@ -162,9 +162,7 @@ const visaApplicationSchema = new Schema(
             type: Boolean,
             required: true,
             default: false,
-        },
-        
-     
+        },     
         status: {
             type: String,
             required: true,
@@ -179,6 +177,19 @@ const visaApplicationSchema = new Schema(
     },
     { timestamps: true }
 );
+
+// visaApplicationSchema.pre("save", function (next) {
+//     let allStatuses = this.travellers.map((traveller) => traveller.isStatus);
+//     let allApprovedOrRejected = allStatuses.every(
+//       (status) => status === "approved" || status === "rejected"
+//     );
+  
+//     if (allApprovedOrRejected) {
+//       this.status = "verified";
+//     }
+  
+//     next();
+//   });
 
 
 

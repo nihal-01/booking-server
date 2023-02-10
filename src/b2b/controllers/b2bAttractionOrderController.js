@@ -28,6 +28,8 @@ const {
 const sendAttractionOrderEmail = require("../helpers/sendAttractionOrderEmail");
 const sendAttractionOrderAdminEmail = require("../helpers/sendAttractionOrderAdminEmail");
 const sendAttractionOrderOtp = require("../helpers/sendAttractionOrderOtp");
+const sendInsufficentBalanceMail = require("../helpers/sendInsufficentBalanceEmail");
+const sendWalletDeductMail = require("../helpers/sendWalletDeductMail");
 
 const dayNames = [
     "sunday",
@@ -463,6 +465,9 @@ module.exports = {
                 reseller: req.reseller?._id,
             });
             if (!wallet || wallet.balance < totalAmount) {
+                
+                let reseller = req.reseller
+                sendInsufficentBalanceMail(reseller)
                 return sendErrorResponse(
                     res,
                     400,
@@ -659,6 +664,9 @@ module.exports = {
 
             wallet.balance -= totalAmount;
             await wallet.save();
+            
+            let reseller = req.reseller
+            sendWalletDeductMail( reseller  , attractionOrder )
 
             transaction.status = "success";
             await transaction.save();

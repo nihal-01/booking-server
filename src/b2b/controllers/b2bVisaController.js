@@ -7,9 +7,11 @@ const {
   VisaDocument,
 } = require("../../models");
 const { generateUniqueString } = require("../../utils");
+const sendInsufficentBalanceMail = require("../helpers/sendInsufficentBalanceEmail");
 const sendAdminVisaApplicationEmail = require("../helpers/sendVisaAdminEmail");
 const sendApplicationEmail = require("../helpers/sendVisaApplicationEmail");
 const sendVisaOrderOtp = require("../helpers/sendVisaOrderEmail");
+const sendWalletDeductMail = require("../helpers/sendWalletDeductMail");
 const { B2BWallet, B2BTransaction } = require("../models");
 const {
   visaApplicationSchema, visaReapplySchema,
@@ -348,8 +350,12 @@ module.exports = {
       let wallet = await B2BWallet.findOne({
         reseller: req.reseller?._id,
       });
+      
 
+      let reseller = req.reseller
       if (!wallet || wallet.balance < totalAmount) {
+
+        sendInsufficentBalanceMail(reseller)
         return sendErrorResponse(
           res,
           400,
@@ -373,16 +379,22 @@ module.exports = {
 
       transaction.status = "success";
       await transaction.save();
-
+      
+      console.log(reseller, "reseller")
+      sendWalletDeductMail(reseller , VisaApplicationOrder)
+      
       VisaApplicationOrder.isPayed = true;
       await VisaApplicationOrder.save();
+      
+      
+     
 
       res.status(200).json({
         message: "Amount Paided successfully ",
         VisaApplicationOrder,
       });
     } catch (err) {
-      console.log(err ,error)
+      console.log(err ,"error")
       sendErrorResponse(res, 500, err);
     }
   },
