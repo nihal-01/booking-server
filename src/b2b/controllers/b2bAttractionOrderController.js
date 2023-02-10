@@ -84,7 +84,6 @@ module.exports = {
                 const attraction = await Attraction.findOne({
                     _id: activity.attraction,
                     isDeleted: false,
-                    isActive: true,
                 });
                 if (!attraction) {
                     return sendErrorResponse(res, 500, "attraction not found!");
@@ -160,23 +159,74 @@ module.exports = {
                     }
                 }
 
-                // date validation
-                // if ticket and transfer validation
-                // ticket availability check
-                // if not ticket then check only transfer or not
-                // only transfer then check transfer available
-                // not only transfer do that
+                if (attraction.bookingType === "ticket") {
+                    let adultTicketError = false;
+                    let childTicketError = false;
+                    const adultTickets = await AttractionTicket.find({
+                        activity: activity._id,
+                        status: "ok",
+                        ticketFor: "adult",
+                        $or: [
+                            {
+                                validity: true,
+                                validTill: {
+                                    $gte: new Date(
+                                        selectedActivities[i]?.date
+                                    ).toISOString(),
+                                },
+                            },
+                            { validity: false },
+                        ],
+                    }).count();
+                    const childrenTickets = await AttractionTicket.find({
+                        activity: activity._id,
+                        status: "ok",
+                        ticketFor: "child",
+                        $or: [
+                            {
+                                validity: true,
+                                validTill: {
+                                    $gte: new Date(
+                                        selectedActivities[i]?.date
+                                    ).toISOString(),
+                                },
+                            },
+                            { validity: false },
+                        ],
+                    }).count();
+
+                    if (adultTickets < selectedActivities[i]?.adultsCount) {
+                        adultTicketError = true;
+                    }
+
+                    if (
+                        childrenTickets < selectedActivities[i]?.childrenCount
+                    ) {
+                        childTicketError = true;
+                    }
+
+                    if (adultTicketError || childTicketError) {
+                        return sendErrorResponse(
+                            res,
+                            500,
+                            `${adultTicketError ? "Adult Tickets" : ""}${
+                                adultTicketError && childTicketError
+                                    ? " and "
+                                    : ""
+                            }${
+                                childTicketError ? "Child Tickets" : ""
+                            } Sold Out`
+                        );
+                    }
+                }
 
                 let price = 0;
                 let totalResellerMarkup = 0;
                 let totalSubAgentMarkup = 0;
                 let markups = [];
+
                 let resellerToSubAgentMarkup;
                 let resellerToClientMarkup;
-                let totalPurchaseCost = 0;
-                let totalPax =
-                    (Number(selectedActivities[i]?.adultsCount) || 0) +
-                    (Number(selectedActivities[i]?.childrenCount) || 0);
                 if (req.reseller.role === "sub-agent") {
                     resellerToSubAgentMarkup =
                         await B2BSubAgentAttractionMarkup.findOne({
@@ -191,432 +241,115 @@ module.exports = {
                     });
 
                 if (
-                    attraction.bookingType === "ticket" &&
-                    activity.activityType === "transfer"
+                    selectedActivities[i]?.adultsCount > 0 &&
+                    activity.adultPrice
                 ) {
-                    return sendErrorResponse(
-                        res,
-                        400,
-                        "something went wrong in our end. please try again"
-                    );
+                    let adultPrice = activity.adultPrice;
+                    if (resellerToSubAgentMarkup) {
+                        let markup = 0;
+                        if (resellerToSubAgentMarkup.markupType === "flat") {
+                            markup = resellerToSubAgentMarkup.markup;
+                        } else {
+                            markup =
+                                (resellerToSubAgentMarkup.markup *
+                                    activity.adultPrice) /
+                                100;
+                        }
+
+                        totalResellerMarkup +=
+                            markup * selectedActivities[i]?.adultsCount;
+                        adultPrice += markup;
+                    }
+
+                    if (resellerToClientMarkup) {
+                        let markup = 0;
+                        if (resellerToClientMarkup.markupType === "flat") {
+                            markup = resellerToClientMarkup.markup;
+                        } else {
+                            markup =
+                                (resellerToClientMarkup.markup * adultPrice) /
+                                100;
+                        }
+                        totalSubAgentMarkup +=
+                            markup * selectedActivities[i]?.adultsCount;
+                        adultPrice += markup;
+                    }
+
+                    price += adultPrice * selectedActivities[i]?.adultsCount;
                 }
 
-                if (activity?.activityType === "transfer") {
-                    if (selectedActivities[i]?.transferType === "without") {
-                        return sendErrorResponse(
-                            res,
-                            400,
-                            "please select a transfer option."
-                        );
-                    } else if (
-                        selectedActivities[i]?.transferType === "shared"
-                    ) {
-                        if (
-                            activity.isSharedTransferAvailable === false ||
-                            !activity.sharedTransferPrice ||
-                            !activity.sharedTransferCost
-                        ) {
-                            return sendErrorResponse(
-                                res,
-                                400,
-                                "this activity doesn't have a shared transfer option"
-                            );
+                if (
+                    selectedActivities[i]?.childrenCount > 0 &&
+                    activity.childPrice
+                ) {
+                    let childPrice = activity.childPrice;
+                    if (resellerToSubAgentMarkup) {
+                        let markup = 0;
+                        if (resellerToSubAgentMarkup.markupType === "flat") {
+                            markup = resellerToSubAgentMarkup.markup;
+                        } else {
+                            markup =
+                                (resellerToSubAgentMarkup.markup *
+                                    activity?.childPrice) /
+                                100;
                         }
-                        let sharedTransferPrice = activity.sharedTransferPrice;
-                        if (resellerToSubAgentMarkup) {
-                            let markup = 0;
-                            if (
-                                resellerToSubAgentMarkup.markupType === "flat"
-                            ) {
-                                markup = resellerToSubAgentMarkup.markup;
-                            } else {
-                                markup =
-                                    (resellerToSubAgentMarkup.markup *
-                                        sharedTransferPrice) /
-                                    100;
-                            }
-                            totalResellerMarkup += markup * totalPax;
-                            sharedTransferPrice += markup;
-                        }
-
-                        if (resellerToClientMarkup) {
-                            let markup = 0;
-                            if (resellerToClientMarkup.markupType === "flat") {
-                                markup = resellerToClientMarkup.markup;
-                            } else {
-                                markup =
-                                    (resellerToClientMarkup.markup *
-                                        sharedTransferPrice) /
-                                    100;
-                            }
-                            totalSubAgentMarkup += markup * totalPax;
-                            sharedTransferPrice += markup;
-                        }
-
-                        price += sharedTransferPrice * totalPax;
-                        totalPurchaseCost +=
-                            activity?.sharedTransferCost * totalPax;
-                    } else if (
-                        selectedActivities[i]?.transferType === "private"
-                    ) {
-                        if (
-                            activity.isPrivateTransferAvailable === false ||
-                            !activity.privateTransfers ||
-                            activity.privateTransfers?.length < 1
-                        ) {
-                            return sendErrorResponse(
-                                res,
-                                400,
-                                "this activity doesn't have a private transfer option"
-                            );
-                        }
-
-                        const sortedPvtTransfers =
-                            activity.privateTransfers.sort(
-                                (a, b) => a.maxCapacity - b.maxCapacity
-                            );
-
-                        let tempPax = totalPax;
-                        while (tempPax > 0) {
-                            for (
-                                let j = 0;
-                                j < sortedPvtTransfers.length;
-                                j++
-                            ) {
-                                if (
-                                    totalPax <=
-                                        sortedPvtTransfers[i].maxCapacity ||
-                                    j === sortedPvtTransfers.length - 1
-                                ) {
-                                    let currentPax =
-                                        tempPax >
-                                        sortedPvtTransfers[i].maxCapacity
-                                            ? sortedPvtTransfers[i].maxCapacity
-                                            : tempPax;
-                                    let pvtTransferPrice =
-                                        sortedPvtTransfers[i].price;
-                                    let pvtTransferCost =
-                                        sortedPvtTransfers[i].cost;
-                                    if (resellerToSubAgentMarkup) {
-                                        let markup = 0;
-                                        if (
-                                            resellerToSubAgentMarkup.markupType ===
-                                            "flat"
-                                        ) {
-                                            markup =
-                                                resellerToSubAgentMarkup.markup;
-                                        } else {
-                                            markup =
-                                                (resellerToSubAgentMarkup.markup *
-                                                    pvtTransferPrice) /
-                                                100;
-                                        }
-                                        totalResellerMarkup +=
-                                            markup * currentPax;
-                                        pvtTransferPrice += markup;
-                                    }
-
-                                    if (resellerToClientMarkup) {
-                                        let markup = 0;
-                                        if (
-                                            resellerToClientMarkup.markupType ===
-                                            "flat"
-                                        ) {
-                                            markup =
-                                                resellerToClientMarkup.markup;
-                                        } else {
-                                            markup =
-                                                (resellerToClientMarkup.markup *
-                                                    pvtTransferPrice) /
-                                                100;
-                                        }
-                                        totalSubAgentMarkup +=
-                                            markup * currentPax;
-                                        pvtTransferPrice += markup;
-                                    }
-
-                                    price += pvtTransferPrice * currentPax;
-                                    totalPurchaseCost +=
-                                        pvtTransferCost * currentPax;
-                                    tempPax -= currentPax;
-                                }
-                            }
-                        }
-                    } else {
-                        return sendErrorResponse(
-                            res,
-                            400,
-                            "please select a valid transfer option."
-                        );
-                    }
-                } else if (activity?.activityType === "normal") {
-                    if (attraction.bookingType === "ticket") {
-                        let adultTicketError = false;
-                        let childTicketError = false;
-                        const adultTickets = await AttractionTicket.find({
-                            activity: activity._id,
-                            status: "ok",
-                            ticketFor: "adult",
-                            $or: [
-                                {
-                                    validity: true,
-                                    validTill: {
-                                        $gte: new Date(
-                                            selectedActivities[i]?.date
-                                        ).toISOString(),
-                                    },
-                                },
-                                { validity: false },
-                            ],
-                        }).count();
-                        const childrenTickets = await AttractionTicket.find({
-                            activity: activity._id,
-                            status: "ok",
-                            ticketFor: "child",
-                            $or: [
-                                {
-                                    validity: true,
-                                    validTill: {
-                                        $gte: new Date(
-                                            selectedActivities[i]?.date
-                                        ).toISOString(),
-                                    },
-                                },
-                                { validity: false },
-                            ],
-                        }).count();
-
-                        if (adultTickets < selectedActivities[i]?.adultsCount) {
-                            adultTicketError = true;
-                        }
-
-                        if (
-                            childrenTickets <
-                            selectedActivities[i]?.childrenCount
-                        ) {
-                            childTicketError = true;
-                        }
-
-                        if (adultTicketError || childTicketError) {
-                            return sendErrorResponse(
-                                res,
-                                500,
-                                `${adultTicketError ? "Adult Tickets" : ""}${
-                                    adultTicketError && childTicketError
-                                        ? " and "
-                                        : ""
-                                }${
-                                    childTicketError ? "Child Tickets" : ""
-                                } Sold Out`
-                            );
-                        }
+                        totalResellerMarkup +=
+                            markup * selectedActivities[i]?.childrenCount;
+                        childPrice += markup;
                     }
 
-                    if (Number(selectedActivities[i]?.adultsCount) > 0) {
-                        if (!activity?.adultPrice) {
-                            return sendErrorResponse(
-                                res,
-                                500,
-                                "sorry, something went wrong with our end. please try again later"
-                            );
+                    if (resellerToClientMarkup) {
+                        let markup = 0;
+                        if (resellerToClientMarkup.markupType === "flat") {
+                            markup = resellerToClientMarkup.markup;
+                        } else {
+                            markup =
+                                (resellerToClientMarkup.markup * childPrice) /
+                                100;
                         }
-                        let adultPrice = activity.adultPrice;
-                        if (resellerToSubAgentMarkup) {
-                            let markup = 0;
-                            if (
-                                resellerToSubAgentMarkup.markupType === "flat"
-                            ) {
-                                markup = resellerToSubAgentMarkup.markup;
-                            } else {
-                                markup =
-                                    (resellerToSubAgentMarkup.markup *
-                                        activity.adultPrice) /
-                                    100;
-                            }
-
-                            totalResellerMarkup +=
-                                markup * selectedActivities[i]?.adultsCount;
-                            adultPrice += markup;
-                        }
-
-                        if (resellerToClientMarkup) {
-                            let markup = 0;
-                            if (resellerToClientMarkup.markupType === "flat") {
-                                markup = resellerToClientMarkup.markup;
-                            } else {
-                                markup =
-                                    (resellerToClientMarkup.markup *
-                                        adultPrice) /
-                                    100;
-                            }
-                            totalSubAgentMarkup +=
-                                markup * selectedActivities[i]?.adultsCount;
-                            adultPrice += markup;
-                        }
-
-                        price +=
-                            adultPrice * selectedActivities[i]?.adultsCount;
+                        totalSubAgentMarkup +=
+                            markup * selectedActivities[i]?.childrenCount;
+                        childPrice += markup;
                     }
 
-                    if (Number(selectedActivities[i]?.childrenCount) > 0) {
-                        if (!activity.childPrice) {
-                            return sendErrorResponse(
-                                res,
-                                400,
-                                "sorry, something went wrong with our end. please try again later"
-                            );
-                        }
-                        let childPrice = activity.childPrice;
-                        if (resellerToSubAgentMarkup) {
-                            let markup = 0;
-                            if (
-                                resellerToSubAgentMarkup.markupType === "flat"
-                            ) {
-                                markup = resellerToSubAgentMarkup.markup;
-                            } else {
-                                markup =
-                                    (resellerToSubAgentMarkup.markup *
-                                        activity?.childPrice) /
-                                    100;
-                            }
-                            totalResellerMarkup +=
-                                markup * selectedActivities[i]?.childrenCount;
-                            childPrice += markup;
-                        }
+                    price += childPrice * selectedActivities[i]?.childrenCount;
+                }
 
-                        if (resellerToClientMarkup) {
-                            let markup = 0;
-                            if (resellerToClientMarkup.markupType === "flat") {
-                                markup = resellerToClientMarkup.markup;
-                            } else {
-                                markup =
-                                    (resellerToClientMarkup.markup *
-                                        childPrice) /
-                                    100;
-                            }
-                            totalSubAgentMarkup +=
-                                markup * selectedActivities[i]?.childrenCount;
-                            childPrice += markup;
+                if (
+                    selectedActivities[i]?.infantCount > 0 &&
+                    activity.infantPrice
+                ) {
+                    let infantPrice = activity.infantPrice;
+                    if (resellerToSubAgentMarkup) {
+                        let markup = 0;
+                        if (resellerToSubAgentMarkup.markupType === "flat") {
+                            markup = resellerToSubAgentMarkup.markup;
+                        } else {
+                            markup =
+                                (resellerToSubAgentMarkup.markup *
+                                    selectedActivities[i]?.infantPrice) /
+                                100;
                         }
-
-                        price +=
-                            childPrice * selectedActivities[i]?.childrenCount;
+                        totalResellerMarkup +=
+                            markup * selectedActivities[i]?.infantCount;
+                        infantPrice += markup;
                     }
 
-                    if (
-                        Number(selectedActivities[i]?.infantCount) > 0 &&
-                        activity.infantPrice > 0
-                    ) {
-                        let infantPrice = activity.infantPrice;
-                        if (resellerToSubAgentMarkup) {
-                            let markup = 0;
-                            if (
-                                resellerToSubAgentMarkup.markupType === "flat"
-                            ) {
-                                markup = resellerToSubAgentMarkup.markup;
-                            } else {
-                                markup =
-                                    (resellerToSubAgentMarkup.markup *
-                                        selectedActivities[i]?.infantPrice) /
-                                    100;
-                            }
-                            totalResellerMarkup +=
-                                markup * selectedActivities[i]?.infantCount;
-                            infantPrice += markup;
+                    if (resellerToClientMarkup) {
+                        let markup = 0;
+                        if (resellerToClientMarkup.markupType === "flat") {
+                            markup = resellerToClientMarkup.markup;
+                        } else {
+                            markup =
+                                (resellerToClientMarkup.markup * infantPrice) /
+                                100;
                         }
-
-                        if (resellerToClientMarkup) {
-                            let markup = 0;
-                            if (resellerToClientMarkup.markupType === "flat") {
-                                markup = resellerToClientMarkup.markup;
-                            } else {
-                                markup =
-                                    (resellerToClientMarkup.markup *
-                                        infantPrice) /
-                                    100;
-                            }
-                            totalSubAgentMarkup +=
-                                markup * selectedActivities[i]?.infantCount;
-                            infantPrice += markup;
-                        }
-
-                        price +=
-                            infantPrice * selectedActivities[i]?.infantCount;
+                        totalSubAgentMarkup +=
+                            markup * selectedActivities[i]?.infantCount;
+                        infantPrice += markup;
                     }
 
-                    if (selectedActivities[i]?.transferType === "shared") {
-                        if (
-                            activity.isSharedTransferAvailable === false ||
-                            !activity.sharedTransferPrice ||
-                            !activity.sharedTransferCost
-                        ) {
-                            return sendErrorResponse(
-                                res,
-                                400,
-                                "this activity doesn't have a shared transfer option"
-                            );
-                        }
-                        let sharedTransferPrice = activity.sharedTransferPrice;
-
-                        price += sharedTransferPrice * totalPax;
-                        totalPurchaseCost +=
-                            activity?.sharedTransferCost * totalPax;
-                    } else if (
-                        selectedActivities[i]?.transferType === "private"
-                    ) {
-                        if (
-                            activity.isPrivateTransferAvailable === false ||
-                            !activity.privateTransfers ||
-                            activity.privateTransfers?.length < 1
-                        ) {
-                            return sendErrorResponse(
-                                res,
-                                400,
-                                "this activity doesn't have a private transfer option"
-                            );
-                        }
-
-                        const sortedPvtTransfers =
-                            activity.privateTransfers.sort(
-                                (a, b) => a.maxCapacity - b.maxCapacity
-                            );
-
-                        let tempPax = totalPax;
-                        while (tempPax > 0) {
-                            for (
-                                let j = 0;
-                                j < sortedPvtTransfers.length;
-                                j++
-                            ) {
-                                if (
-                                    totalPax <=
-                                        sortedPvtTransfers[i].maxCapacity ||
-                                    j === sortedPvtTransfers.length - 1
-                                ) {
-                                    let currentPax =
-                                        tempPax >
-                                        sortedPvtTransfers[i].maxCapacity
-                                            ? sortedPvtTransfers[i].maxCapacity
-                                            : tempPax;
-                                    let pvtTransferPrice =
-                                        sortedPvtTransfers[i].price;
-                                    let pvtTransferCost =
-                                        sortedPvtTransfers[i].cost;
-
-                                    price += pvtTransferPrice * currentPax;
-                                    totalPurchaseCost +=
-                                        pvtTransferCost * currentPax;
-                                    tempPax -= currentPax;
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    return sendErrorResponse(
-                        res,
-                        500,
-                        "invalid activity type, please try again"
-                    );
+                    price += infantPrice * selectedActivities[i]?.infantCount;
                 }
 
                 let isExpiry = false;
@@ -638,8 +371,7 @@ module.exports = {
                 });
 
                 selectedActivities[i].amount = price;
-                selectedActivities[i].purchaseCost = totalPurchaseCost;
-                selectedActivities[i].profit = 0;
+                selectedActivities[i].offerAmount = 0;
                 selectedActivities[i].status = "pending";
                 selectedActivities[i].bookingType = attraction.bookingType;
                 selectedActivities[i].resellerMarkup = totalResellerMarkup;
@@ -664,6 +396,7 @@ module.exports = {
             const attractionOrder = new B2BAttractionOrder({
                 activities: selectedActivities,
                 totalAmount,
+                totalOffer,
                 reseller: req.reseller?._id,
                 country,
                 name,
@@ -896,12 +629,20 @@ module.exports = {
                     attractionOrder.activities[i].infantTickets = infantTickets;
                     attractionOrder.activities[i].status = "confirmed";
                 } else {
+                    totalPurchaseCost =
+                        activity.adultCost *
+                            attractionOrder.activities[i].adultsCount +
+                        (activity.childCost *
+                            attractionOrder.activities[i].childrenCount || 0) +
+                        (activity.infantCost *
+                            attractionOrder.activities[i].childrenCount || 0);
                     attractionOrder.activities[i].status = "booked";
                 }
-                attractionOrder.activities[i].purchaseCost += totalPurchaseCost;
+                attractionOrder.activities[i].totalPurchaseCost =
+                    totalPurchaseCost;
                 attractionOrder.activities[i].profit =
                     attractionOrder.activities[i].amount -
-                    (attractionOrder.activities[i].purchaseCost +
+                    (attractionOrder.activities[i].totalPurchaseCost +
                         (attractionOrder.activities[i].resellerMarkup || 0) +
                         (attractionOrder.activities[i].subAgentMarkup || 0));
             }
@@ -936,6 +677,7 @@ module.exports = {
                 }
             }
 
+            console.log(attractionOrder, "attractionOrder");
             sendAttractionOrderEmail(req.reseller.email, attractionOrder);
             sendAttractionOrderAdminEmail(attractionOrder);
 
@@ -1256,3 +998,644 @@ module.exports = {
         }
     },
 };
+
+
+
+// createAttractionOrder: async (req, res) => {
+//     try {
+//         const { selectedActivities, country, name, email, phoneNumber } =
+//             req.body;
+
+//         const { _, error } = b2bAttractionOrderSchema.validate(req.body);
+//         if (error) {
+//             return sendErrorResponse(res, 400, error.details[0].message);
+//         }
+
+//         if (!isValidObjectId(country)) {
+//             return sendErrorResponse(res, 400, "invalid country id");
+//         }
+
+//         const countryDetail = await Country.findOne({
+//             isDeleted: false,
+//             _id: country,
+//         });
+//         if (!countryDetail) {
+//             return sendErrorResponse(res, 404, "country not found");
+//         }
+
+//         let totalAmount = 0;
+//         let totalOffer = 0;
+//         for (let i = 0; i < selectedActivities?.length; i++) {
+//             if (!isValidObjectId(selectedActivities[i]?.activity)) {
+//                 return sendErrorResponse(res, 400, "Invalid activity id");
+//             }
+
+//             const activity = await AttractionActivity.findOne({
+//                 _id: selectedActivities[i]?.activity,
+//                 isDeleted: false,
+//             });
+
+//             if (!activity) {
+//                 return sendErrorResponse(res, 400, "Activity not found!");
+//             }
+
+//             const attraction = await Attraction.findOne({
+//                 _id: activity.attraction,
+//                 isDeleted: false,
+//                 isActive: true,
+//             });
+//             if (!attraction) {
+//                 return sendErrorResponse(res, 500, "attraction not found!");
+//             }
+
+//             if (
+//                 new Date(selectedActivities[i]?.date) <
+//                 new Date(new Date().setDate(new Date().getDate() + 2))
+//             ) {
+//                 return sendErrorResponse(
+//                     res,
+//                     400,
+//                     `"selectedActivities[${i}].date" must be a valid date`
+//                 );
+//             }
+
+//             if (
+//                 attraction.isCustomDate === true &&
+//                 (new Date(selectedActivities[i]?.date) <
+//                     new Date(attraction?.startDate) ||
+//                     new Date(selectedActivities[i]?.date) >
+//                         new Date(attraction?.endDate))
+//             ) {
+//                 return sendErrorResponse(
+//                     res,
+//                     400,
+//                     `${
+//                         activity?.name
+//                     } is not avaialble on your date. Please select a date between ${new Date(
+//                         attraction?.startDate
+//                     )?.toDateString()} and ${new Date(
+//                         attraction?.endDate
+//                     )?.toDateString()} `
+//                 );
+//             }
+
+//             const selectedDay =
+//                 dayNames[new Date(selectedActivities[i]?.date).getDay()];
+
+//             const objIndex = attraction.availability?.findIndex((item) => {
+//                 return (
+//                     item?.day?.toLowerCase() === selectedDay?.toLowerCase()
+//                 );
+//             });
+
+//             if (
+//                 objIndex === -1 ||
+//                 attraction.availability[objIndex]?.isEnabled === false
+//             ) {
+//                 return sendErrorResponse(
+//                     res,
+//                     400,
+//                     `sorry, ${activity?.name} is off on ${selectedDay}`
+//                 );
+//             }
+
+//             for (let j = 0; j < attraction.offDates?.length; j++) {
+//                 const { from, to } = attraction.offDates[j];
+//                 if (
+//                     new Date(selectedActivities[i]?.date) >=
+//                         new Date(from) &&
+//                     new Date(selectedActivities[i]?.date) <= new Date(to)
+//                 ) {
+//                     return sendErrorResponse(
+//                         res,
+//                         400,
+//                         `${activity?.name} is off between ${new Date(
+//                             from
+//                         )?.toDateString()} and ${new Date(
+//                             to
+//                         )?.toDateString()} `
+//                     );
+//                 }
+//             }
+
+//             // date validation
+//             // if ticket and transfer validation
+//             // ticket availability check
+//             // if not ticket then check only transfer or not
+//             // only transfer then check transfer available
+//             // not only transfer do that
+
+//             let price = 0;
+//             let totalResellerMarkup = 0;
+//             let totalSubAgentMarkup = 0;
+//             let markups = [];
+//             let resellerToSubAgentMarkup;
+//             let resellerToClientMarkup;
+//             let totalPurchaseCost = 0;
+//             let totalPax =
+//                 (Number(selectedActivities[i]?.adultsCount) || 0) +
+//                 (Number(selectedActivities[i]?.childrenCount) || 0);
+//             if (req.reseller.role === "sub-agent") {
+//                 resellerToSubAgentMarkup =
+//                     await B2BSubAgentAttractionMarkup.findOne({
+//                         resellerId: req.reseller?.referredBy,
+//                         attraction: activity?.attraction,
+//                     });
+//             }
+//             resellerToClientMarkup =
+//                 await B2BClientAttractionMarkup.findOne({
+//                     resellerId: req.reseller?._id,
+//                     attraction: activity?.attraction,
+//                 });
+
+//             if (
+//                 attraction.bookingType === "ticket" &&
+//                 activity.activityType === "transfer"
+//             ) {
+//                 return sendErrorResponse(
+//                     res,
+//                     400,
+//                     "something went wrong in our end. please try again"
+//                 );
+//             }
+
+//             if (activity?.activityType === "transfer") {
+//                 if (selectedActivities[i]?.transferType === "without") {
+//                     return sendErrorResponse(
+//                         res,
+//                         400,
+//                         "please select a transfer option."
+//                     );
+//                 } else if (
+//                     selectedActivities[i]?.transferType === "shared"
+//                 ) {
+//                     if (
+//                         activity.isSharedTransferAvailable === false ||
+//                         !activity.sharedTransferPrice ||
+//                         !activity.sharedTransferCost
+//                     ) {
+//                         return sendErrorResponse(
+//                             res,
+//                             400,
+//                             "this activity doesn't have a shared transfer option"
+//                         );
+//                     }
+//                     let sharedTransferPrice = activity.sharedTransferPrice;
+//                     if (resellerToSubAgentMarkup) {
+//                         let markup = 0;
+//                         if (
+//                             resellerToSubAgentMarkup.markupType === "flat"
+//                         ) {
+//                             markup = resellerToSubAgentMarkup.markup;
+//                         } else {
+//                             markup =
+//                                 (resellerToSubAgentMarkup.markup *
+//                                     sharedTransferPrice) /
+//                                 100;
+//                         }
+//                         totalResellerMarkup += markup * totalPax;
+//                         sharedTransferPrice += markup;
+//                     }
+
+//                     if (resellerToClientMarkup) {
+//                         let markup = 0;
+//                         if (resellerToClientMarkup.markupType === "flat") {
+//                             markup = resellerToClientMarkup.markup;
+//                         } else {
+//                             markup =
+//                                 (resellerToClientMarkup.markup *
+//                                     sharedTransferPrice) /
+//                                 100;
+//                         }
+//                         totalSubAgentMarkup += markup * totalPax;
+//                         sharedTransferPrice += markup;
+//                     }
+
+//                     price += sharedTransferPrice * totalPax;
+//                     totalPurchaseCost +=
+//                         activity?.sharedTransferCost * totalPax;
+//                 } else if (
+//                     selectedActivities[i]?.transferType === "private"
+//                 ) {
+//                     if (
+//                         activity.isPrivateTransferAvailable === false ||
+//                         !activity.privateTransfers ||
+//                         activity.privateTransfers?.length < 1
+//                     ) {
+//                         return sendErrorResponse(
+//                             res,
+//                             400,
+//                             "this activity doesn't have a private transfer option"
+//                         );
+//                     }
+
+//                     const sortedPvtTransfers =
+//                         activity.privateTransfers.sort(
+//                             (a, b) => a.maxCapacity - b.maxCapacity
+//                         );
+
+//                     let tempPax = totalPax;
+//                     while (tempPax > 0) {
+//                         for (
+//                             let j = 0;
+//                             j < sortedPvtTransfers.length;
+//                             j++
+//                         ) {
+//                             if (
+//                                 totalPax <=
+//                                     sortedPvtTransfers[i].maxCapacity ||
+//                                 j === sortedPvtTransfers.length - 1
+//                             ) {
+//                                 let currentPax =
+//                                     tempPax >
+//                                     sortedPvtTransfers[i].maxCapacity
+//                                         ? sortedPvtTransfers[i].maxCapacity
+//                                         : tempPax;
+//                                 let pvtTransferPrice =
+//                                     sortedPvtTransfers[i].price;
+//                                 let pvtTransferCost =
+//                                     sortedPvtTransfers[i].cost;
+//                                 if (resellerToSubAgentMarkup) {
+//                                     let markup = 0;
+//                                     if (
+//                                         resellerToSubAgentMarkup.markupType ===
+//                                         "flat"
+//                                     ) {
+//                                         markup =
+//                                             resellerToSubAgentMarkup.markup;
+//                                     } else {
+//                                         markup =
+//                                             (resellerToSubAgentMarkup.markup *
+//                                                 pvtTransferPrice) /
+//                                             100;
+//                                     }
+//                                     totalResellerMarkup +=
+//                                         markup * currentPax;
+//                                     pvtTransferPrice += markup;
+//                                 }
+
+//                                 if (resellerToClientMarkup) {
+//                                     let markup = 0;
+//                                     if (
+//                                         resellerToClientMarkup.markupType ===
+//                                         "flat"
+//                                     ) {
+//                                         markup =
+//                                             resellerToClientMarkup.markup;
+//                                     } else {
+//                                         markup =
+//                                             (resellerToClientMarkup.markup *
+//                                                 pvtTransferPrice) /
+//                                             100;
+//                                     }
+//                                     totalSubAgentMarkup +=
+//                                         markup * currentPax;
+//                                     pvtTransferPrice += markup;
+//                                 }
+
+//                                 price += pvtTransferPrice * currentPax;
+//                                 totalPurchaseCost +=
+//                                     pvtTransferCost * currentPax;
+//                                 tempPax -= currentPax;
+//                             }
+//                         }
+//                     }
+//                 } else {
+//                     return sendErrorResponse(
+//                         res,
+//                         400,
+//                         "please select a valid transfer option."
+//                     );
+//                 }
+//             } else if (activity?.activityType === "normal") {
+//                 if (attraction.bookingType === "ticket") {
+//                     let adultTicketError = false;
+//                     let childTicketError = false;
+//                     const adultTickets = await AttractionTicket.find({
+//                         activity: activity._id,
+//                         status: "ok",
+//                         ticketFor: "adult",
+//                         $or: [
+//                             {
+//                                 validity: true,
+//                                 validTill: {
+//                                     $gte: new Date(
+//                                         selectedActivities[i]?.date
+//                                     ).toISOString(),
+//                                 },
+//                             },
+//                             { validity: false },
+//                         ],
+//                     }).count();
+//                     const childrenTickets = await AttractionTicket.find({
+//                         activity: activity._id,
+//                         status: "ok",
+//                         ticketFor: "child",
+//                         $or: [
+//                             {
+//                                 validity: true,
+//                                 validTill: {
+//                                     $gte: new Date(
+//                                         selectedActivities[i]?.date
+//                                     ).toISOString(),
+//                                 },
+//                             },
+//                             { validity: false },
+//                         ],
+//                     }).count();
+
+//                     if (adultTickets < selectedActivities[i]?.adultsCount) {
+//                         adultTicketError = true;
+//                     }
+
+//                     if (
+//                         childrenTickets <
+//                         selectedActivities[i]?.childrenCount
+//                     ) {
+//                         childTicketError = true;
+//                     }
+
+//                     if (adultTicketError || childTicketError) {
+//                         return sendErrorResponse(
+//                             res,
+//                             500,
+//                             `${adultTicketError ? "Adult Tickets" : ""}${
+//                                 adultTicketError && childTicketError
+//                                     ? " and "
+//                                     : ""
+//                             }${
+//                                 childTicketError ? "Child Tickets" : ""
+//                             } Sold Out`
+//                         );
+//                     }
+//                 }
+
+//                 if (Number(selectedActivities[i]?.adultsCount) > 0) {
+//                     if (!activity?.adultPrice) {
+//                         return sendErrorResponse(
+//                             res,
+//                             500,
+//                             "sorry, something went wrong with our end. please try again later"
+//                         );
+//                     }
+//                     let adultPrice = activity.adultPrice;
+//                     if (resellerToSubAgentMarkup) {
+//                         let markup = 0;
+//                         if (
+//                             resellerToSubAgentMarkup.markupType === "flat"
+//                         ) {
+//                             markup = resellerToSubAgentMarkup.markup;
+//                         } else {
+//                             markup =
+//                                 (resellerToSubAgentMarkup.markup *
+//                                     activity.adultPrice) /
+//                                 100;
+//                         }
+
+//                         totalResellerMarkup +=
+//                             markup * selectedActivities[i]?.adultsCount;
+//                         adultPrice += markup;
+//                     }
+
+//                     if (resellerToClientMarkup) {
+//                         let markup = 0;
+//                         if (resellerToClientMarkup.markupType === "flat") {
+//                             markup = resellerToClientMarkup.markup;
+//                         } else {
+//                             markup =
+//                                 (resellerToClientMarkup.markup *
+//                                     adultPrice) /
+//                                 100;
+//                         }
+//                         totalSubAgentMarkup +=
+//                             markup * selectedActivities[i]?.adultsCount;
+//                         adultPrice += markup;
+//                     }
+
+//                     price +=
+//                         adultPrice * selectedActivities[i]?.adultsCount;
+//                 }
+
+//                 if (Number(selectedActivities[i]?.childrenCount) > 0) {
+//                     if (!activity.childPrice) {
+//                         return sendErrorResponse(
+//                             res,
+//                             400,
+//                             "sorry, something went wrong with our end. please try again later"
+//                         );
+//                     }
+//                     let childPrice = activity.childPrice;
+//                     if (resellerToSubAgentMarkup) {
+//                         let markup = 0;
+//                         if (
+//                             resellerToSubAgentMarkup.markupType === "flat"
+//                         ) {
+//                             markup = resellerToSubAgentMarkup.markup;
+//                         } else {
+//                             markup =
+//                                 (resellerToSubAgentMarkup.markup *
+//                                     activity?.childPrice) /
+//                                 100;
+//                         }
+//                         totalResellerMarkup +=
+//                             markup * selectedActivities[i]?.childrenCount;
+//                         childPrice += markup;
+//                     }
+
+//                     if (resellerToClientMarkup) {
+//                         let markup = 0;
+//                         if (resellerToClientMarkup.markupType === "flat") {
+//                             markup = resellerToClientMarkup.markup;
+//                         } else {
+//                             markup =
+//                                 (resellerToClientMarkup.markup *
+//                                     childPrice) /
+//                                 100;
+//                         }
+//                         totalSubAgentMarkup +=
+//                             markup * selectedActivities[i]?.childrenCount;
+//                         childPrice += markup;
+//                     }
+
+//                     price +=
+//                         childPrice * selectedActivities[i]?.childrenCount;
+//                 }
+
+//                 if (
+//                     Number(selectedActivities[i]?.infantCount) > 0 &&
+//                     activity.infantPrice > 0
+//                 ) {
+//                     let infantPrice = activity.infantPrice;
+//                     if (resellerToSubAgentMarkup) {
+//                         let markup = 0;
+//                         if (
+//                             resellerToSubAgentMarkup.markupType === "flat"
+//                         ) {
+//                             markup = resellerToSubAgentMarkup.markup;
+//                         } else {
+//                             markup =
+//                                 (resellerToSubAgentMarkup.markup *
+//                                     selectedActivities[i]?.infantPrice) /
+//                                 100;
+//                         }
+//                         totalResellerMarkup +=
+//                             markup * selectedActivities[i]?.infantCount;
+//                         infantPrice += markup;
+//                     }
+
+//                     if (resellerToClientMarkup) {
+//                         let markup = 0;
+//                         if (resellerToClientMarkup.markupType === "flat") {
+//                             markup = resellerToClientMarkup.markup;
+//                         } else {
+//                             markup =
+//                                 (resellerToClientMarkup.markup *
+//                                     infantPrice) /
+//                                 100;
+//                         }
+//                         totalSubAgentMarkup +=
+//                             markup * selectedActivities[i]?.infantCount;
+//                         infantPrice += markup;
+//                     }
+
+//                     price +=
+//                         infantPrice * selectedActivities[i]?.infantCount;
+//                 }
+
+//                 if (selectedActivities[i]?.transferType === "shared") {
+//                     if (
+//                         activity.isSharedTransferAvailable === false ||
+//                         !activity.sharedTransferPrice ||
+//                         !activity.sharedTransferCost
+//                     ) {
+//                         return sendErrorResponse(
+//                             res,
+//                             400,
+//                             "this activity doesn't have a shared transfer option"
+//                         );
+//                     }
+//                     let sharedTransferPrice = activity.sharedTransferPrice;
+
+//                     price += sharedTransferPrice * totalPax;
+//                     totalPurchaseCost +=
+//                         activity?.sharedTransferCost * totalPax;
+//                 } else if (
+//                     selectedActivities[i]?.transferType === "private"
+//                 ) {
+//                     if (
+//                         activity.isPrivateTransferAvailable === false ||
+//                         !activity.privateTransfers ||
+//                         activity.privateTransfers?.length < 1
+//                     ) {
+//                         return sendErrorResponse(
+//                             res,
+//                             400,
+//                             "this activity doesn't have a private transfer option"
+//                         );
+//                     }
+
+//                     const sortedPvtTransfers =
+//                         activity.privateTransfers.sort(
+//                             (a, b) => a.maxCapacity - b.maxCapacity
+//                         );
+
+//                     let tempPax = totalPax;
+//                     while (tempPax > 0) {
+//                         for (
+//                             let j = 0;
+//                             j < sortedPvtTransfers.length;
+//                             j++
+//                         ) {
+//                             if (
+//                                 totalPax <=
+//                                     sortedPvtTransfers[i].maxCapacity ||
+//                                 j === sortedPvtTransfers.length - 1
+//                             ) {
+//                                 let currentPax =
+//                                     tempPax >
+//                                     sortedPvtTransfers[i].maxCapacity
+//                                         ? sortedPvtTransfers[i].maxCapacity
+//                                         : tempPax;
+//                                 let pvtTransferPrice =
+//                                     sortedPvtTransfers[i].price;
+//                                 let pvtTransferCost =
+//                                     sortedPvtTransfers[i].cost;
+
+//                                 price += pvtTransferPrice * currentPax;
+//                                 totalPurchaseCost +=
+//                                     pvtTransferCost * currentPax;
+//                                 tempPax -= currentPax;
+//                             }
+//                         }
+//                     }
+//                 }
+//             } else {
+//                 return sendErrorResponse(
+//                     res,
+//                     500,
+//                     "invalid activity type, please try again"
+//                 );
+//             }
+
+//             let isExpiry = false;
+//             if (attraction.cancellationType !== "nonRefundable") {
+//                 isExpiry = true;
+//             }
+
+//             if (req.reseller.role === "sub-agent") {
+//                 markups.push({
+//                     to: req.reseller?.referredBy,
+//                     amount: totalResellerMarkup,
+//                     isExpiry,
+//                 });
+//             }
+//             markups.push({
+//                 to: req.reseller?._id,
+//                 amount: totalSubAgentMarkup,
+//                 isExpiry,
+//             });
+
+//             selectedActivities[i].amount = price;
+//             selectedActivities[i].purchaseCost = totalPurchaseCost;
+//             selectedActivities[i].profit = 0;
+//             selectedActivities[i].status = "pending";
+//             selectedActivities[i].bookingType = attraction.bookingType;
+//             selectedActivities[i].resellerMarkup = totalResellerMarkup;
+//             selectedActivities[i].subAgentMarkup = totalSubAgentMarkup;
+//             selectedActivities[i].markups = markups;
+//             selectedActivities[i].attraction = attraction?._id;
+
+//             totalAmount += price;
+//         }
+
+//         const otp = await sendMobileOtp(
+//             countryDetail.phonecode,
+//             phoneNumber
+//         );
+
+//         sendAttractionOrderOtp(
+//             req.reseller.email,
+//             "Attraction Order Otp Verifiaction",
+//             otp
+//         );
+
+//         const attractionOrder = new B2BAttractionOrder({
+//             activities: selectedActivities,
+//             totalAmount,
+//             reseller: req.reseller?._id,
+//             country,
+//             name,
+//             email,
+//             phoneNumber,
+//             orderStatus: "pending",
+//             otp,
+//             referenceNumber: generateUniqueString("B2BATO"),
+//             orderedBy: req.reseller.role,
+//         });
+//         await attractionOrder.save();
+
+//         res.status(200).json(attractionOrder);
+//     } catch (err) {
+//         sendErrorResponse(res, 500, err);
+//     }
+// },
