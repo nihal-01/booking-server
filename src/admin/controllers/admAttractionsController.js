@@ -164,6 +164,7 @@ module.exports = {
       const { id } = req.params;
       const {
         title,
+        logo,
         category,
         isActive,
         mapLink,
@@ -222,10 +223,20 @@ module.exports = {
         parsedOldImages = JSON.parse(oldImages);
       }
 
-      let newImages = [...parsedOldImages];
-      for (let i = 0; i < req.files?.length; i++) {
-        const img = "/" + req.files[i]?.path?.replace(/\\/g, "/");
-        newImages.push(img);
+      let images = [...parsedOldImages];
+
+      if (req.files["images"]) {
+        let image = req.files["images"];
+        for (let i = 0; i < image.length; i++) {
+          const img = "/" + image[i]?.path?.replace(/\\/g, "/");
+          images.push(img);
+        }
+      }
+
+      let oldLogo = logo;
+      if (req.files["logo"]) {
+        let logos = req.files["logo"];
+        oldLogo = "/" + logos[0]?.path?.replace(/\\/g, "/");
       }
 
       let parsedSections;
@@ -252,6 +263,7 @@ module.exports = {
         { _id: id, isDeleted: false },
         {
           title,
+          logo: oldLogo,
           bookingType,
           category,
           mapLink,
@@ -260,7 +272,7 @@ module.exports = {
           offerAmountType,
           offerAmount,
           youtubeLink,
-          images: newImages,
+          images: images,
           sections: parsedSections,
           startDate,
           isCustomDate,

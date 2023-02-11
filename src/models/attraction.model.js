@@ -9,7 +9,6 @@ const attractionSchema = new Schema(
     },
     logo: {
       type: String,
-      required: true,
     },
     title: {
       type: String,

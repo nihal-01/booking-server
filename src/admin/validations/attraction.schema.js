@@ -2,6 +2,7 @@ const Joi = require("joi");
 
 const attractionSchema = Joi.object({
     title: Joi.string().required(),
+    logo : Joi.string().allow("", null),
     category: Joi.string().required(),
     bookingType: Joi.string()
         .allow(...["booking", "ticket"])
