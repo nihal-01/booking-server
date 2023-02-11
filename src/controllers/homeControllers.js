@@ -52,6 +52,7 @@ module.exports = {
                                                     ],
                                                 },
                                                 { $eq: ["$isDeleted", false] },
+                                                { $eq: ["$isActive", true] },
                                             ],
                                         },
                                     },
@@ -210,6 +211,7 @@ module.exports = {
                                                     ],
                                                 },
                                                 { $eq: ["$isDeleted", false] },
+                                                { $eq: ["$isActive", true] },
                                             ],
                                         },
                                     },
@@ -368,8 +370,6 @@ module.exports = {
                 .lean();
 
             res.status(200).json({ countries, destinations, currencies });
-
-            
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

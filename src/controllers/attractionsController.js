@@ -17,6 +17,7 @@ module.exports = {
                     $match: {
                         _id: Types.ObjectId(id),
                         isDeleted: false,
+                        isActive: true,
                     },
                 },
                 {
@@ -273,7 +274,7 @@ module.exports = {
                 isOffer,
             } = req.query;
 
-            const filters1 = { isDeleted: false };
+            const filters1 = { isDeleted: false, isActive: true };
             const filters2 = {};
 
             if (category && category !== "") {

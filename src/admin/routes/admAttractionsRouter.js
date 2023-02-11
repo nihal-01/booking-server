@@ -16,13 +16,14 @@ const {
     deleteActivity,
     getSingleAttractionBasicData,
     deleteAttractionReview,
+    updateAttractionIsActiveOrNot,
 } = require("../controllers/admAttractionsController");
-
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, "public/images/attractions");
     },
+    
     filename: function (req, file, cb) {
         const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
         cb(
@@ -75,6 +76,7 @@ router.post("/activities/add", addAttractionActivity);
 
 router.patch("/update/:id", upload, updateAttraction);
 router.patch("/activities/update/:activityId", updateActivity);
+router.patch("/update/:id/is-active", updateAttractionIsActiveOrNot);
 
 router.get("/all", getAllAttractions);
 router.get("/initial-data", getInitialData);
