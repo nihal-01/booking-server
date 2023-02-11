@@ -96,7 +96,7 @@ module.exports = {
       }
 
       let logos = req.files["logo"];
-      const logo = "/" + logos[i]?.path?.replace(/\\/g, "/");
+      const logo = "/" + logos[0]?.path?.replace(/\\/g, "/");
 
       let parsedSections;
       if (sections) {
@@ -117,6 +117,8 @@ module.exports = {
       if (availability) {
         parsedAvailability = JSON.parse(availability);
       }
+
+      console.log(logo, "logoog");
 
       const newAttraction = new Attraction({
         title,
