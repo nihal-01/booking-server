@@ -13,6 +13,7 @@ module.exports= {
           const { skip = 0, limit = 10, status ,referenceNumber ,orderedBy } = req.query;
           
           let query = { };
+          let filter2 
 
           console.log(orderedBy ,"orderedBy")
            
@@ -22,7 +23,7 @@ module.exports= {
           }
           
           if (status && status !== "all") {
-            query.status = status;
+            filter2 = status;
           }
 
           if(orderedBy == "b2b"){
@@ -35,70 +36,201 @@ module.exports= {
           console.log(query , "query")
           
           if(orderedBy == "b2c"){
-            const visaApplications = await B2CVisaApplication.find(query)
-            .populate({
-              path: 'visaType',
-              populate: {
-                path: 'visa',
-                populate : {
-                  path : 'country'
-                }
+            // const visaApplications = await B2CVisaApplication.find(query)
+            // .populate({
+            //   path: 'visaType',
+            //   populate: {
+            //     path: 'visa',
+            //     populate : {
+            //       path : 'country'
+            //     }
   
+            //   }
+            // })
+            //   .sort({
+            //     createdAt: -1,
+            //   })
+            //   .limit(limit)
+            //   .skip(limit * skip);
+
+             const visaApplications = await B2CVisaApplication.aggregate([
+              {
+                $match: query
+              },
+              {
+                $lookup: {
+                  from: "users",
+                  localField: "user",
+                  foreignField: "_id",
+                  as: "user",
+                },
+              },
+              {
+                $lookup: {
+                  from: "visatypes",
+                  localField: "visaType",
+                  foreignField: "_id",
+                  as: "visaType",
+                },
+              },
+              {
+                $lookup: {
+                  from: "visas",
+                  localField: "visaType.visa",
+                  foreignField: "_id",
+                  as: "visa",
+                },
+              },
+              {
+                $set: {
+                  user : {$arrayElemAt: ["$user", 0] },
+                  visaType: { $arrayElemAt: ["$visaType.visaName", 0] },
+                  visa: { $arrayElemAt: ["$visa.name", 0] },
+    
+                },
+              },
+              {
+                $unwind : "$travellers"
+              },
+              {
+                $match: {
+                  $expr: {
+                    $eq: [
+                      "$travellers.isStatus",
+                      {
+                        $ifNull: [filter2, "$travellers.isStatus"]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                $sort: {
+                  createdAt: -1,
+                }
+              },
+              {
+                $group: {
+                  _id: null,
+                  count: { $sum: 1 },
+                  visaApplications: { $push: "$$ROOT" }
+                }
+              },
+              {
+                $project: {
+                  _id: 0,
+                  count: 1,
+                  visaApplications: {
+                    $slice: [ "$visaApplications", Number(skip * limit), Number(limit) ]
+                  }
+                }
               }
-            })
-              .sort({
-                createdAt: -1,
-              })
-              .limit(limit)
-              .skip(limit * skip);
-      
+            ]);
+            
             if (!visaApplications) {
               return sendErrorResponse(res, 400, "VisaApplication Not Found ");
             }
       
-      
-            const totalVisaApplications = await VisaApplication.find(query).count();
-      
+           
+            console.log(visaApplications[0]?.visaApplications , "visaApplications")      
             res.status(200).json({
-              visaApplications,
+              visaApplications : visaApplications[0]?.visaApplications,
               skip: Number(skip),
               limit: Number(limit),
-              totalVisaApplications,
+              totalVisaApplications : visaApplications[0]?.count ,
             });
             }
 
           else{
 
             
-            const visaApplications = await VisaApplication.find(query)
-          .populate({
-            path: 'visaType',
-            populate: {
-              path: 'visa',
-              populate : {
-                path : 'country'
+            const visaApplications = await VisaApplication.aggregate([
+              {
+                $match: query
+              },
+              {
+                $lookup: {
+                  from: "resellers",
+                  localField: "reseller",
+                  foreignField: "_id",
+                  as: "reseller",
+                },
+              },
+              {
+                $lookup: {
+                  from: "visatypes",
+                  localField: "visaType",
+                  foreignField: "_id",
+                  as: "visaType",
+                },
+              },
+              {
+                $lookup: {
+                  from: "visas",
+                  localField: "visaType.visa",
+                  foreignField: "_id",
+                  as: "visa",
+                },
+              },
+              {
+                $set: {
+                  reseller : {$arrayElemAt: ["$reseller", 0] },
+                  visaType: { $arrayElemAt: ["$visaType.visaName", 0] },
+                  visa: { $arrayElemAt: ["$visa.name", 0] },
+    
+                },
+              },
+              {
+                $unwind : "$travellers"
+              },
+              {
+                $match: {
+                  $expr: {
+                    $eq: [
+                      "$travellers.isStatus",
+                      {
+                        $ifNull: [filter2, "$travellers.isStatus"]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                $sort: {
+                  createdAt: -1,
+                }
+              },
+              {
+                $group: {
+                  _id: null,
+                  count: { $sum: 1 },
+                  visaApplications: { $push: "$$ROOT" }
+                }
+              },
+              {
+                $project: {
+                  _id: 0,
+                  count: 1,
+                  visaApplications: {
+                    $slice: [ "$visaApplications", Number(skip * limit), Number(limit) ]
+                  }
+                }
               }
+            ]);
 
-            }
-          })
-            .sort({
-              createdAt: -1,
-            })
-            .limit(limit)
-            .skip(limit * skip);
+            console.log(visaApplications[0]?.visaApplications[0]  ,"visaApplications")
     
           if (!visaApplications) {
             return sendErrorResponse(res, 400, "VisaApplication Not Found ");
           }
     
     
-          const totalVisaApplications = await VisaApplication.find(query).count();
-    
+          console.log(visaApplications , "visaApplications")      
           res.status(200).json({
-            visaApplications,
+            visaApplications : visaApplications[0].visaApplications,
             skip: Number(skip),
             limit: Number(limit),
-            totalVisaApplications,
+            totalVisaApplications : visaApplications[0].count ,
           });
           }
 
@@ -112,7 +244,7 @@ module.exports= {
     
       listSingleVisaApplication: async (req, res) => {
         try {
-          const { id , orderedBy} = req.params;
+          const { id , orderedBy , travellerId} = req.params;
     
           if (!isValidObjectId(id)) {
             return sendErrorResponse(res, 400, "Invalid VisaApplication id");
@@ -129,24 +261,38 @@ module.exports= {
 
           if(orderedBy == "b2c"){
 
-            const visaApplication = await B2CVisaApplication.findOne(query).populate(
-              "user travellers.documents travellers.country"
-            ).populate({
-              path: 'visaType',
-              populate: {
-                path: 'visa',
-                populate : {
-                  path : 'country',
-                  select : "countryName"
-                }
+            // const visaApplication = await B2CVisaApplication.findOne(query).populate(
+            //   "user travellers.documents travellers.country"
+            // ).populate({
+            //   path: 'visaType',
+            //   populate: {
+            //     path: 'visa',
+            //     populate : {
+            //       path : 'country',
+            //       select : "countryName"
+            //     }
   
+            //   }
+            // })
+            const visaApplication = await B2CVisaApplication.findOne(
+              query,
+              { travellers: { $elemMatch: { _id: travellerId } } }
+          ).populate({
+            path: 'visaType',
+            populate: {
+              path: 'visa',
+              populate : {
+                path : 'country',
+                select : "countryName"
               }
-            })
+
+            }
+          }).populate("user referenceNumber createdAt totalAmount travellers.documents travellers.country")
       
             if (!visaApplication) {
               return sendErrorResponse(res, 400, "VisaApplication Not Found ");
             }
-      
+          
             res.status(200).json(visaApplication);
           }
              
@@ -155,24 +301,31 @@ module.exports= {
           else{
 
          
-            const visaApplication = await VisaApplication.findOne(query).populate(
-              "reseller travellers.documents travellers.country"
-            ).populate({
-              path: 'visaType',
-              populate: {
-                path: 'visa',
-                populate : {
-                  path : 'country',
-                  select : "countryName"
-                }
-  
+            // const visaApplication = await VisaApplication.findOne(query).populate(
+            //   "reseller travellers.documents travellers.country"
+            // )
+
+            const visaApplication = await VisaApplication.findOne(
+              query,
+              { travellers: { $elemMatch: { _id: travellerId } } }
+          ).populate({
+            path: 'visaType',
+            populate: {
+              path: 'visa',
+              populate : {
+                path : 'country',
+                select : "countryName"
               }
-            })
+
+            }
+          }).populate("reseller referenceNumber createdAt totalAmount travellers.documents travellers.country")
       
             if (!visaApplication) {
               return sendErrorResponse(res, 400, "VisaApplication Not Found ");
             }
-      
+             
+
+            console.log(visaApplication ,"visaApplication")
             res.status(200).json(visaApplication);
           
           }
@@ -193,7 +346,7 @@ module.exports= {
           const {orderedBy} = req.body
           
 
-          let query = { _id: id , status : "submitted" };
+          let query = { _id: id };
 
           if(orderedBy == "b2b"){
             query.orderedBy = "reseller"
@@ -247,18 +400,15 @@ module.exports= {
               return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
             }
   
-            if (visaApplication.isPayed == false) {
-              return sendErrorResponse(res, 400, "VisaApplication Amount Payed ");
+            if (!visaApplication.status == "payed") {
+              return sendErrorResponse(res, 400, "VisaApplication Amount Not Payed ");
             }
             
-            if(visaApplication.status == "approved"){
-              return sendErrorResponse(res, 400, "VisaApplication Already Approved");
-  
-            }
+           
   
             console.log(visa , "visaaa")
   
-            let upload = await B2CVisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
+            let upload = await B2CVisaApplication.updateOne({  _id: id ,"travellers._id": travellerId }, 
             { $set: { "travellers.$.visaUpload": visa  , "travellers.$.isStatus" : "approved" }})
            
   
@@ -282,7 +432,7 @@ module.exports= {
           }else{
              
             
-
+            console.log(query , "query")
             const visaApplication = await VisaApplication.findOne(query).populate(
               "reseller travellers.documents travellers.country"
             ).populate({
@@ -301,18 +451,15 @@ module.exports= {
               return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
             }
   
-            if (visaApplication.isPayed == false) {
+            if (!visaApplication.status == "payed") {
               return sendErrorResponse(res, 400, "VisaApplication Amount Payed ");
             }
             
-            if(visaApplication.status == "approved"){
-              return sendErrorResponse(res, 400, "VisaApplication Already Approved");
-  
-            }
+           
   
             console.log(visa , "visaaa")
   
-            let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
+            let upload = await VisaApplication.updateOne({  _id: id ,   "travellers._id": travellerId }, 
             { $set: { "travellers.$.visaUpload": visa  , "travellers.$.isStatus" : "approved" }})
            
   
@@ -437,7 +584,7 @@ module.exports= {
           }
 
           if (orderedBy == 'b2b'){
-            let query = { _id: id , status : "submitted" };
+            let query = { _id: id };
 
           const visaApplication = await VisaApplication.findOne(query).populate(
             "reseller travellers.documents travellers.country"
@@ -458,16 +605,14 @@ module.exports= {
             return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
           }
 
-          if (visaApplication.isPayed == false) {
+          if (!visaApplication.status == "payed") {
             return sendErrorResponse(res, 400, "VisaApplication Amount Payed ");
           }
           
-          if (visaApplication.isDocumentUplaoded == false) {
-            return sendErrorResponse(res, 400, "VisaApplication Document Not Uploaded ");
-          }
+          
          
 
-          let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
+          let upload = await VisaApplication.updateOne({  _id: id ,  "travellers._id": travellerId }, 
           { $set: { "travellers.$.reason": reason  , "travellers.$.isStatus" : "rejected" } })
        
           console.log(upload)
@@ -483,7 +628,7 @@ module.exports= {
 
           }else{
 
-            let query = { _id: id , status : "submitted" };
+            let query = { _id: id };
 
           const visaApplication = await B2CVisaApplication.findOne(query).populate(
             "user travellers.documents travellers.country"
@@ -504,16 +649,14 @@ module.exports= {
             return sendErrorResponse(res, 400, "VisaApplication Not Found Or Not Submitted");
           }
 
-          if (visaApplication.isPayed == false) {
+          if (!visaApplication.status == "payed") {
             return sendErrorResponse(res, 400, "VisaApplication Amount Payed ");
           }
           
-          if (visaApplication.isDocumentUplaoded == false) {
-            return sendErrorResponse(res, 400, "VisaApplication Document Not Uploaded ");
-          }
+          
          
 
-          let upload = await VisaApplication.updateOne({  _id: id , status : "submitted" ,  "travellers._id": travellerId }, 
+          let upload = await VisaApplication.updateOne({  _id: id ,  "travellers._id": travellerId }, 
           { $set: { "travellers.$.reason": reason  , "travellers.$.isStatus" : "rejected"} })
        
           console.log(upload)

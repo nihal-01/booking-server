@@ -93,6 +93,21 @@ const visaApplicationSchema = new Schema(
                             required: true,
                         },
                     },
+                    profit : [
+                       {
+                        type: Number,
+                        required: true,
+                       }
+                    
+                    ]
+                   ,
+                   amount : [
+                    {
+                     type: Number,
+                     required: true,
+                    }
+                 
+                 ],
                     dateOfBirth: {
                         day: {
                             type: Number,
@@ -126,50 +141,33 @@ const visaApplicationSchema = new Schema(
                     },
                     isStatus: {
                         type: String,
-                      enum: ["initiated", "approved", "rejected"],
+                      enum: ["initiated","submitted" ,  "approved", "rejected" , "resubmitted" ],
                       default: "initiated",
 
                     },
                     visaUpload: {
                         type:String,
-                        required: function () {
-                            return this.isStatus=== "approved";
-                        },
+                       
                     },
                         reason: {
                         type:String,
-                        required: function () {
-                            return this.isStatus=== "rejected";
-                        },
+                        
                     },
                     
                     documents: {
                         type: Schema.Types.ObjectId,
                         ref: "VisaDocument",
-                        required: function () {
-                            return this.isStatus === "approved";
-                        },
-                    },
+                        
+                    }, 
+
                 },
             ],
         },
-        isPayed: {
-            type: Boolean,
-            required: true,
-            default: false,
-        },
-        isDocumentUplaoded: {
-            type: Boolean,
-            required: true,
-            default: false,
-        },
-        
-     
         status: {
             type: String,
             required: true,
             lowercase: true,
-            enum: ["initiated", "submitted", "cancelled"],
+            enum: ["initiated", "payed"],
             default: "initiated",
         },
         referenceNumber : {
