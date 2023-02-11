@@ -41,7 +41,7 @@ const upload = multer({
 
 
 router.get('/all' , listAllVisaApplication )
-router.get('/:orderedBy/single/:id' , listSingleVisaApplication )
+router.get('/:orderedBy/:id/single/:travellerId' , listSingleVisaApplication )
 router.patch("/:id/approve/:travellerId" , upload.single('pdfFile'),   approveVisaApplicationStatus)
 router.patch("/:id/reject/:travellerId" , cancelVisaApplicationStatus)
 

@@ -270,6 +270,11 @@ module.exports = {
 
       const otp = await sendMobileOtp(countryDetail.phonecode, contactNo);
 
+      const updatedTravellers = travellers.map((traveller) => {
+        traveller.amount.push(totalAmount / noOfTravellers);
+        return traveller;
+      });
+
       await sendVisaOrderOtp(req.reseller.email, "Visa Application Order Otp", otp);
 
       const newVisaApplication = new VisaApplication({
@@ -284,7 +289,7 @@ module.exports = {
         onwardDate,
         returnDate,
         noOfTravellers,
-        travellers,
+        travellers : updatedTravellers,
         otp,
         reseller: req.reseller?._id,
         orderedBy: req.reseller.role,
@@ -330,7 +335,7 @@ module.exports = {
       //     );
       // }
 
-      if (VisaApplicationOrder.isPayed === true) {
+      if (VisaApplicationOrder.status === "payed") {
         return sendErrorResponse(
           res,
           400,
@@ -379,11 +384,7 @@ module.exports = {
 
       transaction.status = "success";
       await transaction.save();
-      
-      console.log(reseller, "reseller")
-      sendWalletDeductMail(reseller , VisaApplicationOrder)
-      
-      VisaApplicationOrder.isPayed = true;
+
       await VisaApplicationOrder.save();
       
       
@@ -394,7 +395,7 @@ module.exports = {
         VisaApplicationOrder,
       });
     } catch (err) {
-      console.log(err ,"error")
+      console.log(err ,error)
       sendErrorResponse(res, 500, err);
     }
   },
@@ -420,7 +421,7 @@ module.exports = {
         return sendErrorResponse(res, 404, "Visa Application Not Found");
       }
 
-      if (visaApplication.isPayed === false) {
+      if (!visaApplication.status === "payed") {
         return sendErrorResponse(
           res,
           404,
@@ -510,8 +511,10 @@ module.exports = {
               }
 
               console.log(document, "document");
+              console.log("Calll" )
 
               visaApplication.travellers[i].documents = document._id;
+              visaApplication.travellers[i].isStatus = "submitted"
               resolve();
             });
           })
@@ -520,8 +523,8 @@ module.exports = {
 
       await Promise.all(promises);
 
-      visaApplication.isDocumentUplaoded = true;
-      visaApplication.status = "submitted";
+      // visaApplication.isDocumentUplaoded = true;
+      // visaApplication.status = "submitted";
 
       await sendApplicationEmail( req.reseller.email ,visaApplication);
       await sendAdminVisaApplicationEmail( visaApplication);
@@ -550,7 +553,8 @@ module.exports = {
       country,
       passportNo,
       contactNo,
-      email } = req.body
+      email,
+      status } = req.body
        
 
       if (!isValidObjectId(orderId)) {
@@ -597,7 +601,7 @@ module.exports = {
       if (!visaApplication) {
         return sendErrorResponse(res, 404, "Visa Application Not Found");
       }
-      if (visaApplication.isPayed === false) {
+      if (!visaApplication.status === "payed") {
         return sendErrorResponse(
           res,
           404,
@@ -706,7 +710,7 @@ module.exports = {
                 "travellers.$.passportNo" :  passportNo,
                 "travellers.$.contactNo" : contactNo,
                 "travellers.$.email" : email,
-                "travellers.$.isStatus" : "initiated" } }
+                "travellers.$.isStatus" : status } }
               );
 
               console.log(upload , "upload")
@@ -720,8 +724,6 @@ module.exports = {
 
       await Promise.all(promises);
 
-      visaApplication.isDocumentUplaoded = true;
-      visaApplication.status = "submitted";
       await visaApplication.save();
 
       res.status(200).json({success : "visa submitted " });

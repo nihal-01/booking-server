@@ -36,6 +36,21 @@ const storage = multer.diskStorage({
     },
 });
 
+// const upload = multer({
+//     limits: {
+//         fileSize: 20000000,
+//     },
+//     fileFilter: (req, file, cb) => {
+//         const allowed = [".jpg", ".jpeg", ".png", ".webp"];
+//         const ext = path.extname(file.originalname);
+//         if (!allowed.includes(ext)) {
+//             return cb(new Error("Please upload jpg, jpeg, webp, or png"));
+//         }
+//         cb(undefined, true);
+//     },
+//     storage: storage,
+// })
+
 const upload = multer({
     limits: {
         fileSize: 20000000,
@@ -49,12 +64,16 @@ const upload = multer({
         cb(undefined, true);
     },
     storage: storage,
-});
+}).fields([
+    { name: 'images', maxCount: 8 },
+    { name: 'logo', maxCount: 1 },
+   
+])
 
-router.post("/create", upload.array("images"), createNewAttraction);
+router.post("/create", upload, createNewAttraction);
 router.post("/activities/add", addAttractionActivity);
 
-router.patch("/update/:id", upload.array("images"), updateAttraction);
+router.patch("/update/:id", upload, updateAttraction);
 router.patch("/activities/update/:activityId", updateActivity);
 
 router.get("/all", getAllAttractions);

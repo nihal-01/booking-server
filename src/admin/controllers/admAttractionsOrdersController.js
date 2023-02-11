@@ -235,6 +235,7 @@ module.exports = {
                     $in: ["booked", "confirmed", "cancelled", "pending"],
                 },
             };
+            
             const filters2 = {};
 
             if (bookingType && bookingType != "") {

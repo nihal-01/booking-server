@@ -360,7 +360,6 @@ module.exports = {
         description,
         faqs,
         details,
-        keywords,
       } = req.body;
 
 
@@ -416,7 +415,6 @@ module.exports = {
           description,
           faqs: parsedFaqs,
           details: parsedDetails,
-          // keywords,
           sampleVisa,
         },
         { runValidators: true, new: true }

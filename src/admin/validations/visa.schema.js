@@ -77,7 +77,7 @@ const visaUpdateSchema = Joi.object({
     faqs: Joi.array()
         .min(1)
         .items({
-            _id: Joi.string().required(),
+            _id: Joi.string().allow("", null),
             question: Joi.string().required(),
             answer: Joi.string().required(),
         })
@@ -86,7 +86,7 @@ const visaUpdateSchema = Joi.object({
     details: Joi.array()
         .min(1)
         .items({
-            _id: Joi.string().required(),
+            _id: Joi.string().allow("", null),
             title: Joi.string().required(),
             body: Joi.string().required(),
         })
