@@ -767,4 +767,36 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+    updateAttractionIsActiveOrNot: async (req, res) => {
+        try {
+            const { isActive } = req.body;
+            const { id } = req.params;
+
+            if (!isValidObjectId) {
+                return sendErrorResponse(res, 400, "invalid attraction id");
+            }
+
+            const attraction = await Attraction.findOneAndUpdate(
+                { _id: id, isDeleted: false },
+                { isActive },
+                { runValidators: true }
+            );
+
+            if (!attraction) {
+                return sendErrorResponse(
+                    res,
+                    404,
+                    "attraction not found or deleted."
+                );
+            }
+
+            res.status(200).json({
+                message: "attraction's status updated successfully",
+                _id: id,
+                isActive,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };

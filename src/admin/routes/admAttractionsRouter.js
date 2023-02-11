@@ -3,38 +3,38 @@ const multer = require("multer");
 const path = require("path");
 
 const {
-    createNewAttraction,
-    addAttractionActivity,
-    getAllAttractions,
-    getInitialData,
-    getSingleAttraction,
-    updateAttraction,
-    deleteAttraction,
-    getSingleAttractionReviews,
-    getSingleActivity,
-    updateActivity,
-    deleteActivity,
-    getSingleAttractionBasicData,
-    deleteAttractionReview,
-    updateAttractionIsActiveOrNot,
+  createNewAttraction,
+  addAttractionActivity,
+  getAllAttractions,
+  getInitialData,
+  getSingleAttraction,
+  updateAttraction,
+  deleteAttraction,
+  getSingleAttractionReviews,
+  getSingleActivity,
+  updateActivity,
+  deleteActivity,
+  getSingleAttractionBasicData,
+  deleteAttractionReview,
+  updateAttractionIsActiveOrNot,
 } = require("../controllers/admAttractionsController");
 
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, "public/images/attractions");
-    },
-    
-    filename: function (req, file, cb) {
-        const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-        cb(
-            null,
-            file.fieldname +
-                "-" +
-                uniqueSuffix +
-                "." +
-                file.originalname.split(".")[1]
-        );
-    },
+  destination: function (req, file, cb) {
+    cb(null, "public/images/attractions");
+  },
+
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(
+      null,
+      file.fieldname +
+        "-" +
+        uniqueSuffix +
+        "." +
+        file.originalname.split(".")[1]
+    );
+  },
 });
 
 // const upload = multer({
@@ -53,23 +53,22 @@ const storage = multer.diskStorage({
 // })
 
 const upload = multer({
-    limits: {
-        fileSize: 20000000,
-    },
-    fileFilter: (req, file, cb) => {
-        const allowed = [".jpg", ".jpeg", ".png", ".webp"];
-        const ext = path.extname(file.originalname);
-        if (!allowed.includes(ext)) {
-            return cb(new Error("Please upload jpg, jpeg, webp, or png"));
-        }
-        cb(undefined, true);
-    },
-    storage: storage,
+  limits: {
+    fileSize: 20000000,
+  },
+  fileFilter: (req, file, cb) => {
+    const allowed = [".jpg", ".jpeg", ".png", ".webp"];
+    const ext = path.extname(file.originalname);
+    if (!allowed.includes(ext)) {
+      return cb(new Error("Please upload jpg, jpeg, webp, or png"));
+    }
+    cb(undefined, true);
+  },
+  storage: storage,
 }).fields([
-    { name: 'images', maxCount: 8 },
-    { name: 'logo', maxCount: 1 },
-   
-])
+  { name: "images", maxCount: 8 },
+  { name: "logo", maxCount: 1 },
+]);
 
 router.post("/create", upload, createNewAttraction);
 router.post("/activities/add", addAttractionActivity);
