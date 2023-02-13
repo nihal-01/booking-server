@@ -295,14 +295,14 @@ module.exports = {
         //   }
         // }
 
-        // console.log(ticketCount, ticketStatus, "ticketCheck");
-
-        // console.log(attraction[0], "attraction[0]");
         if (!attraction || attraction?.length < 1) {
           return sendErrorResponse(res, 404, "Attraction not found");
         }
-
         res.status(200).json(attraction[0]);
+
+       // res.status(200).json({attraction : attraction[0] , ticketStatus , ticketCount  });
+
+       
       } else {
         const attraction = await Attraction.aggregate([
           {
