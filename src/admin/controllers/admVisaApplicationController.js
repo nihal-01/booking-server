@@ -659,8 +659,71 @@ module.exports= {
           let upload = await VisaApplication.updateOne({  _id: id ,  "travellers._id": travellerId }, 
           { $set: { "travellers.$.reason": reason  , "travellers.$.isStatus" : "rejected"} })
        
-          console.log(upload)
+          let reseller = await Reseller.findById(visaApplication.reseller).populate("referredBy")
+  
+  
+          if(reseller.role == "subAgent" && visaApplication.subAgentMarkup > 0){
+               
+            const transaction = new B2BTransaction({
+              reseller: reseller?.referredBy,
+              transactionType: "markup",
+              status: "success",
+              paymentProcessor: "wallet",
+              amount: visaApplication.subAgentMarkup / visaApplication.noOfTravellers,
+              order: visaApplication._id,
+              orderItem: visaApplication.visaType,
+            });
 
+           
+            let wallet = await B2BWallet.updateOne({
+              reseller: reseller?.referredBy,
+            },
+            {
+              $inc: {
+                balance: visaApplication.subAgentMarkup
+              }
+            },
+            {
+              upsert: true
+            });
+
+            transaction.status = "success"
+
+           await transaction.save()
+
+
+          }
+          
+          if( visaApplication.resellerMarkup > 0 ){
+
+            const transaction = new B2BTransaction({
+              reseller: reseller?._id,
+              transactionType: "markup",
+              status: "success",
+              paymentProcessor: "wallet",
+              amount: visaApplication.resellerMarkup / visaApplication.noOfTravellers ,
+              order: visaApplication._id,
+              orderItem: visaApplication.visaType
+                      });
+  
+            
+            let wallet = await B2BWallet.updateOne({
+              reseller: reseller?._id,
+            },
+            {
+              $inc: {
+                balance: visaApplication.resellerMarkup
+              }
+            },
+            {
+              upsert: true
+            });
+  
+            console.log(wallet , "wallet")
+            transaction.status = "success"
+            await transaction.save()
+
+          }
           const filteredTraveller = visaApplication.travellers.filter(traveller => {
             return traveller._id == travellerId;
         });
@@ -670,9 +733,6 @@ module.exports= {
 
           res.json({message : "Visa Rejectd Due To Some Reason"})
           }
-
-          
-
 
         }catch(err){
            
