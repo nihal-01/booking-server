@@ -10,13 +10,12 @@ const b2bSpecialMarkupSchema = new Schema(
         markupType: {
             type: String,
             required: true,
-            default: 0,
+            enum: ["flat", "percentage"]
         },
         resellerId: {
-            type: String,
+            type: Schema.Types.ObjectId,
+            ref: "Reseller",
             required: true,
-            // type: Schema.Types.ObjectId,
-            // ref: "Reseller",
         },
     },
     { timestamps: true }

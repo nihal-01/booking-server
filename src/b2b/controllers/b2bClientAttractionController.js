@@ -11,6 +11,7 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid attraction id");
             }
 
+
             console.log(req.reseller, "reseller");
 
             if (req.reseller.role == "reseller") {
@@ -113,30 +114,65 @@ module.exports = {
                             },
                         },
                     },
-                    {
-                        $lookup: {
-                            from: "attractionactivities",
-                            let: {
-                                attraction: "$_id",
-                            },
-                            pipeline: [
-                                {
-                                    $match: {
-                                        $expr: {
-                                            $eq: [
-                                                "$attraction",
-                                                "$$attraction",
-                                            ],
-                                        },
-                                    },
-                                },
-                                {
-                                    $sort: { adultPrice: 1 },
-                                },
-                            ],
-                            as: "activities",
-                        },
-                    },
+                    // {
+                    //     $lookup: {.........................................................................
+                    //         from: "attractionactivities",
+                    //         let: {
+                    //             attraction: "$_id",
+                    //         },
+                    //         pipeline: [
+                    //             {
+                    //                 $match: {
+                    //                     $expr: {
+                    //                         $eq: [
+                    //                             "$attraction",
+                    //                             "$$attraction",
+                    //                         ],
+                    //                     },
+                    //                 },
+                    //             },
+                    //             {
+                    //                 $sort: { adultPrice: 1 },
+                    //             },
+                    //         ],
+                    //         as: "activities",
+                    //     },
+                    // },
+                    // {
+                    //     $lookup: {
+                    //         from: "attractionactivities",
+                    //         let: {
+                    //             attraction: "$_id",
+                    //         },
+                    //         pipeline: [
+                    //             {
+                    //                 $match: {
+                    //                     $expr: {
+                    //                         $eq: [
+                    //                             "$attraction",
+                    //                             "$$attraction",
+                    //                         ],
+                    //                     },
+                    //                 },
+                    //             },
+                    //             {
+                    //                 $addFields: {
+                    //                     adultPrice: {
+                    //                         $cond: [
+                    //                             isSpecialMarkup,
+                    //                             "$adultCost",
+                    //                             "$adultPrice"
+                    //                         ]
+                    //                     }
+                    //                 }
+                    //             },
+                    //             {
+                    //                 $sort: { adultPrice: 1 },
+                    //             },
+                    //         ],
+                    //         as: "activities",
+                    //     }
+                    // },
                     {
                         $addFields: {
                             activities: {

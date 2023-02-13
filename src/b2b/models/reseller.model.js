@@ -91,7 +91,7 @@ const resellerSchema = new Schema(
                 return this.role === "sub-agent";
             },
         },
-        specialMarkup: {
+        specialAttractionMarkup: {
             type: Boolean,
             default: false,
         },

@@ -11,7 +11,6 @@ module.exports = {
         try {
             const { markupType, markup, visaType } = req.body;
 
-            console.log(req.body , "body")
 
             const { _, error } = b2bVisaMarkupSchema.validate(
                 req.body

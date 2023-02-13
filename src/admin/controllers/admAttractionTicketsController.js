@@ -300,7 +300,7 @@ module.exports = {
                 populate: {
                     path: "attraction",
                     populate: { path: "destination" },
-                    select: "title images",
+                    select: "title images logo",
                 },
                 select: "name description",
             });
