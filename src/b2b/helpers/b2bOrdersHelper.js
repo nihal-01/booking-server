@@ -118,6 +118,7 @@ module.exports = {
                         as: "country",
                     },
                 },
+                
                 {
                     $lookup: {
                         from: "drivers",
@@ -149,6 +150,24 @@ module.exports = {
                         },
                     },
                 },
+                {
+                    $lookup: {
+                        from: "destinations",
+                        localField: "attraction.destination",
+                        foreignField: "_id",
+                        as: "activities.destination",
+                    },
+                },
+                {
+                    $set : {
+
+                        "activities.destination": {
+                            $arrayElemAt: ["$activities.destination", 0],
+                        }
+                    } 
+                },
+
+
                 { $match: filters2 },
                 { $sort: { createdAt: -1 } },
                 {
@@ -168,10 +187,15 @@ module.exports = {
                         attraction: {
                             title: 1,
                             images: 1,
+                            logo : 1 
                         },
                         activities: {
                             activity: {
                                 name: 1,
+                                description : 1
+                            },
+                            destination : {
+                                 name : 1
                             },
                             bookingType: 1,
                             date: 1,
