@@ -483,7 +483,7 @@ module.exports = {
         },
         {
           $lookup: {
-            from: "specialmarkups",
+            from: "b2bspecialattractionmarkups",
             let: {
               attraction: "$_id",
             },
@@ -1350,7 +1350,7 @@ module.exports = {
         },
         {
           $lookup: {
-            from: "specialmarkups",
+            from: "b2bspecialattractionmarkups",
             let: {
               attraction: "$_id",
             },
@@ -1774,7 +1774,7 @@ module.exports = {
 
         {
           $lookup: {
-            from: "specialmarkups",
+            from: "b2bspecialattractionmarkups",
             let: {
               attraction: "$_id",
             },
