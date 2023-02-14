@@ -9,6 +9,7 @@ const {
   AttractionActivity,
   Country,
   AttractionTicket,
+  HomeSettings,
 } = require("../../models");
 const {
   B2BClientAttractionMarkup,
@@ -348,7 +349,7 @@ module.exports = {
 
       sendAttractionOrderOtp(
         req.reseller.email,
-        "Attraction Order Otp Verifiaction",
+        "Attraction Order Otp Verification",
         otp
       );
 
@@ -597,8 +598,10 @@ module.exports = {
       wallet.balance -= totalAmount;
       await wallet.save();
 
+     const comapnyDetails = await HomeSettings.findOne()
+
       let reseller = req.reseller;
-      sendWalletDeductMail(reseller, attractionOrder);
+      sendWalletDeductMail(reseller, attractionOrder , comapnyDetails);
 
       transaction.status = "success";
       await transaction.save();

@@ -6,7 +6,7 @@ const sendAttractionOrderAdminEmail = async (attractionOrder) => {
     try {
       
           sendAdminEmail(
-            attractionOrder.email,
+           
              "New Order Placed Mail",
             `<body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5;">
             <div style="background-color: #333; color: #fff; padding: 20px; text-align: center;">

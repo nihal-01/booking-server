@@ -445,6 +445,7 @@ module.exports = {
         {
           $project: {
             title: 1,
+            isActive,
             bookingType: 1,
             isOffer: 1,
             offerAmountType: 1,
