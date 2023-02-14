@@ -6,8 +6,8 @@ const B2BWallet = require("./b2bWallet.model");
 const B2BAttractionOrder = require("./b2bAttractionOrder.model");
 const B2BClientVisaMarkup = require("./b2bClientVisaMarkUp.modal");
 const B2BSubAgentVisaMarkup = require("./b2bSubAgentVisaMarkup.modal");
-const B2BSpecialMarkup = require("./b2bSpecialMarkup.modal");
-
+const B2BSpecialAttractionMarkup = require("./b2bAttractionSpecialMarkup.modal");
+const B2BSpecialVisaMarkup = require('./b2bVisaSpecialMarkup.modal')
 module.exports = {
   Reseller,
   B2BClientVisaMarkup,
@@ -17,5 +17,6 @@ module.exports = {
   B2BTransaction,
   B2BWallet,
   B2BAttractionOrder,
-  B2BSpecialMarkup,
+  B2BSpecialAttractionMarkup,
+  B2BSpecialVisaMarkup
 };

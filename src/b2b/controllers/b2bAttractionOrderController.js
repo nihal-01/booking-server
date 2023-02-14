@@ -926,6 +926,7 @@ module.exports = {
                 name: 1,
               },
             },
+            createdAt : 1
           },
         },
         {
@@ -940,6 +941,8 @@ module.exports = {
             orderStatus: { $first: "$orderStatus" },
             totalOffer: { $first: "$totalOffer" },
             country: { $first: "$country" },
+            createdAt: { $first: "$createdAt" },
+
           },
         },
       ]);

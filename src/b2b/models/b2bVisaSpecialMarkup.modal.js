@@ -1,6 +1,6 @@
 const { Schema, model } = require("mongoose");
 
-const b2bSpecialMarkupSchema = new Schema(
+const b2bVisaSpecialMarkupSchema = new Schema(
   {
     resellerId: {
       type: Schema.Types.ObjectId,
@@ -21,9 +21,9 @@ const b2bSpecialMarkupSchema = new Schema(
   { timestamps: true }
 );
 
-const SpecialMarkup = model(
-  "B2BSpecialAttractionMarkup",
-  b2bSpecialMarkupSchema
+const B2BSpecialVisaMarkup = model(
+  "B2bSpecialVisaMarkup",
+  b2bVisaSpecialMarkupSchema
 );
 
-module.exports = SpecialMarkup;
+module.exports = B2BSpecialVisaMarkup;
