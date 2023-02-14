@@ -947,4 +947,23 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+
+    attractionInvoice : async(req,res)=>{
+
+        try{
+
+            const {orderId} = req.params
+
+            let attractionInvoice = await AttractionOrder.findOne({
+                _id : orderId
+            }).populate('country')
+
+            res.status(200).json(attractionInvoice)
+
+        }catch(err){
+
+
+        }
+    }
 };

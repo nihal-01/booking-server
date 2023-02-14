@@ -270,10 +270,10 @@ module.exports = {
 
       const otp = await sendMobileOtp(countryDetail.phonecode, contactNo);
 
-      const updatedTravellers = travellers.map((traveller) => {
-        traveller.amount.push(totalAmount / noOfTravellers);
-        return traveller;
-      });
+      // const updatedTravellers = travellers.map((traveller) => {
+      //   traveller.amount.push(totalAmount / noOfTravellers);
+      //   return traveller;
+      // });
 
       await sendVisaOrderOtp(req.reseller.email, "Visa Application Order Otp", otp);
 
@@ -289,7 +289,7 @@ module.exports = {
         onwardDate,
         returnDate,
         noOfTravellers,
-        travellers : updatedTravellers,
+        travellers,
         otp,
         reseller: req.reseller?._id,
         orderedBy: req.reseller.role,

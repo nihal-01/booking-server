@@ -25,15 +25,24 @@ module.exports = {
         isDeleted: false,
       });
       if (!reseller) {
-        return sendErrorResponse(res);
+        return sendErrorResponse(res, 400, "Invalid reseller id");
       }
 
+      console.log(reseller, "reseller");
+
       console.log(resellerId);
-      let b2bAttractionSpecialMarkup = await B2BSpecialMarkup.findOneAndUpdate(
-        { resellerId: resellerId },
-        { $set: { markupType: markupType, markup: markup } },
-        { upsert: true, new: true, runValidators: true }
-      );
+
+      const b2bAttractionSpecialMarkup =
+        await B2BSpecialMarkup.findOneAndUpdate(
+          {
+            resellerId: reseller._id,
+          },
+          {
+            markupType,
+            markup,
+          },
+          { upsert: true, new: true }
+        );
 
       // await Reseller.findByIdAndUpdate({
       //     resellerId

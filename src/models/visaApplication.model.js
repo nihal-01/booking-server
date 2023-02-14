@@ -93,21 +93,7 @@ const visaApplicationSchema = new Schema(
                             required: true,
                         },
                     },
-                    profit : [
-                       {
-                        type: Number,
-                        required: true,
-                       }
-                    
-                    ]
-                   ,
-                   amount : [
-                    {
-                     type: Number,
-                     required: true,
-                    }
-                 
-                 ],
+                
                     dateOfBirth: {
                         day: {
                             type: Number,
