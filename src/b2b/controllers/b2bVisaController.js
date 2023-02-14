@@ -85,6 +85,28 @@ module.exports = {
         },
         {
           $lookup: {
+            from: "b2bspecialvisamarkups",
+            let: {
+              attraction: "$_id",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ["$resellerId", req.reseller._id],
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "specialMarkup",
+          },
+        },
+        {
+          $lookup: {
             from: "b2bclientvisamarkups",
             let: {
               visaType: "$_id",
@@ -130,6 +152,37 @@ module.exports = {
           $set: {
             markupClient: { $arrayElemAt: ["$markupClient", 0] },
             markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
+            specialMarkup: { $arrayElemAt: ["$specialMarkup", 0] },
+
+          },
+        },
+        {
+          $addFields: {
+            totalspecialPrice: {
+              $cond: [
+                {
+                  $eq: ["$specialMarkup.markupType", "percentage"],
+                },
+
+                {
+                  $sum: [
+                    "$visaPrice",
+                    {
+                      $divide: [
+                        {
+                          $multiply: ["$specialMarkup.markup", "$visaPrice"],
+                        },
+                        100,
+                      ],
+                    },
+                  ],
+                },
+
+                {
+                  $sum: ["$visaPrice", "$specialMarkup.markup"],
+                },
+              ],
+            },
           },
         },
         {
@@ -142,11 +195,11 @@ module.exports = {
 
                 {
                   $sum: [
-                    "$visaPrice",
+                    "$totalspecialPrice",
                     {
                       $divide: [
                         {
-                          $multiply: ["$markupSubAgent.markup", "$visaPrice"],
+                          $multiply: ["$markupSubAgent.markup", "$totalspecialPrice"],
                         },
                         100,
                       ],
@@ -155,7 +208,7 @@ module.exports = {
                 },
 
                 {
-                  $sum: ["$visaPrice", "$markupSubAgent.markup"],
+                  $sum: ["$totalspecialPrice", "$markupSubAgent.markup"],
                 },
               ],
             },
@@ -212,7 +265,7 @@ module.exports = {
                     {
                       $divide: [
                         {
-                          $multiply: ["$markupSubAgent.markup", "$visaPrice"],
+                          $multiply: ["$markupSubAgent.markup", "$totalspecialPrice"],
                         },
                         100,
                       ],
@@ -262,7 +315,7 @@ module.exports = {
       console.log(visaTypeList, "visaTypeList");
 
       let profit =
-        (visaTypeList[0].visaPrice - visaTypeList[0].purchaseCost) *
+        (visaTypeList[0].totalspecialPrice - visaTypeList[0].purchaseCost) *
         noOfTravellers;
 
       let totalAmount =

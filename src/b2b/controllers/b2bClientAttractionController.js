@@ -974,14 +974,29 @@ module.exports = {
         },
       ]);
 
+      let ticketCount;
+      let ticketStatus = true;
+      if (attraction[0].bookingType == "ticket") {
+        ticketCount = await AttractionTicket.find({
+          activity: attraction[0].activities[0]._id,
+          status: "ok",
+        }).count();
+
+        if (ticketCount < 1) {
+          ticketStatus = false;
+        }
+      }
+
+      console.log(attraction[0].activity, "attraction");
+
       if (!attraction || attraction?.length < 1) {
         return sendErrorResponse(res, 404, "Attraction not found");
       }
+      // res.status(200).json(attraction[0]);
 
-      res.status(200).json(attraction[0]);
-      // }
-
-      // console.log(attraction, "attraction");
+      res
+        .status(200)
+        .json({ attraction: attraction[0], ticketStatus, ticketCount });
     } catch (err) {
       sendErrorResponse(res, 500, err);
     }
