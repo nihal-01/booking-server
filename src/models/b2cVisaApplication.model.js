@@ -67,9 +67,8 @@ const b2cVisaApplicationSchema = new Schema(
                         day:{
                             type: Number,
                             required: true,
-
                         },
-                        month: {
+                       month: {
                             type: Number,
                             required: true,
                         },
@@ -78,6 +77,7 @@ const b2cVisaApplicationSchema = new Schema(
                             required: true,
                         },
                     },
+                
                     dateOfBirth: {
                         day: {
                             type: Number,
@@ -111,30 +111,25 @@ const b2cVisaApplicationSchema = new Schema(
                     },
                     isStatus: {
                         type: String,
-                      enum: ["initiated", "approved", "rejected"],
+                      enum: ["initiated","submitted" ,  "approved", "rejected"  ],
                       default: "initiated",
 
                     },
                     visaUpload: {
                         type:String,
-                        required: function () {
-                            return this.isStatus=== "approved";
-                        },
+                       
                     },
                         reason: {
                         type:String,
-                        required: function () {
-                            return this.isStatus=== "rejected";
-                        },
+                        
                     },
                     
                     documents: {
                         type: Schema.Types.ObjectId,
                         ref: "VisaDocument",
-                        required: function () {
-                            return this.isDocumentUplaoded === true;
-                        },
-                    },
+                        
+                    }, 
+
                 },
             ],
         },
@@ -142,24 +137,13 @@ const b2cVisaApplicationSchema = new Schema(
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
-        },
-        isPayed: {
-            type: Boolean,
-            required: true,
-            default: false,
-        },
-        isDocumentUplaoded: {
-            type: Boolean,
-            required: true,
-            default: false,
-        },
-        
+        },     
      
         status: {
             type: String,
             required: true,
             lowercase: true,
-            enum: ["initiated", "submitted", "approved", "cancelled"],
+            enum: ["initiated", "payed"],
             default: "initiated",
         },
         referenceNumber : {

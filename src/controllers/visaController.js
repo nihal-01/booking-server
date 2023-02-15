@@ -696,17 +696,17 @@ module.exports = {
     try {
       const { travellerId } = req.params;
       const { orderId } = req.params;
-      const {
-        title,
-        firstName,
-        lastName,
-        dateOfBirth,
-        expiryDate,
-        country,
-        passportNo,
-        contactNo,
-        email,
-      } = req.body;
+      // const {
+      //   title,
+      //   firstName,
+      //   lastName,
+      //   dateOfBirth,
+      //   expiryDate,
+      //   country,
+      //   passportNo,
+      //   contactNo,
+      //   email,
+      // } = req.body;
 
       if (!isValidObjectId(orderId)) {
         return sendErrorResponse(res, 400, "invalid order id");
@@ -714,25 +714,6 @@ module.exports = {
 
       if (!isValidObjectId(travellerId)) {
         return sendErrorResponse(res, 400, "invalid order id");
-      }
-
-      // const { _, error } = visaReapplySchema.validate(req.body);
-      // if (error) {
-      //   return sendErrorResponse(
-      //     res,
-      //     400,
-      //     error.details ? error?.details[0]?.message : error.message
-      //   );
-      // }
-
-      let parsedDateOfBirth;
-      if (dateOfBirth) {
-        parsedDateOfBirth = JSON.parse(dateOfBirth);
-      }
-
-      let parsedExpiryDate;
-      if (dateOfBirth) {
-        parsedExpiryDate = JSON.parse(expiryDate);
       }
 
       const visaApplication = await B2CVisaApplication.findOne({
@@ -749,57 +730,6 @@ module.exports = {
       if (!visaApplication.status === "payed") {
         return sendErrorResponse(res, 404, "Visa Application Amount Not Payed");
       }
-
-      // if (
-      //   req.files["passportFistPagePhoto"].length !==
-      //   visaApplication.noOfTravellers
-      // ) {
-      //   return sendErrorResponse(res, 400, "Please Upload all Documents ");
-      // }
-
-      // async function insertPhotos(numPersons, numPhotos) {
-      //   let persons = [];
-      //   let startIndex = 0;
-      //   let promises = [];
-      //   for (let i = 0; i < numPersons; i++) {
-      //     let person = {};
-      //     for (let j = 0; j < numPhotos; j++) {
-      //       let photoIndex = startIndex + j;
-      //       person[`photo${j + 1}`] =
-      //         "/" + req.files[photoIndex]?.path?.replace(/\\/g, "/");
-      //     }
-
-      //     console.log(person, "person");
-      //     const visaDocument = new VisaDocument({
-      //       passportFistPagePhoto: person.photo1,
-      //       passportLastPagePhoto: person.photo2,
-      //       passportSizePhoto: person.photo3,
-      //     });
-
-      //     promises.push(
-      //       new Promise((resolve, reject) => {
-      //         visaDocument.save((error, document) => {
-      //           if (error) {
-      //             return reject(error);
-      //           }
-
-      //           console.log(document, "document");
-
-      //           visaApplication.travellers[i].documents = document._id;
-      //           resolve();
-      //         });
-      //       })
-      //     );
-
-      //     persons.push(person);
-      //     startIndex += numPhotos;
-      //   }
-
-      //   await Promise.all(promises);
-      //   return persons;
-      // }
-
-      // let persons = await insertPhotos(visaApplication.noOfTravellers, 3);
 
       const passportFirstPagePhotos = req.files["passportFistPagePhoto"];
       const passportLastPagePhotos = req.files["passportLastPagePhoto"];
@@ -830,8 +760,6 @@ module.exports = {
             }
 
             console.log(document, "document");
-
-            console.log(parsedExpiryDate, parsedDateOfBirth, "jjjjj");
 
             let upload = await B2CVisaApplication.updateOne(
               {
