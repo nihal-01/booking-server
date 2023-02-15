@@ -17,7 +17,8 @@ router.post("/paypal/capture", capturePaypalAttractionPayment);
 router.post("/ccavenue/capture", captureCCAvenueAttractionPayment);
 router.post("/razorpay/capture", captureRazorpayAttractionPayment);
 router.post("/cancel", userAuth, cancelAttractionOrder);
-router.get('/all' , getSingleUserAllOrders  )
+router.post("/cancel", userAuth, cancelAttractionOrder);
+router.get('/all' ,userAuth, getSingleUserAllOrders  )
 
 router.get("/single/:id", getSingleAttractionOrder);
 
