@@ -9,6 +9,7 @@ module.exports = {
     limit = 10,
     bookingType,
     orderedBy,
+    userId,
     status,
     referenceNo,
     dateFrom,
@@ -41,9 +42,9 @@ module.exports = {
         filters1["activities.status"] = status;
       }
 
-      if (orderedBy && orderedBy !== "") {
-        filters1.orderedBy = orderedBy;
-      }
+      // if (orderedBy && orderedBy !== "") {
+      //   filters1.orderedBy = orderedBy;
+      // }
 
       if (travellerEmail && travellerEmail !== "") {
         filters1.email = travellerEmail;
@@ -137,7 +138,7 @@ module.exports = {
               $arrayElemAt: ["$attraction", 0],
             },
             country: { $arrayElemAt: ["$country", 0] },
-            reseller: { $arrayElemAt: ["$reseller", 0] },
+            user: { $arrayElemAt: ["$user", 0] },
             "activities.driver": {
               $arrayElemAt: ["$activities.driver", 0],
             },
@@ -208,12 +209,6 @@ module.exports = {
               _id: 1,
             },
             referenceNumber: 1,
-            reseller: {
-              companyName: 1,
-              email: 1,
-              website: 1,
-              agentCode: 1,
-            },
           },
         },
         {

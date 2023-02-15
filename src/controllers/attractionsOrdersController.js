@@ -451,7 +451,6 @@ module.exports = {
       if (paymentProcessor === "paypal") {
         const currency = "USD";
         const totalAmountUSD = await convertCurrency(totalAmount, currency);
-        console.log(totalAmountUSD);
         const response = await createOrder(totalAmountUSD, currency);
 
         if (response.statusCode !== 201) {
@@ -477,7 +476,7 @@ module.exports = {
         body += {
           merchant_id: process.env.CCAVENUE_MERCHANT_ID,
           order_id: attractionOrder?._id,
-          currency: "AED",
+          currency: "INR",
           amount: Number(attractionOrder?.totalAmount),
           redirect_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
           cancel_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
@@ -895,8 +894,10 @@ module.exports = {
         userId: req.user?._id,
       });
 
+      console.log(result, "result");
       res.status(200).json({ result, skip, limit });
     } catch (err) {
+      console.log(err, "error");
       sendErrorResponse(res, 500, err);
     }
   },

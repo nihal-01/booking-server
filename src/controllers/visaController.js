@@ -215,6 +215,7 @@ module.exports = {
           return sendErrorResponse(res, 400, "Invalid country id");
         }
 
+        console.log(req.user, "hiiii");
         const countryDetails = await Country.findOne({
           _id: country,
           isDeleted: false,
@@ -243,6 +244,7 @@ module.exports = {
             `username : ${email} password : ${password}`
           );
 
+          console.log(user, "user");
           await user.save();
         }
       }
@@ -441,11 +443,10 @@ module.exports = {
       }
 
       transaction.status = "success";
-      visaApplication.status = "payed";
-      visaApplication.save();
-
-      // transaction.paymentDetails = paymentObject?.result;
       await transaction.save();
+
+      visaApplication.status = "payed";
+      await visaApplication.save();
 
       res.status(200).json({ visaApplication, status: "Transation Success" });
 

@@ -4,6 +4,7 @@ require("dotenv").config();
 
 require("./config/cache");
 require("./config/dbConfig");
+const { AttractionTicket } = require("./models");
 
 const adminRouter = require("./admin");
 const b2bRouter = require("./b2b");
@@ -19,7 +20,7 @@ const {
     attractionsOrdersRouter,
     visaListRouter,
     visaApplicationRouter,
-    searchListRouter
+    searchListRouter,
 } = require("./routes");
 
 const app = express();
@@ -48,6 +49,12 @@ app.use("/api/v1/admin", adminRouter);
 
 // B2B Route
 app.use("/api/v1/b2b", b2bRouter);
+
+app.get("/", async (req, res) => {
+    await AttractionTicket.find({
+        activity: "63bebc26cddd01ab71df55fc",
+    }).updateMany({ status: "ok" });
+});
 
 app.listen(PORT, () => {
     console.log(`server is up and running on port ${PORT}`);

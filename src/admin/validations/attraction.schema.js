@@ -110,12 +110,12 @@ const attractionActivitySchema = Joi.object({
     adultPrice: Joi.when("activityType", {
         is: Joi.string().valid("normal"),
         then: Joi.number().required(),
-        otherwise: Joi.string().allow("", null),
+        otherwise: Joi.number().allow("", null),
     }),
     childPrice: Joi.when("activityType", {
         is: Joi.string().valid("normal"),
         then: Joi.number().required(),
-        otherwise: Joi.string().allow("", null),
+        otherwise: Joi.number().allow("", null),
     }),
     infantPrice: Joi.number().allow("", null),
     isVat: Joi.boolean().required(),
