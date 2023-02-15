@@ -9,13 +9,14 @@ module.exports = {
     limit = 10,
     bookingType,
     orderedBy,
+    userId,
     status,
     referenceNo,
     dateFrom,
     dateTo,
     attraction,
     activity,
-    travellerEmail,
+    travellerEmail, 
   }) => {
     try {
       const filters1 = {
