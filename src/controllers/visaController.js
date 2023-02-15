@@ -186,7 +186,7 @@ module.exports = {
                         100,
                       ],
                     },
-                    noOfTravellers,
+                    Number(noOfTravellers),
                   ],
                 },
                 {
@@ -214,7 +214,9 @@ module.exports = {
         if (!isValidObjectId(country)) {
           return sendErrorResponse(res, 400, "Invalid country id");
         }
+        
 
+        console.log(req.user , "hiiii")
         const countryDetails = await Country.findOne({
           _id: country,
           isDeleted: false,
@@ -226,7 +228,7 @@ module.exports = {
 
         // console.log(travellers[0].firstName , "travellers[0].firstname")
 
-        user = await User.findOne({ email });
+        user = await User.findOne({ email  });
         if (!user) {
           const password = crypto.randomBytes(6);
           user = new User({
@@ -444,7 +446,6 @@ module.exports = {
       visaApplication.status = "payed";
       visaApplication.save();
 
-      transaction.paymentDetails = paymentObject?.result;
       await transaction.save();
 
       res.status(200).json({ visaApplication, status: "Transation Success" });
