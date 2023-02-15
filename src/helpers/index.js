@@ -4,7 +4,9 @@ const sendAdminPassword = require("./sendAdminPassword");
 const createQuotationPdf = require("./ticketInvoice");
 const getOtpSettings = require("./getOtpSettings");
 const sendMobileOtp = require("./sendMobileOtp");
-const userOrderHelper = require("./userOrderHelper");
+const sendVisaApplicationEmail = require('./sendVisaApplicationEmail')
+
+
 
 module.exports = {
   sendErrorResponse,
@@ -13,5 +15,5 @@ module.exports = {
   createQuotationPdf,
   getOtpSettings,
   sendMobileOtp,
-  userOrderHelper,
+  sendVisaApplicationEmail,
 };
