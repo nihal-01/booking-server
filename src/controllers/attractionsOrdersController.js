@@ -25,7 +25,7 @@ const {
   completeOrderAfterPayment,
 } = require("../helpers/attractionOrderHelpers");
 
-const  {getUserOrder}  = require("../helpers/userOrderHelper");
+const { getUserOrder } = require("../helpers/userOrderHelper");
 
 const dayNames = [
   "sunday",
@@ -889,6 +889,7 @@ module.exports = {
 
   getSingleUserAllOrders: async (req, res) => {
     try {
+      console.log(req);
       const { result, skip, limit } = await getUserOrder({
         ...req.query,
         userId: req.user?._id,

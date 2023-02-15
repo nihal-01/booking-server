@@ -186,7 +186,7 @@ module.exports = {
                         100,
                       ],
                     },
-                    noOfTravellers,
+                    Number(noOfTravellers),
                   ],
                 },
                 {
@@ -360,7 +360,7 @@ module.exports = {
 
   capturePayalVisaApplication: async (req, res) => {
     try {
-      const { paymentId, orderId } = req.body;
+      const { paymentId, paymentOrderId, orderId } = req.body;
 
       // const { _, error } = visaOrderCaptureSchema.validate(
       //     req.body
@@ -396,7 +396,7 @@ module.exports = {
         await transaction.save();
       }
 
-      const orderObject = await fetchOrder(orderId);
+      const orderObject = await fetchOrder(paymentOrderId);
 
       if (orderObject.statusCode == "500") {
         transaction.status = "failed";
@@ -444,7 +444,7 @@ module.exports = {
       visaApplication.status = "payed";
       visaApplication.save();
 
-      transaction.paymentDetails = paymentObject?.result;
+      // transaction.paymentDetails = paymentObject?.result;
       await transaction.save();
 
       res.status(200).json({ visaApplication, status: "Transation Success" });
