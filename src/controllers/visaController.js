@@ -1,7 +1,12 @@
 const { isValidObjectId, Types } = require("mongoose");
 const crypto = require("crypto");
 const { generateUniqueString } = require("../utils");
-const { sendMobileOtp, sendEmail, sendErrorResponse } = require("../helpers");
+const {
+  sendMobileOtp,
+  sendEmail,
+  sendErrorResponse,
+  sendVisaApplicationEmail,
+} = require("../helpers");
 const {
   B2BWallet,
   B2BTransaction,
@@ -21,6 +26,7 @@ const { convertCurrency } = require("../b2b/helpers/currencyHelpers");
 const {
   completeOrderAfterPayment,
 } = require("../helpers/attractionOrderHelpers");
+const sendAdminVisaApplicationEmail = require("../b2b/helpers/sendVisaAdminEmail");
 
 module.exports = {
   applyVisa: async (req, res) => {
@@ -279,7 +285,7 @@ module.exports = {
         return sendErrorResponse(res, 400, "Visa Application Not Found");
       }
 
-      if (visaApplication.isPayed == true) {
+      if (visaApplication.status == "payed") {
         return sendErrorResponse(res, 400, "Visa Application Already Payed");
       }
 
@@ -374,14 +380,6 @@ module.exports = {
         return sendErrorResponse(res, 400, "visa application not found!");
       }
 
-      if (visaApplication.status === "submitted") {
-        return sendErrorResponse(
-          res,
-          400,
-          "This order already completed, Thank you. Check with our team if you paid multiple times."
-        );
-      }
-
       const transaction = await B2CTransaction.findOne({
         paymentOrderId: orderId,
       });
@@ -443,7 +441,7 @@ module.exports = {
       }
 
       transaction.status = "success";
-      visaApplication.isPayed = true;
+      visaApplication.status = "payed";
       visaApplication.save();
 
       transaction.paymentDetails = paymentObject?.result;
@@ -513,14 +511,6 @@ module.exports = {
         );
       }
 
-      if (visaApplication.isPayed === true) {
-        return sendErrorResponse(
-          res,
-          400,
-          "This order already completed, Thank you. Check with our team if you paid multiple times."
-        );
-      }
-
       let transaction = await B2CTransaction.findOne({
         paymentProcessor: "razorpay",
         orderId: attractionOrder?._id,
@@ -555,7 +545,8 @@ module.exports = {
 
       transaction.status = "success";
       await transaction.save();
-      visaApplication.isPayed = true;
+
+      visaApplication.status = "payed";
       await visaApplication.save();
 
       return res
@@ -678,6 +669,8 @@ module.exports = {
               console.log(document, "document");
 
               visaApplication.travellers[i].documents = document._id;
+              visaApplication.travellers[i].isStatus = "submitted";
+
               resolve();
             });
           })
@@ -686,16 +679,203 @@ module.exports = {
 
       await Promise.all(promises);
 
-      console.log(visaApplication, "visaApplication");
+      await sendVisaApplicationEmail(req.reseller.email, visaApplication);
+      await sendAdminVisaApplicationEmail(visaApplication);
 
-      visaApplication.isDocumentUplaoded = true;
-      visaApplication.status = "submitted";
       await visaApplication.save();
 
       res.status(200).json({
         visaApplication,
       });
     } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
+
+  completeVisaReapplyDocumentOrder: async (req, res) => {
+    try {
+      const { travellerId } = req.params;
+      const { orderId } = req.params;
+      const {
+        title,
+        firstName,
+        lastName,
+        dateOfBirth,
+        expiryDate,
+        country,
+        passportNo,
+        contactNo,
+        email,
+      } = req.body;
+
+      if (!isValidObjectId(orderId)) {
+        return sendErrorResponse(res, 400, "invalid order id");
+      }
+
+      if (!isValidObjectId(travellerId)) {
+        return sendErrorResponse(res, 400, "invalid order id");
+      }
+
+      // const { _, error } = visaReapplySchema.validate(req.body);
+      // if (error) {
+      //   return sendErrorResponse(
+      //     res,
+      //     400,
+      //     error.details ? error?.details[0]?.message : error.message
+      //   );
+      // }
+
+      let parsedDateOfBirth;
+      if (dateOfBirth) {
+        parsedDateOfBirth = JSON.parse(dateOfBirth);
+      }
+
+      let parsedExpiryDate;
+      if (dateOfBirth) {
+        parsedExpiryDate = JSON.parse(expiryDate);
+      }
+
+      const visaApplication = await B2CVisaApplication.findOne({
+        _id: orderId,
+        user: req.user._id,
+      }).populate({
+        path: "visaType",
+        populate: { path: "visa", populate: { path: "country" } },
+      });
+
+      if (!visaApplication) {
+        return sendErrorResponse(res, 404, "Visa Application Not Found");
+      }
+      if (!visaApplication.status === "payed") {
+        return sendErrorResponse(res, 404, "Visa Application Amount Not Payed");
+      }
+
+      // if (
+      //   req.files["passportFistPagePhoto"].length !==
+      //   visaApplication.noOfTravellers
+      // ) {
+      //   return sendErrorResponse(res, 400, "Please Upload all Documents ");
+      // }
+
+      // async function insertPhotos(numPersons, numPhotos) {
+      //   let persons = [];
+      //   let startIndex = 0;
+      //   let promises = [];
+      //   for (let i = 0; i < numPersons; i++) {
+      //     let person = {};
+      //     for (let j = 0; j < numPhotos; j++) {
+      //       let photoIndex = startIndex + j;
+      //       person[`photo${j + 1}`] =
+      //         "/" + req.files[photoIndex]?.path?.replace(/\\/g, "/");
+      //     }
+
+      //     console.log(person, "person");
+      //     const visaDocument = new VisaDocument({
+      //       passportFistPagePhoto: person.photo1,
+      //       passportLastPagePhoto: person.photo2,
+      //       passportSizePhoto: person.photo3,
+      //     });
+
+      //     promises.push(
+      //       new Promise((resolve, reject) => {
+      //         visaDocument.save((error, document) => {
+      //           if (error) {
+      //             return reject(error);
+      //           }
+
+      //           console.log(document, "document");
+
+      //           visaApplication.travellers[i].documents = document._id;
+      //           resolve();
+      //         });
+      //       })
+      //     );
+
+      //     persons.push(person);
+      //     startIndex += numPhotos;
+      //   }
+
+      //   await Promise.all(promises);
+      //   return persons;
+      // }
+
+      // let persons = await insertPhotos(visaApplication.noOfTravellers, 3);
+
+      const passportFirstPagePhotos = req.files["passportFistPagePhoto"];
+      const passportLastPagePhotos = req.files["passportLastPagePhoto"];
+      const passportSizePhotos = req.files["passportSizePhoto"];
+      const supportiveDoc1s = req.files["supportiveDoc1"];
+      const supportiveDoc2s = req.files["supportiveDoc2"];
+
+      const photos = [];
+      let promises = [];
+
+      // for (let i = 0; i < passportFirstPagePhotos.length; i++) {
+      const visaDocument = new VisaDocument({
+        passportFistPagePhoto:
+          "/" + passportFirstPagePhotos[0]?.path?.replace(/\\/g, "/"),
+        passportLastPagePhoto:
+          "/" + passportLastPagePhotos[0]?.path?.replace(/\\/g, "/"),
+        passportSizePhoto:
+          "/" + passportSizePhotos[0]?.path?.replace(/\\/g, "/"),
+        supportiveDoc1: "/" + supportiveDoc1s[0]?.path?.replace(/\\/g, "/"),
+        supportiveDoc2: "/" + supportiveDoc2s[0]?.path?.replace(/\\/g, "/"),
+      });
+
+      promises.push(
+        new Promise((resolve, reject) => {
+          visaDocument.save(async (error, document) => {
+            if (error) {
+              return reject(error);
+            }
+
+            console.log(document, "document");
+
+            console.log(parsedExpiryDate, parsedDateOfBirth, "jjjjj");
+
+            let upload = await B2CVisaApplication.updateOne(
+              {
+                _id: orderId,
+                "travellers._id": travellerId,
+              },
+              {
+                $set: {
+                  "travellers.$.documents": document._id,
+                  "travellers.$.isStatus": "submitted",
+                },
+              }
+              // {
+              //   $set: {
+              //     "travellers.$.documents": document._id,
+              //     "travellers.$.title": title,
+              //     "travellers.$.firstName": firstName,
+              //     "travellers.$.lastName": lastName,
+              //     "travellers.$.dateOfBirth": parsedDateOfBirth,
+              //     "travellers.$.expiryDate": parsedExpiryDate,
+              //     "travellers.$.country": country,
+              //     "travellers.$.passportNo": passportNo,
+              //     "travellers.$.contactNo": contactNo,
+              //     "travellers.$.email": email,
+              //     "travellers.$.isStatus": "submitted",
+              //   },
+              // }
+            );
+
+            console.log(upload, "upload");
+
+            resolve();
+          });
+        })
+      );
+      // }
+
+      await Promise.all(promises);
+
+      await visaApplication.save();
+
+      res.status(200).json({ success: "visa submitted " });
+    } catch (err) {
+      console.log(err, "error");
       sendErrorResponse(res, 500, err);
     }
   },

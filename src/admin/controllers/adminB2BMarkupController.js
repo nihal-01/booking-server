@@ -93,7 +93,9 @@ module.exports = {
         return sendErrorResponse(res, 400, "No special visa  markup found");
       }
 
-      res.status(200).json({attractionMarkup : attractionMarkup , visaMarkup :visaMarkup  } );
+      res
+        .status(200)
+        .json({ attractionMarkup: attractionMarkup, visaMarkup: visaMarkup });
     } catch (err) {
       console.log(err);
       sendErrorResponse(res, 500, err);
