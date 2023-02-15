@@ -517,12 +517,17 @@ module.exports = {
                 const order = await instance.orders.create(options);
                 return res.status(200).json(order);
             } else if (paymentProcessor === "ccavenue") {
+                const currency = "INR";
+                const totalAmountINR = await convertCurrency(
+                    totalAmount,
+                    currency
+                );
                 let body = "";
                 body += {
                     merchant_id: process.env.CCAVENUE_MERCHANT_ID,
                     order_id: attractionOrder?._id,
-                    currency: "AED",
-                    amount: Number(attractionOrder?.totalAmount),
+                    currency,
+                    amount: totalAmountINR,
                     redirect_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
                     cancel_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
                     language: "EN",
