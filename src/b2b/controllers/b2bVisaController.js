@@ -86,16 +86,22 @@ module.exports = {
         {
           $lookup: {
             from: "b2bspecialvisamarkups",
-            let: {
-              attraction: "$_id",
-            },
             pipeline: [
               {
                 $match: {
                   $expr: {
                     $and: [
                       {
-                        $eq: ["$resellerId", req.reseller._id],
+                        $eq: [
+                          "$resellerId",
+                          {
+                            $cond: {
+                              if: { $eq: [req.reseller.role, "sub-agent"] },
+                              then: req.reseller?.referredBy,
+                              else: req.reseller?._id,
+                            },
+                          },
+                        ],
                       },
                     ],
                   },
@@ -153,7 +159,6 @@ module.exports = {
             markupClient: { $arrayElemAt: ["$markupClient", 0] },
             markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
             specialMarkup: { $arrayElemAt: ["$specialMarkup", 0] },
-
           },
         },
         {
@@ -199,7 +204,10 @@ module.exports = {
                     {
                       $divide: [
                         {
-                          $multiply: ["$markupSubAgent.markup", "$totalspecialPrice"],
+                          $multiply: [
+                            "$markupSubAgent.markup",
+                            "$totalspecialPrice",
+                          ],
                         },
                         100,
                       ],
@@ -265,7 +273,10 @@ module.exports = {
                     {
                       $divide: [
                         {
-                          $multiply: ["$markupSubAgent.markup", "$totalspecialPrice"],
+                          $multiply: [
+                            "$markupSubAgent.markup",
+                            "$totalspecialPrice",
+                          ],
                         },
                         100,
                       ],
@@ -448,7 +459,9 @@ module.exports = {
         message: "Amount Paided successfully ",
         VisaApplicationOrder,
       });
-    } catch (err) {     
+
+      
+    } catch (err) {
       console.log(err);
       sendErrorResponse(res, 500, err);
     }
@@ -572,8 +585,7 @@ module.exports = {
 
       // visaApplication.isDocumentUplaoded = true;
       // visaApplication.status = "submitted";
-
-      await sendApplicationEmail(req.reseller.email, visaApplication);
+      await sendApplicationEmail(req.reseller.email,visaApplication);
       await sendAdminVisaApplicationEmail(visaApplication);
 
       await visaApplication.save();

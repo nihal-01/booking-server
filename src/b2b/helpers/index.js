@@ -1,3 +1,4 @@
 const sendSubAgentPassword = require("./sendSubAgentPassword");
+const sendWalletDeposit = require("./sendWalletDepositEmail");
 
-module.exports = { sendSubAgentPassword };
+module.exports = { sendWalletDeposit, sendSubAgentPassword };

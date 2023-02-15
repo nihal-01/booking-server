@@ -70,7 +70,7 @@ module.exports = {
     }
   },
 
-  listAttractionSpecialMarkup: async (req, res) => {
+  listSpecialMarkup: async (req, res) => {
     try {
       const { resellerId } = req.params;
       console.log(resellerId);
@@ -79,15 +79,21 @@ module.exports = {
         return sendErrorResponse(res, 400, "Invalid reseller id");
       }
 
-      const markup = await B2BSpecialAttractionMarkup.findOne({
+      const attractionMarkup = await B2BSpecialAttractionMarkup.findOne({
         resellerId: resellerId,
       });
-      if (!markup) {
+      if (!attractionMarkup) {
         return sendErrorResponse(res, 400, "No special markup found");
       }
-      console.log(markup);
 
-      res.status(200).json(markup);
+      const visaMarkup = await B2BSpecialVisaMarkup.findOne({
+        resellerId: resellerId,
+      });
+      if (!visaMarkup) {
+        return sendErrorResponse(res, 400, "No special visa  markup found");
+      }
+
+      res.status(200).json({attractionMarkup : attractionMarkup , visaMarkup :visaMarkup  } );
     } catch (err) {
       console.log(err);
       sendErrorResponse(res, 500, err);

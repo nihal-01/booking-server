@@ -594,16 +594,22 @@ module.exports={
           {
             $lookup: {
               from: "b2bspecialvisamarkups",
-              let: {
-                attraction: "$_id",
-              },
               pipeline: [
                 {
                   $match: {
                     $expr: {
                       $and: [
                         {
-                          $eq: ["$resellerId", req.reseller._id],
+                          $eq: [
+                            "$resellerId",
+                            {
+                              $cond: {
+                                if: { $eq: [req.reseller.role, "sub-agent"] },
+                                then: req.reseller?.referredBy,
+                                else: req.reseller?._id,
+                              },
+                            },
+                          ],
                         },
                       ],
                     },

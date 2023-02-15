@@ -8,7 +8,7 @@ const {
     captureCCAvenueAttractionPayment,
     captureRazorpayAttractionPayment,
     cancelAttractionOrder,
-} = require("../controllers/attractionsOrdersController");
+    getSingleUserAllOrders} = require("../controllers/attractionsOrdersController");
 const { userAuthOrNot, userAuth } = require("../middlewares");
 
 router.post("/create", userAuthOrNot, createAttractionOrder);
@@ -17,6 +17,7 @@ router.post("/paypal/capture", capturePaypalAttractionPayment);
 router.post("/ccavenue/capture", captureCCAvenueAttractionPayment);
 router.post("/razorpay/capture", captureRazorpayAttractionPayment);
 router.post("/cancel", userAuth, cancelAttractionOrder);
+router.get('/all' , getSingleUserAllOrders  )
 
 router.get("/single/:id", getSingleAttractionOrder);
 
