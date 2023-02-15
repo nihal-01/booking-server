@@ -494,7 +494,6 @@ module.exports = {
                     totalAmount,
                     currency
                 );
-                console.log(totalAmountUSD);
                 const response = await createOrder(totalAmountUSD, currency);
 
                 if (response.statusCode !== 201) {

@@ -201,7 +201,6 @@ module.exports = {
                     }
                 }
 
-                let price = 0;
                 let adultActivityPrice = activity.adultPrice;
                 let childActivityPrice = activity.childPrice;
                 let infantActivityPrice = activity.infantPrice;
@@ -222,7 +221,6 @@ module.exports = {
                 let totalSubAgentMarkup = 0;
                 let resellerToSubAgentMarkup;
                 let resellerToClientMarkup;
-                let totalPurchaseCost = 0;
                 let totalPax =
                     (Number(selectedActivities[i]?.adultsCount) || 0) +
                     (Number(selectedActivities[i]?.childrenCount) || 0);
