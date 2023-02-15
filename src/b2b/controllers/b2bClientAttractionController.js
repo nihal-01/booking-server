@@ -11,444 +11,6 @@ module.exports = {
         return sendErrorResponse(res, 400, "Invalid attraction id");
       }
 
-      console.log(req.reseller, "reseller");
-
-      // if (req.reseller.role == "reseller") {
-      //   const attraction = await Attraction.aggregate([
-      //     {
-      //       $match: {
-      //         _id: Types.ObjectId(id),
-      //         isDeleted: false,
-      //         isActive: true,
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "destinations",
-      //         localField: "destination",
-      //         foreignField: "_id",
-      //         as: "destination",
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "attractioncategories",
-      //         localField: "category",
-      //         foreignField: "_id",
-      //         as: "category",
-      //       },
-      //     },
-
-      //     {
-      //       $lookup: {
-      //         from: "attractionreviews",
-      //         localField: "_id",
-      //         foreignField: "attraction",
-      //         as: "reviews",
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "specialmarkups",
-      //         let: {
-      //           attraction: "$_id",
-      //         },
-      //         pipeline: [
-      //           {
-      //             $match: {
-      //               $expr: {
-      //                 $and: [
-      //                   {
-      //                     $eq: ["$resellerId", req.reseller._id],
-      //                   },
-      //                 ],
-      //               },
-      //             },
-      //           },
-      //         ],
-      //         as: "specialMarkup",
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "b2bclientattractionmarkups",
-      //         let: {
-      //           attraction: "$_id",
-      //         },
-      //         pipeline: [
-      //           {
-      //             $match: {
-      //               $expr: {
-      //                 $and: [
-      //                   {
-      //                     $eq: ["$resellerId", req.reseller._id],
-      //                   },
-      //                   {
-      //                     $eq: ["$attraction", "$$attraction"],
-      //                   },
-      //                 ],
-      //               },
-      //             },
-      //           },
-      //         ],
-      //         as: "markup",
-      //       },
-      //     },
-
-      //     {
-      //       $set: {
-      //         destination: { $arrayElemAt: ["$destination", 0] },
-      //         category: { $arrayElemAt: ["$category", 0] },
-      //         markup: { $arrayElemAt: ["$markup", 0] },
-      //         specialMarkup: { $arrayElemAt: ["$specialMarkup", 0] },
-
-      //         totalRating: {
-      //           $sum: {
-      //             $map: {
-      //               input: "$reviews",
-      //               in: "$$this.rating",
-      //             },
-      //           },
-      //         },
-      //         totalReviews: {
-      //           $size: "$reviews",
-      //         },
-      //       },
-      //     },
-      //     {
-      //       $set: {
-      //         averageRating: {
-      //           $cond: [
-      //             { $eq: ["$totalReviews", 0] },
-      //             0,
-      //             {
-      //               $divide: ["$totalRating", "$totalReviews"],
-      //             },
-      //           ],
-      //         },
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "attractionactivities",
-      //         let: {
-      //           attraction: "$_id",
-      //         },
-      //         pipeline: [
-      //           {
-      //             $match: {
-      //               $expr: {
-      //                 $eq: ["$attraction", "$$attraction"],
-      //               },
-      //             },
-      //           },
-      //           {
-      //             $sort: { adultPrice: 1 },
-      //           },
-      //         ],
-      //         as: "activities",
-      //       },
-      //     },
-      //     // {
-      //     //     $lookup: {
-      //     //         from: "attractionactivities",
-      //     //         let: {
-      //     //             attraction: "$_id",
-      //     //         },
-      //     //         pipeline: [
-      //     //             {
-      //     //                 $match: {
-      //     //                     $expr: {
-      //     //                         $eq: [
-      //     //                             "$attraction",
-      //     //                             "$$attraction",
-      //     //                         ],
-      //     //                     },
-      //     //                 },
-      //     //             },
-      //     //             {
-      //     //                 $addFields: {
-      //     //                     adultPrice: {
-      //     //                         $cond: [
-      //     //                             isSpecialMarkup,
-      //     //                             "$adultCost",
-      //     //                             "$adultPrice"
-      //     //                         ]
-      //     //                     }
-      //     //                 }
-      //     //             },
-      //     //             {
-      //     //                 $sort: { adultPrice: 1 },
-      //     //             },
-      //     //         ],
-      //     //         as: "activities",
-      //     //     }
-      //     // },
-      //     {
-      //       $addFields: {
-      //         activitiesSpecial: {
-      //           $filter: {
-      //             input: "$activities",
-      //             as: "item",
-      //             cond: { $eq: ["$$item.isDeleted", false] },
-      //           },
-      //         },
-      //         activitiesSpecial: {
-      //           $map: {
-      //             input: "$activities",
-      //             as: "activity",
-      //             in: {
-      //               $cond: [
-      //                 {
-      //                   $eq: ["$specialMarkup.markupType", "percentage"],
-      //                 },
-      //                 {
-      //                   $mergeObjects: [
-      //                     "$$activity",
-      //                     {
-      //                       adultPrice: {
-      //                         $sum: [
-      //                           "$$activity.adultPrice",
-      //                           {
-      //                             $divide: [
-      //                               {
-      //                                 $multiply: [
-      //                                   "$specialMarkup.markup",
-      //                                   "$$activity.adultPrice",
-      //                                 ],
-      //                               },
-      //                               100,
-      //                             ],
-      //                           },
-      //                         ],
-      //                       },
-      //                       childPrice: {
-      //                         $sum: [
-      //                           "$$activity.childPrice",
-      //                           {
-      //                             $divide: [
-      //                               {
-      //                                 $multiply: [
-      //                                   "$specialMarkup.markup",
-      //                                   "$$activity.childPrice",
-      //                                 ],
-      //                               },
-      //                               100,
-      //                             ],
-      //                           },
-      //                         ],
-      //                       },
-      //                       infantPrice: {
-      //                         $cond: [
-      //                           {
-      //                             $eq: ["$$activity.infantPrice", 0],
-      //                           },
-      //                           0,
-      //                           {
-      //                             $sum: [
-      //                               "$$activity.infantPrice",
-      //                               {
-      //                                 $divide: [
-      //                                   {
-      //                                     $multiply: [
-      //                                       "$specialMarkup.markup",
-      //                                       "$$activity.infantPrice",
-      //                                     ],
-      //                                   },
-      //                                   100,
-      //                                 ],
-      //                               },
-      //                             ],
-      //                           },
-      //                         ],
-      //                       },
-      //                     },
-      //                   ],
-      //                 },
-      //                 {
-      //                   $mergeObjects: [
-      //                     "$$activity",
-      //                     {
-      //                       adultPrice: {
-      //                         $sum: [
-      //                           "$$activity.adultPrice",
-      //                           "$specialMarkup.markup",
-      //                         ],
-      //                       },
-      //                       childPrice: {
-      //                         $sum: [
-      //                           "$$activity.childPrice",
-      //                           "$specialMarkup.markup",
-      //                         ],
-      //                       },
-      //                       infantPrice: {
-      //                         $cond: [
-      //                           {
-      //                             $eq: ["$$activity.infantPrice", 0],
-      //                           },
-      //                           0,
-      //                           {
-      //                             $sum: [
-      //                               "$$activity.infantPrice",
-      //                               "$specialMarkup.markup",
-      //                             ],
-      //                           },
-      //                         ],
-      //                       },
-      //                     },
-      //                   ],
-      //                 },
-      //               ],
-      //             },
-      //           },
-      //         },
-      //       },
-      //     },
-      //     {
-      //       $addFields: {
-      //         activities: {
-      //           $filter: {
-      //             input: "$activitiesSpecial",
-      //             as: "item",
-      //             cond: { $eq: ["$$item.isDeleted", false] },
-      //           },
-      //         },
-      //         activities: {
-      //           $map: {
-      //             input: "$activitiesSpecial",
-      //             as: "activity",
-      //             in: {
-      //               $cond: [
-      //                 {
-      //                   $eq: ["$markup.markupType", "percentage"],
-      //                 },
-      //                 {
-      //                   $mergeObjects: [
-      //                     "$$activity",
-      //                     {
-      //                       adultPrice: {
-      //                         $sum: [
-      //                           "$$activity.adultPrice",
-      //                           {
-      //                             $divide: [
-      //                               {
-      //                                 $multiply: [
-      //                                   "$markup.markup",
-      //                                   "$$activity.adultPrice",
-      //                                 ],
-      //                               },
-      //                               100,
-      //                             ],
-      //                           },
-      //                         ],
-      //                       },
-      //                       childPrice: {
-      //                         $sum: [
-      //                           "$$activity.childPrice",
-      //                           {
-      //                             $divide: [
-      //                               {
-      //                                 $multiply: [
-      //                                   "$markup.markup",
-      //                                   "$$activity.childPrice",
-      //                                 ],
-      //                               },
-      //                               100,
-      //                             ],
-      //                           },
-      //                         ],
-      //                       },
-      //                       infantPrice: {
-      //                         $cond: [
-      //                           {
-      //                             $eq: ["$$activity.infantPrice", 0],
-      //                           },
-      //                           0,
-      //                           {
-      //                             $sum: [
-      //                               "$$activity.infantPrice",
-      //                               {
-      //                                 $divide: [
-      //                                   {
-      //                                     $multiply: [
-      //                                       "$markup.markup",
-      //                                       "$$activity.infantPrice",
-      //                                     ],
-      //                                   },
-      //                                   100,
-      //                                 ],
-      //                               },
-      //                             ],
-      //                           },
-      //                         ],
-      //                       },
-      //                     },
-      //                   ],
-      //                 },
-      //                 {
-      //                   $mergeObjects: [
-      //                     "$$activity",
-      //                     {
-      //                       adultPrice: {
-      //                         $sum: ["$$activity.adultPrice", "$markup.markup"],
-      //                       },
-      //                       childPrice: {
-      //                         $sum: ["$$activity.childPrice", "$markup.markup"],
-      //                       },
-      //                       infantPrice: {
-      //                         $cond: [
-      //                           {
-      //                             $eq: ["$$activity.infantPrice", 0],
-      //                           },
-      //                           0,
-      //                           {
-      //                             $sum: [
-      //                               "$$activity.infantPrice",
-      //                               "$markup.markup",
-      //                             ],
-      //                           },
-      //                         ],
-      //                       },
-      //                     },
-      //                   ],
-      //                 },
-      //               ],
-      //             },
-      //           },
-      //         },
-      //       },
-      //     },
-
-      //     {
-      //       $project: {
-      //         totalReviews: 0,
-      //       },
-      //     },
-      //   ]);
-
-      //   // let ticketCount;
-      //   // let ticketStatus = true;
-      //   // if (attraction[0].bookingType == "ticket") {
-      //   //   ticketCount = await AttractionTicket.find({
-      //   //     activity: attraction[0].activities[0]._id,
-      //   //     status: "ok",
-      //   //   }).count();
-
-      //   //   if (ticketCount < 1) {
-      //   //     ticketStatus = false;
-      //   //   }
-      //   // }
-
-      //   console.log(attraction[0].activity, "attraction");
-
-      //   if (!attraction || attraction?.length < 1) {
-      //     return sendErrorResponse(res, 404, "Attraction not found");
-      //   }
-      //   res.status(200).json(attraction[0]);
-
-      //   // res.status(200).json({attraction : attraction[0] , ticketStatus , ticketCount  });
-      // } else {
-
       const attraction = await Attraction.aggregate([
         {
           $match: {
@@ -484,16 +46,22 @@ module.exports = {
         {
           $lookup: {
             from: "b2bspecialattractionmarkups",
-            let: {
-              attraction: "$_id",
-            },
             pipeline: [
               {
                 $match: {
                   $expr: {
                     $and: [
                       {
-                        $eq: ["$resellerId", req.reseller._id],
+                        $eq: [
+                          "$resellerId",
+                          {
+                            $cond: {
+                              if: { $eq: [req.reseller.role, "sub-agent"] },
+                              then: req.reseller?.referredBy,
+                              else: req.reseller?._id,
+                            },
+                          },
+                        ],
                       },
                     ],
                   },
@@ -616,13 +184,6 @@ module.exports = {
         {
           $addFields: {
             activitiesSpecial: {
-              $filter: {
-                input: "$activities",
-                as: "item",
-                cond: { $eq: ["$$item.isDeleted", false] },
-              },
-            },
-            activitiesSpecial: {
               $map: {
                 input: "$activities",
                 as: "activity",
@@ -733,15 +294,103 @@ module.exports = {
             },
           },
         },
+        // {
+        //   $addFields: {
+        //     activitiesSpecial: {
+        //       $map: {
+        //         input: "$activities",
+        //         as: "activity",
+        //         in: {
+        //           $cond: [
+        //             { $eq: ["$specialMarkup.markupType", "percentage"] },
+        //             {
+        //               $mergeObjects: [
+        //                 "$$activity",
+        //                 {
+        //                   adultPrice: {
+        //                     $sum: [
+        //                       "$$activity.adultPrice",
+        //                       {
+        //                         $multiply: [
+        //                           "$$activity.adultPrice",
+        //                           { $divide: ["$specialMarkup.markup", 100] },
+        //                         ],
+        //                       },
+        //                     ],
+        //                   },
+        //                   childPrice: {
+        //                     $sum: [
+        //                       "$$activity.childPrice",
+        //                       {
+        //                         $multiply: [
+        //                           "$$activity.childPrice",
+        //                           { $divide: ["$specialMarkup.markup", 100] },
+        //                         ],
+        //                       },
+        //                     ],
+        //                   },
+        //                   infantPrice: {
+        //                     $cond: [
+        //                       { $eq: ["$$activity.infantPrice", 0] },
+        //                       0,
+        //                       {
+        //                         $sum: [
+        //                           "$$activity.infantPrice",
+        //                           {
+        //                             $multiply: [
+        //                               "$$activity.infantPrice",
+        //                               {
+        //                                 $divide: ["$specialMarkup.markup", 100],
+        //                               },
+        //                             ],
+        //                           },
+        //                         ],
+        //                       },
+        //                     ],
+        //                   },
+        //                 },
+        //               ],
+        //             },
+        //             {
+        //               $mergeObjects: [
+        //                 "$$activity",
+        //                 {
+        //                   adultPrice: {
+        //                     $sum: [
+        //                       "$$activity.adultPrice",
+        //                       "$specialMarkup.markup",
+        //                     ],
+        //                   },
+        //                   childPrice: {
+        //                     $sum: [
+        //                       "$$activity.childPrice",
+        //                       "$specialMarkup.markup",
+        //                     ],
+        //                   },
+        //                   infantPrice: {
+        //                     $cond: [
+        //                       { $eq: ["$$activity.infantPrice", 0] },
+        //                       0,
+        //                       {
+        //                         $sum: [
+        //                           "$$activity.infantPrice",
+        //                           "$specialMarkup.markup",
+        //                         ],
+        //                       },
+        //                     ],
+        //                   },
+        //                 },
+        //               ],
+        //             },
+        //           ],
+        //         },
+        //       },
+        //     },
+        //   },
+        // },
         {
           $addFields: {
-            activitiesSubAgent: {
-              $filter: {
-                input: "$activitiesSpecial",
-                as: "item",
-                cond: { $eq: ["$$item.isDeleted", false] },
-              },
-            },
+            
             activitiesSubAgent: {
               $map: {
                 input: "$activitiesSpecial",
@@ -1037,298 +686,6 @@ module.exports = {
         filters1.title = { $regex: search, $options: "i" };
       }
 
-      // if (req.reseller.role == "reseller") {
-      //   const attractions = await Attraction.aggregate([
-      //     { $match: filters1 },
-      //     {
-      //       $lookup: {
-      //         from: "attractionactivities",
-      //         let: {
-      //           attraction: "$_id",
-      //         },
-      //         pipeline: [
-      //           {
-      //             $match: {
-      //               $expr: {
-      //                 $eq: ["$attraction", "$$attraction"],
-      //               },
-      //             },
-      //           },
-      //           {
-      //             $sort: { adultPrice: 1 },
-      //           },
-      //           {
-      //             $limit: 1,
-      //           },
-      //         ],
-      //         as: "activities",
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "attractionreviews",
-      //         localField: "_id",
-      //         foreignField: "attraction",
-      //         as: "reviews",
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "specialmarkups",
-      //         let: {
-      //           attraction: "$_id",
-      //         },
-      //         pipeline: [
-      //           {
-      //             $match: {
-      //               $expr: {
-      //                 $and: [
-      //                   {
-      //                     $eq: ["$resellerId", req.reseller._id],
-      //                   },
-      //                 ],
-      //               },
-      //             },
-      //           },
-      //         ],
-      //         as: "specialMarkup",
-      //       },
-      //     },
-
-      //     {
-      //       $lookup: {
-      //         from: "b2bclientattractionmarkups",
-      //         let: {
-      //           attraction: "$_id",
-      //         },
-      //         pipeline: [
-      //           {
-      //             $match: {
-      //               $expr: {
-      //                 $and: [
-      //                   {
-      //                     $eq: ["$resellerId", req.reseller._id],
-      //                   },
-      //                   {
-      //                     $eq: ["$attraction", "$$attraction"],
-      //                   },
-      //                 ],
-      //               },
-      //             },
-      //           },
-      //         ],
-      //         as: "markup",
-      //       },
-      //     },
-
-      //     {
-      //       $lookup: {
-      //         from: "destinations",
-      //         localField: "destination",
-      //         foreignField: "_id",
-      //         as: "destination",
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "attractioncategories",
-      //         localField: "category",
-      //         foreignField: "_id",
-      //         as: "category",
-      //       },
-      //     },
-      //     {
-      //       $set: {
-      //         activity: { $arrayElemAt: ["$activities", 0] },
-      //         specialMarkup: { $arrayElemAt: ["$specialMarkup", 0] },
-      //         markup: { $arrayElemAt: ["$markup", 0] },
-      //         destination: { $arrayElemAt: ["$destination", 0] },
-      //         category: { $arrayElemAt: ["$category", 0] },
-      //         totalReviews: {
-      //           $size: "$reviews",
-      //         },
-      //         totalRating: {
-      //           $sum: {
-      //             $map: {
-      //               input: "$reviews",
-      //               in: "$$this.rating",
-      //             },
-      //           },
-      //         },
-      //       },
-      //     },
-      //     {
-      //       $addFields: {
-      //         activitiesSpecialMarkup: {
-      //           $filter: {
-      //             input: "$activities",
-      //             as: "item",
-      //             cond: { $eq: ["$$item.isDeleted", false] },
-      //           },
-      //         },
-      //         activitiesSpecialMarkup: {
-      //           $map: {
-      //             input: "$activities",
-      //             as: "activity",
-      //             in: {
-      //               $cond: [
-      //                 {
-      //                   $eq: ["$specialMarkup.markupType", "percentage"],
-      //                 },
-      //                 {
-      //                   $mergeObjects: [
-      //                     "$$activity",
-      //                     {
-      //                       adultPrice: {
-      //                         $sum: [
-      //                           "$$activity.adultPrice",
-      //                           {
-      //                             $divide: [
-      //                               {
-      //                                 $multiply: [
-      //                                   "$specialMarkup.markup",
-      //                                   "$$activity.adultPrice",
-      //                                 ],
-      //                               },
-      //                               100,
-      //                             ],
-      //                           },
-      //                         ],
-      //                       },
-      //                     },
-      //                   ],
-      //                 },
-      //                 {
-      //                   $mergeObjects: [
-      //                     "$$activity",
-      //                     {
-      //                       adultPrice: {
-      //                         $sum: [
-      //                           "$$activity.adultPrice",
-      //                           "$specialMarkup.markup",
-      //                         ],
-      //                       },
-      //                     },
-      //                   ],
-      //                 },
-      //               ],
-      //             },
-      //           },
-      //         },
-      //       },
-      //     },
-      //     {
-      //       $addFields: {
-      //         activity: {
-      //           $map: {
-      //             input: "$activitiesSpecialMarkup",
-      //             as: "activity",
-      //             in: {
-      //               $cond: [
-      //                 {
-      //                   $eq: ["$markup.markupType", "percentage"],
-      //                 },
-      //                 {
-      //                   $mergeObjects: [
-      //                     "$$activity",
-      //                     {
-      //                       adultPrice: {
-      //                         $sum: [
-      //                           "$$activity.adultPrice",
-      //                           {
-      //                             $divide: [
-      //                               {
-      //                                 $multiply: [
-      //                                   "$markup.markup",
-      //                                   "$$activity.adultPrice",
-      //                                 ],
-      //                               },
-      //                               100,
-      //                             ],
-      //                           },
-      //                         ],
-      //                       },
-      //                     },
-      //                   ],
-      //                 },
-      //                 {
-      //                   $mergeObjects: [
-      //                     "$$activity",
-      //                     {
-      //                       adultPrice: {
-      //                         $sum: [
-      //                           "$$activity.adultPrice",
-      //                           "$markup.markup",
-      //                         ],
-      //                       },
-      //                     },
-      //                   ],
-      //                 },
-      //               ],
-      //             },
-      //           },
-      //         },
-      //       },
-      //     },
-      //     {
-      //       $project: {
-      //         title: 1,
-      //         destination: 1,
-      //         category: {
-      //           categoryName: 1,
-      //           slug: 1,
-      //         },
-      //         images: 1,
-      //         bookingType: 1,
-      //         activity:1,
-      //         duration: 1,
-      //         durationType: 1,
-      //         totalReviews: 1,
-      //         averageRating: {
-      //           $cond: [
-      //             { $eq: ["$totalReviews", 0] },
-      //             0,
-      //             {
-      //               $divide: ["$totalRating", "$totalReviews"],
-      //             },
-      //           ],
-      //         },
-      //         cancellationType: 1,
-      //         cancelBeforeTime: 1,
-      //         cancellationFee: 1,
-      //         isCombo: 1,
-      //         isOffer: 1,
-      //         offerAmountType: 1,
-      //         offerAmount: 1,
-      //       },
-      //     },
-
-      //     {
-      //       $group: {
-      //         _id: null,
-      //         totalAttractions: { $sum: 1 },
-      //         data: { $push: "$$ROOT" },
-      //       },
-      //     },
-      //     {
-      //       $project: {
-      //         totalAttractions: 1,
-      //         data: {
-      //           $slice: ["$data", Number(limit) * Number(skip), Number(limit)],
-      //         },
-      //       },
-      //     },
-      //   ]);
-
-      //   console.log(attractions[0].data, "attractions");
-
-      //   res.status(200).json({
-      //     attractions: attractions[0],
-      //     skip: Number(skip),
-      //     limit: Number(limit),
-      //   });
-      // } else {
-
       const attractions = await Attraction.aggregate([
         { $match: filters1 },
         {
@@ -1366,16 +723,22 @@ module.exports = {
         {
           $lookup: {
             from: "b2bspecialattractionmarkups",
-            let: {
-              attraction: "$_id",
-            },
             pipeline: [
               {
                 $match: {
                   $expr: {
                     $and: [
                       {
-                        $eq: ["$resellerId", req.reseller._id],
+                        $eq: [
+                          "$resellerId",
+                          {
+                            $cond: {
+                              if: { $eq: [req.reseller.role, "sub-agent"] },
+                              then: req.reseller?.referredBy,
+                              else: req.reseller?._id,
+                            },
+                          },
+                        ],
                       },
                     ],
                   },
@@ -1422,7 +785,7 @@ module.exports = {
                   $expr: {
                     $and: [
                       {
-                        $eq: ["$resellerId", req?.reseller.referredBy],
+                        $eq: ["$resellerId", req?.reseller?.referredBy],
                       },
                       {
                         $eq: ["$attraction", "$$attraction"],
@@ -1480,13 +843,13 @@ module.exports = {
         },
         {
           $addFields: {
-            activitiesSpecial: {
-              $filter: {
-                input: "$activities",
-                as: "item",
-                cond: { $eq: ["$$item.isDeleted", false] },
-              },
-            },
+            // activitiesSpecial: {
+            //   $filter: {
+            //     input: "$activities",
+            //     as: "item",
+            //     cond: { $eq: ["$$item.isDeleted", false] },
+            //   },
+            // },
             activitiesSpecial: {
               $map: {
                 input: "$activities",
@@ -1659,6 +1022,7 @@ module.exports = {
         {
           $project: {
             title: 1,
+            activitiesSpecial: 1,
             destination: 1,
             category: {
               categoryName: 1,
@@ -1734,7 +1098,7 @@ module.exports = {
         },
       ]);
 
-      console.log(attractions[0], "attractions");
+      console.log(attractions[0].data[0], "attractions");
 
       res.status(200).json({
         attractions: attractions[0],
@@ -1743,6 +1107,7 @@ module.exports = {
       });
       // }
     } catch (err) {
+      console.log(err, "error");
       sendErrorResponse(res, 500, err);
     }
   },
@@ -1786,20 +1151,25 @@ module.exports = {
             as: "activities",
           },
         },
-
         {
           $lookup: {
             from: "b2bspecialattractionmarkups",
-            let: {
-              attraction: "$_id",
-            },
             pipeline: [
               {
                 $match: {
                   $expr: {
                     $and: [
                       {
-                        $eq: ["$resellerId", req.reseller._id],
+                        $eq: [
+                          "$resellerId",
+                          {
+                            $cond: {
+                              if: { $eq: [req.reseller.role, "sub-agent"] },
+                              then: req.reseller?.referredBy,
+                              else: req.reseller?._id,
+                            },
+                          },
+                        ],
                       },
                     ],
                   },

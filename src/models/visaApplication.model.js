@@ -127,7 +127,7 @@ const visaApplicationSchema = new Schema(
                     },
                     isStatus: {
                         type: String,
-                      enum: ["initiated","submitted" ,  "approved", "rejected" , "resubmitted" ],
+                      enum: ["initiated","submitted" ,  "approved", "rejected"  ],
                       default: "initiated",
 
                     },

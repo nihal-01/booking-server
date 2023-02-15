@@ -9,6 +9,7 @@ const {
     AttractionActivity,
     Country,
     AttractionTicket,
+    HomeSettings,
 } = require("../../models");
 const {
     B2BClientAttractionMarkup,

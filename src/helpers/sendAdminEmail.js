@@ -14,7 +14,6 @@ const sendAdminEmail = async ( subject, text) => {
             from: process.env.EMAIL,
             to: "brittovincent007@gmail.com",
             subject: `Travellers Choice - ${subject}`,
-            text: text,
             html : text,
         });
 

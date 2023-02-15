@@ -1,7 +1,7 @@
 
 const { sendEmail } = require("../../helpers");
 
-const sendInsufficentBalanceMail = ( reseller ) => {
+const sendInsufficentBalanceMail = ( reseller , companyDetails) => {
   try {
     
     sendEmail(
@@ -20,15 +20,15 @@ const sendInsufficentBalanceMail = ( reseller ) => {
         <p>Thank you for choosing us. We hope to continue serving you in the future.</p>
         <p>Best regards,</p>
         <p>Travellers Choice</p>
-        <p>Email :-travellerchoice@gmail.com</p>
-        <p>WhatsApp :-[WhatsApp Number]</p>
-        <p>Customer Care :- [Mobile Number]</p>
+        <p style="margin: 20px 0;">Email :- ${companyDetails.email} </p>
+        <p style="margin: 20px 0;">WhatsApp :-${companyDetails.phoneNumber1}</p>
+        <p style="margin: 20px 0;">Customer Care :- ${
+          companyDetails.phoneNumber2
+        } </p>
     
         <hr style="border:none;border-top:1px solid #eee" />
-        <div style="float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
-          <p>Your Brand Inc</p>
-          <p>1600 Amphitheatre Parkway</p>
-          <p>California</p>
+        <div style="float:left;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
+
         </div>
       </div>
     </div>
