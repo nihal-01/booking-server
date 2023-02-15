@@ -136,7 +136,10 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid admin id");
             }
 
-            const admin = await Admin.findOneAndDelete({ id, role: "admin" });
+            const admin = await Admin.findOneAndDelete({
+                _id: id,
+                role: "admin",
+            });
             if (!admin) {
                 return sendErrorResponse(res, 404, "Admin not found");
             }
