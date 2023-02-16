@@ -106,7 +106,41 @@ module.exports = {
                                 },
                             },
                             {
-                                $sort: { adultPrice: 1 },
+                                $addFields: {
+                                    privateTransfer: {
+                                        $arrayElemAt: ["$privateTransfers", 0],
+                                    },
+                                },
+                            },
+                            {
+                                $addFields: {
+                                    lowPrice: {
+                                        $cond: {
+                                            if: {
+                                                $eq: [
+                                                    "$activityType",
+                                                    "normal",
+                                                ],
+                                            },
+                                            then: "$adultPrice",
+                                            else: {
+                                                $cond: {
+                                                    if: {
+                                                        $eq: [
+                                                            "$isSharedTransferAvailable",
+                                                            true,
+                                                        ],
+                                                    },
+                                                    then: "$sharedTransferPrice",
+                                                    else: "$privateTransfer.price",
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                            {
+                                $sort: { lowPrice: 1 },
                             },
                         ],
                         as: "activities",
@@ -121,61 +155,23 @@ module.exports = {
                                 in: {
                                     $cond: [
                                         {
-                                            $eq: [
-                                                "$markup.markupType",
-                                                "percentage",
-                                            ],
+                                            $eq: ["$activityType", "normal"],
                                         },
                                         {
-                                            $mergeObjects: [
-                                                "$$activity",
+                                            $cond: [
                                                 {
-                                                    adultPrice: {
-                                                        $sum: [
-                                                            "$$activity.adultPrice",
-                                                            {
-                                                                $divide: [
-                                                                    {
-                                                                        $multiply:
-                                                                            [
-                                                                                "$markup.markup",
-                                                                                "$$activity.adultPrice",
-                                                                            ],
-                                                                    },
-                                                                    100,
-                                                                ],
-                                                            },
-                                                        ],
-                                                    },
-                                                    childPrice: {
-                                                        $sum: [
-                                                            "$$activity.childPrice",
-                                                            {
-                                                                $divide: [
-                                                                    {
-                                                                        $multiply:
-                                                                            [
-                                                                                "$markup.markup",
-                                                                                "$$activity.childPrice",
-                                                                            ],
-                                                                    },
-                                                                    100,
-                                                                ],
-                                                            },
-                                                        ],
-                                                    },
-                                                    infantPrice: {
-                                                        $cond: [
-                                                            {
-                                                                $eq: [
-                                                                    "$$activity.infantPrice",
-                                                                    0,
-                                                                ],
-                                                            },
-                                                            0,
-                                                            {
+                                                    $eq: [
+                                                        "$markup.markupType",
+                                                        "percentage",
+                                                    ],
+                                                },
+                                                {
+                                                    $mergeObjects: [
+                                                        "$$activity",
+                                                        {
+                                                            adultPrice: {
                                                                 $sum: [
-                                                                    "$$activity.infantPrice",
+                                                                    "$$activity.adultPrice",
                                                                     {
                                                                         $divide:
                                                                             [
@@ -183,7 +179,7 @@ module.exports = {
                                                                                     $multiply:
                                                                                         [
                                                                                             "$markup.markup",
-                                                                                            "$$activity.infantPrice",
+                                                                                            "$$activity.adultPrice",
                                                                                         ],
                                                                                 },
                                                                                 100,
@@ -191,44 +187,235 @@ module.exports = {
                                                                     },
                                                                 ],
                                                             },
-                                                        ],
-                                                    },
+                                                            childPrice: {
+                                                                $sum: [
+                                                                    "$$activity.childPrice",
+                                                                    {
+                                                                        $divide:
+                                                                            [
+                                                                                {
+                                                                                    $multiply:
+                                                                                        [
+                                                                                            "$markup.markup",
+                                                                                            "$$activity.childPrice",
+                                                                                        ],
+                                                                                },
+                                                                                100,
+                                                                            ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                            infantPrice: {
+                                                                $cond: [
+                                                                    {
+                                                                        $eq: [
+                                                                            "$$activity.infantPrice",
+                                                                            0,
+                                                                        ],
+                                                                    },
+                                                                    0,
+                                                                    {
+                                                                        $sum: [
+                                                                            "$$activity.infantPrice",
+                                                                            {
+                                                                                $divide:
+                                                                                    [
+                                                                                        {
+                                                                                            $multiply:
+                                                                                                [
+                                                                                                    "$markup.markup",
+                                                                                                    "$$activity.infantPrice",
+                                                                                                ],
+                                                                                        },
+                                                                                        100,
+                                                                                    ],
+                                                                            },
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                            lowPrice: {
+                                                                $sum: [
+                                                                    "$$activity.lowPrice",
+                                                                    {
+                                                                        $divide:
+                                                                            [
+                                                                                {
+                                                                                    $multiply:
+                                                                                        [
+                                                                                            "$markup.markup",
+                                                                                            "$$activity.lowPrice",
+                                                                                        ],
+                                                                                },
+                                                                                100,
+                                                                            ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                        },
+                                                    ],
+                                                },
+                                                {
+                                                    $mergeObjects: [
+                                                        "$$activity",
+                                                        {
+                                                            adultPrice: {
+                                                                $sum: [
+                                                                    "$$activity.adultPrice",
+                                                                    "$markup.markup",
+                                                                ],
+                                                            },
+                                                            childPrice: {
+                                                                $sum: [
+                                                                    "$$activity.childPrice",
+                                                                    "$markup.markup",
+                                                                ],
+                                                            },
+                                                            infantPrice: {
+                                                                $cond: [
+                                                                    {
+                                                                        $eq: [
+                                                                            "$$activity.infantPrice",
+                                                                            0,
+                                                                        ],
+                                                                    },
+                                                                    0,
+                                                                    {
+                                                                        $sum: [
+                                                                            "$$activity.infantPrice",
+                                                                            "$markup.markup",
+                                                                        ],
+                                                                    },
+                                                                ],
+                                                            },
+                                                            lowPrice: {
+                                                                $sum: [
+                                                                    "$$activity.lowPrice",
+                                                                    "$markup.markup",
+                                                                ],
+                                                            },
+                                                        },
+                                                    ],
                                                 },
                                             ],
                                         },
                                         {
-                                            $mergeObjects: [
-                                                "$$activity",
+                                            $cond: [
                                                 {
-                                                    adultPrice: {
-                                                        $sum: [
-                                                            "$$activity.adultPrice",
-                                                            "$markup.markup",
-                                                        ],
-                                                    },
-                                                    childPrice: {
-                                                        $sum: [
-                                                            "$$activity.childPrice",
-                                                            "$markup.markup",
-                                                        ],
-                                                    },
-                                                    infantPrice: {
-                                                        $cond: [
-                                                            {
-                                                                $eq: [
-                                                                    "$$activity.infantPrice",
-                                                                    0,
+                                                    $eq: [
+                                                        "$markup.markupType",
+                                                        "percentage",
+                                                    ],
+                                                },
+                                                {
+                                                    $mergeObjects: [
+                                                        "$$activity",
+                                                        {
+                                                            sharedTransferPrice:
+                                                                {
+                                                                    $sum: [
+                                                                        "$$activity.sharedTransferPrice",
+                                                                        {
+                                                                            $divide:
+                                                                                [
+                                                                                    {
+                                                                                        $multiply:
+                                                                                            [
+                                                                                                "$markup.markup",
+                                                                                                "$$activity.sharedTransferPrice",
+                                                                                            ],
+                                                                                    },
+                                                                                    100,
+                                                                                ],
+                                                                        },
+                                                                    ],
+                                                                },
+                                                            privateTransfers: {
+                                                                $map: {
+                                                                    input: "$$activity.privateTransfers",
+                                                                    as: "transfers",
+                                                                    in: {
+                                                                        price: {
+                                                                            $sum: [
+                                                                                "$$transfers.price",
+                                                                                {
+                                                                                    $divide:
+                                                                                        [
+                                                                                            {
+                                                                                                $multiply:
+                                                                                                    [
+                                                                                                        "$markup.markup",
+                                                                                                        "$$transfers.price",
+                                                                                                    ],
+                                                                                            },
+                                                                                            100,
+                                                                                        ],
+                                                                                },
+                                                                            ],
+                                                                        },
+                                                                    },
+                                                                },
+                                                            },
+                                                            lowPrice: {
+                                                                $sum: [
+                                                                    "$$activity.lowPrice",
+                                                                    {
+                                                                        $divide:
+                                                                            [
+                                                                                {
+                                                                                    $multiply:
+                                                                                        [
+                                                                                            "$markup.markup",
+                                                                                            "$$activity.lowPrice",
+                                                                                        ],
+                                                                                },
+                                                                                100,
+                                                                            ],
+                                                                    },
                                                                 ],
                                                             },
-                                                            0,
-                                                            {
+                                                        },
+                                                    ],
+                                                },
+                                                {
+                                                    $mergeObjects: [
+                                                        "$$activity",
+                                                        {
+                                                            sharedTransferPrice:
+                                                                {
+                                                                    $sum: [
+                                                                        "$$activity.sharedTransferPrice",
+                                                                        "$markup.markup",
+                                                                    ],
+                                                                },
+                                                            privateTransfers: {
+                                                                $map: {
+                                                                    input: "$$activity.privateTransfers",
+                                                                    as: "transfers",
+                                                                    in: {
+                                                                        $mergeObjects:
+                                                                            [
+                                                                                "$$transfers",
+                                                                                {
+                                                                                    price: {
+                                                                                        $sum: [
+                                                                                            "$$transfers.price",
+                                                                                            "$markup.markup",
+                                                                                        ],
+                                                                                    },
+                                                                                },
+                                                                            ],
+                                                                    },
+                                                                },
+                                                            },
+                                                            lowPrice: {
                                                                 $sum: [
-                                                                    "$$activity.infantPrice",
+                                                                    "$$activity.lowPrice",
                                                                     "$markup.markup",
                                                                 ],
                                                             },
-                                                        ],
-                                                    },
+                                                        },
+                                                    ],
                                                 },
                                             ],
                                         },
@@ -241,6 +428,9 @@ module.exports = {
                 {
                     $project: {
                         totalReviews: 0,
+                        activities: {
+                            privateTransfer: 0,
+                        },
                     },
                 },
             ]);
@@ -396,7 +586,41 @@ module.exports = {
                                 },
                             },
                             {
-                                $sort: { adultPrice: 1 },
+                                $addFields: {
+                                    privateTransfer: {
+                                        $arrayElemAt: ["$privateTransfers", 0],
+                                    },
+                                },
+                            },
+                            {
+                                $addFields: {
+                                    lowPrice: {
+                                        $cond: {
+                                            if: {
+                                                $eq: [
+                                                    "$activityType",
+                                                    "normal",
+                                                ],
+                                            },
+                                            then: "$adultPrice",
+                                            else: {
+                                                $cond: {
+                                                    if: {
+                                                        $eq: [
+                                                            "$isSharedTransferAvailable",
+                                                            true,
+                                                        ],
+                                                    },
+                                                    then: "$sharedTransferPrice",
+                                                    else: "$privateTransfer.price",
+                                                },
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                            {
+                                $sort: { lowPrice: 1 },
                             },
                             {
                                 $limit: 1,
@@ -467,7 +691,7 @@ module.exports = {
                         images: 1,
                         bookingType: 1,
                         activity: {
-                            adultPrice: {
+                            lowPrice: {
                                 $cond: [
                                     {
                                         $eq: [
@@ -477,13 +701,13 @@ module.exports = {
                                     },
                                     {
                                         $sum: [
-                                            "$activity.adultPrice",
+                                            "$activity.lowPrice",
                                             {
                                                 $divide: [
                                                     {
                                                         $multiply: [
                                                             "$markup.markup",
-                                                            "$activity.adultPrice",
+                                                            "$activity.lowPrice",
                                                         ],
                                                     },
                                                     100,
@@ -493,12 +717,16 @@ module.exports = {
                                     },
                                     {
                                         $sum: [
-                                            "$activity.adultPrice",
+                                            "$activity.lowPrice",
                                             "$markup.markup",
                                         ],
                                     },
                                 ],
                             },
+                            activityType: 1,
+                            isSharedTransferAvailable: 1,
+                            isPrivateTransferAvailable: 1,
+                            privateTransfer: 1,
                         },
                         duration: 1,
                         durationType: 1,

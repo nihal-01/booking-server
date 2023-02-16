@@ -9,7 +9,6 @@ const {
     AttractionActivity,
     Country,
     AttractionTicket,
-    HomeSettings,
 } = require("../../models");
 const {
     B2BClientAttractionMarkup,
@@ -1047,7 +1046,7 @@ module.exports = {
                     _id: attractionOrder.activities[i].activity,
                 });
                 let totalPurchaseCost =
-                    attractionOrder.activities[i].purchaseCost;
+                    attractionOrder.activities[i].totalCost;
                 if (attractionOrder.activities[i].bookingType === "ticket") {
                     let adultTickets = [];
                     let childTickets = [];
@@ -1213,10 +1212,10 @@ module.exports = {
                 } else {
                     attractionOrder.activities[i].status = "booked";
                 }
-                attractionOrder.activities[i].purchaseCost = totalPurchaseCost;
+                attractionOrder.activities[i].totalCost = totalPurchaseCost;
                 attractionOrder.activities[i].profit =
-                    attractionOrder.activities[i].amount -
-                    (attractionOrder.activities[i].purchaseCost +
+                    attractionOrder.activities[i].grandTotal -
+                    (attractionOrder.activities[i].totalCost +
                         (attractionOrder.activities[i].resellerMarkup || 0) +
                         (attractionOrder.activities[i].subAgentMarkup || 0));
             }

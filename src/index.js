@@ -52,8 +52,8 @@ app.use("/api/v1/b2b", b2bRouter);
 
 app.get("/", async (req, res) => {
     await AttractionTicket.find({
-        activity: "63bebc26cddd01ab71df55fc",
-    }).updateMany({ status: "ok" });
+        activity: "63b29508936cc212bdf7fd1b",
+    }).updateMany({ ticketFor: "adult" });
 });
 
 app.listen(PORT, () => {

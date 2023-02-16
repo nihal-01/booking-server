@@ -18,7 +18,7 @@ router.post("/ccavenue/capture", captureCCAvenueAttractionPayment);
 router.post("/razorpay/capture", captureRazorpayAttractionPayment);
 router.post("/cancel", userAuth, cancelAttractionOrder);
 router.post("/cancel", userAuth, cancelAttractionOrder);
+router.get("/single/:id",userAuth , getSingleAttractionOrder);
 router.get('/all' ,userAuth, getSingleUserAllOrders  )
-router.get("/single/:id", getSingleAttractionOrder);
 
 module.exports = router;

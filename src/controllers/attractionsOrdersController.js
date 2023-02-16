@@ -370,6 +370,8 @@ module.exports = {
           return sendErrorResponse(res, 400, "Invalid country id");
         }
 
+        console.log(req.user, "user");
+
         const countryDetails = await Country.findOne({
           _id: country,
           isDeleted: false,
@@ -391,6 +393,8 @@ module.exports = {
           await user.save();
         }
       }
+
+      console.log(req.user, "userlisting");
 
       let buyer = req.user || user;
 
@@ -743,8 +747,11 @@ module.exports = {
       }
 
       const attractionOrder = await AttractionOrder.findById(id)
-        .populate("orders.activity")
-        .populate("attraction", "title isOffer offerAmount offerAmountType")
+        .populate("activities.activity")
+        .populate(
+          "activities.attraction",
+          "title isOffer offerAmount offerAmountType"
+        )
         .lean();
       if (!attractionOrder) {
         return sendErrorResponse(res, 400, "Attraction not found");
@@ -888,6 +895,7 @@ module.exports = {
 
   getSingleUserAllOrders: async (req, res) => {
     try {
+      console.log(req);
       const { result, skip, limit } = await getUserOrder({
         ...req.query,
         userId: req.user?._id,
@@ -897,6 +905,28 @@ module.exports = {
       res.status(200).json({ result, skip, limit });
     } catch (err) {
       console.log(err, "error");
+      sendErrorResponse(res, 500, err);
+    }
+  },
+
+  getSingleUserSingleOrder: async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      if (!isValidObjectId(id)) {
+        return sendErrorResponse(res, 400, "Invalid attraction id");
+      }
+
+      const attractionOrder = await AttractionOrder.findById(id)
+        .populate("orders.activity")
+        .populate("attraction", "title isOffer offerAmount offerAmountType")
+        .lean();
+      if (!attractionOrder) {
+        return sendErrorResponse(res, 400, "Attraction not found");
+      }
+
+      res.status(200).json(attractionOrder);
+    } catch (err) {
       sendErrorResponse(res, 500, err);
     }
   },

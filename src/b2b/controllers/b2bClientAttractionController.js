@@ -56,7 +56,9 @@ module.exports = {
                           "$resellerId",
                           {
                             $cond: {
-                              if: { $eq: [req.reseller.role, "sub-agent"] },
+                              if: {
+                                $eq: [req.reseller.role, "sub-agent"],
+                              },
                               then: req.reseller?.referredBy,
                               else: req.reseller?._id,
                             },
@@ -170,7 +172,41 @@ module.exports = {
               {
                 $match: {
                   $expr: {
-                    $eq: ["$attraction", "$$attraction"],
+                    $and: [
+                      {
+                        $eq: ["$attraction", "$$attraction"],
+                      },
+                      { $eq: ["$isDeleted", false] },
+                    ],
+                  },
+                },
+              },
+
+              {
+                $addFields: {
+                  privateTransfer: {
+                    $arrayElemAt: ["$privateTransfers", 0],
+                  },
+                },
+              },
+              {
+                $addFields: {
+                  lowPrice: {
+                    $cond: {
+                      if: {
+                        $eq: ["$activityType", "normal"],
+                      },
+                      then: "$adultPrice",
+                      else: {
+                        $cond: {
+                          if: {
+                            $eq: ["$isSharedTransferAvailable", true],
+                          },
+                          then: "$sharedTransferPrice",
+                          else: "$privateTransfer.price",
+                        },
+                      },
+                    },
                   },
                 },
               },
@@ -190,59 +226,26 @@ module.exports = {
                 in: {
                   $cond: [
                     {
-                      $eq: ["$specialMarkup.markupType", "percentage"],
+                      $eq: ["$$activity.activityType", "normal"],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              {
-                                $divide: [
-                                  {
-                                    $multiply: [
-                                      "$specialMarkup.markup",
-                                      "$$activity.adultPrice",
-                                    ],
-                                  },
-                                  100,
-                                ],
-                              },
-                            ],
-                          },
-                          childPrice: {
-                            $sum: [
-                              "$$activity.childPrice",
-                              {
-                                $divide: [
-                                  {
-                                    $multiply: [
-                                      "$specialMarkup.markup",
-                                      "$$activity.childPrice",
-                                    ],
-                                  },
-                                  100,
-                                ],
-                              },
-                            ],
-                          },
-                          infantPrice: {
-                            $cond: [
-                              {
-                                $eq: ["$$activity.infantPrice", 0],
-                              },
-                              0,
-                              {
+                          $eq: ["$specialMarkup.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
                                 $sum: [
-                                  "$$activity.infantPrice",
+                                  "$$activity.adultPrice",
                                   {
                                     $divide: [
                                       {
                                         $multiply: [
                                           "$specialMarkup.markup",
-                                          "$$activity.infantPrice",
+                                          "$$activity.adultPrice",
                                         ],
                                       },
                                       100,
@@ -250,41 +253,211 @@ module.exports = {
                                   },
                                 ],
                               },
-                            ],
-                          },
+                              childPrice: {
+                                $sum: [
+                                  "$$activity.childPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$specialMarkup.markup",
+                                          "$$activity.childPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                              infantPrice: {
+                                $cond: [
+                                  {
+                                    $eq: ["$$activity.infantPrice", 0],
+                                  },
+                                  0,
+                                  {
+                                    $sum: [
+                                      "$$activity.infantPrice",
+                                      {
+                                        $divide: [
+                                          {
+                                            $multiply: [
+                                              "$specialMarkup.markup",
+                                              "$$activity.infantPrice",
+                                            ],
+                                          },
+                                          100,
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                ],
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$specialMarkup.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
+                                  "$specialMarkup.markup",
+                                ],
+                              },
+                              childPrice: {
+                                $sum: [
+                                  "$$activity.childPrice",
+                                  "$specialMarkup.markup",
+                                ],
+                              },
+                              infantPrice: {
+                                $cond: [
+                                  {
+                                    $eq: ["$$activity.infantPrice", 0],
+                                  },
+                                  0,
+                                  {
+                                    $sum: [
+                                      "$$activity.infantPrice",
+                                      "$specialMarkup.markup",
+                                    ],
+                                  },
+                                ],
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$specialMarkup.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              "$specialMarkup.markup",
-                            ],
-                          },
-                          childPrice: {
-                            $sum: [
-                              "$$activity.childPrice",
-                              "$specialMarkup.markup",
-                            ],
-                          },
-                          infantPrice: {
-                            $cond: [
-                              {
-                                $eq: ["$$activity.infantPrice", 0],
-                              },
-                              0,
-                              {
+                          $eq: ["$specialMarkup.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
                                 $sum: [
-                                  "$$activity.infantPrice",
+                                  "$$activity.sharedTransferPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$specialMarkup.markup",
+                                          "$$activity.sharedTransferPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    price: {
+                                      $sum: [
+                                        "$$transfers.price",
+                                        {
+                                          $divide: [
+                                            {
+                                              $multiply: [
+                                                "$specialMarkup.markup",
+                                                "$$transfers.price",
+                                              ],
+                                            },
+                                            100,
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$specialMarkup.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
                                   "$specialMarkup.markup",
                                 ],
                               },
-                            ],
-                          },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    $mergeObjects: [
+                                      "$$transfers",
+                                      {
+                                        price: {
+                                          $sum: [
+                                            "$$transfers.price",
+                                            "$specialMarkup.markup",
+                                          ],
+                                        },
+                                      },
+                                    ],
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$specialMarkup.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
@@ -294,103 +467,8 @@ module.exports = {
             },
           },
         },
-        // {
-        //   $addFields: {
-        //     activitiesSpecial: {
-        //       $map: {
-        //         input: "$activities",
-        //         as: "activity",
-        //         in: {
-        //           $cond: [
-        //             { $eq: ["$specialMarkup.markupType", "percentage"] },
-        //             {
-        //               $mergeObjects: [
-        //                 "$$activity",
-        //                 {
-        //                   adultPrice: {
-        //                     $sum: [
-        //                       "$$activity.adultPrice",
-        //                       {
-        //                         $multiply: [
-        //                           "$$activity.adultPrice",
-        //                           { $divide: ["$specialMarkup.markup", 100] },
-        //                         ],
-        //                       },
-        //                     ],
-        //                   },
-        //                   childPrice: {
-        //                     $sum: [
-        //                       "$$activity.childPrice",
-        //                       {
-        //                         $multiply: [
-        //                           "$$activity.childPrice",
-        //                           { $divide: ["$specialMarkup.markup", 100] },
-        //                         ],
-        //                       },
-        //                     ],
-        //                   },
-        //                   infantPrice: {
-        //                     $cond: [
-        //                       { $eq: ["$$activity.infantPrice", 0] },
-        //                       0,
-        //                       {
-        //                         $sum: [
-        //                           "$$activity.infantPrice",
-        //                           {
-        //                             $multiply: [
-        //                               "$$activity.infantPrice",
-        //                               {
-        //                                 $divide: ["$specialMarkup.markup", 100],
-        //                               },
-        //                             ],
-        //                           },
-        //                         ],
-        //                       },
-        //                     ],
-        //                   },
-        //                 },
-        //               ],
-        //             },
-        //             {
-        //               $mergeObjects: [
-        //                 "$$activity",
-        //                 {
-        //                   adultPrice: {
-        //                     $sum: [
-        //                       "$$activity.adultPrice",
-        //                       "$specialMarkup.markup",
-        //                     ],
-        //                   },
-        //                   childPrice: {
-        //                     $sum: [
-        //                       "$$activity.childPrice",
-        //                       "$specialMarkup.markup",
-        //                     ],
-        //                   },
-        //                   infantPrice: {
-        //                     $cond: [
-        //                       { $eq: ["$$activity.infantPrice", 0] },
-        //                       0,
-        //                       {
-        //                         $sum: [
-        //                           "$$activity.infantPrice",
-        //                           "$specialMarkup.markup",
-        //                         ],
-        //                       },
-        //                     ],
-        //                   },
-        //                 },
-        //               ],
-        //             },
-        //           ],
-        //         },
-        //       },
-        //     },
-        //   },
-        // },
         {
           $addFields: {
-            
             activitiesSubAgent: {
               $map: {
                 input: "$activitiesSpecial",
@@ -398,59 +476,26 @@ module.exports = {
                 in: {
                   $cond: [
                     {
-                      $eq: ["$markupSubAgent.markupType", "percentage"],
+                      $eq: ["$$activity.activityType", "normal"],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              {
-                                $divide: [
-                                  {
-                                    $multiply: [
-                                      "$markupSubAgent.markup",
-                                      "$$activity.adultPrice",
-                                    ],
-                                  },
-                                  100,
-                                ],
-                              },
-                            ],
-                          },
-                          childPrice: {
-                            $sum: [
-                              "$$activity.childPrice",
-                              {
-                                $divide: [
-                                  {
-                                    $multiply: [
-                                      "$markupSubAgent.markup",
-                                      "$$activity.childPrice",
-                                    ],
-                                  },
-                                  100,
-                                ],
-                              },
-                            ],
-                          },
-                          infantPrice: {
-                            $cond: [
-                              {
-                                $eq: ["$$activity.infantPrice", 0],
-                              },
-                              0,
-                              {
+                          $eq: ["$markupSubAgent.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
                                 $sum: [
-                                  "$$activity.infantPrice",
+                                  "$$activity.adultPrice",
                                   {
                                     $divide: [
                                       {
                                         $multiply: [
                                           "$markupSubAgent.markup",
-                                          "$$activity.infantPrice",
+                                          "$$activity.adultPrice",
                                         ],
                                       },
                                       100,
@@ -458,41 +503,211 @@ module.exports = {
                                   },
                                 ],
                               },
-                            ],
-                          },
+                              childPrice: {
+                                $sum: [
+                                  "$$activity.childPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupSubAgent.markup",
+                                          "$$activity.childPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                              infantPrice: {
+                                $cond: [
+                                  {
+                                    $eq: ["$$activity.infantPrice", 0],
+                                  },
+                                  0,
+                                  {
+                                    $sum: [
+                                      "$$activity.infantPrice",
+                                      {
+                                        $divide: [
+                                          {
+                                            $multiply: [
+                                              "$markupSubAgent.markup",
+                                              "$$activity.infantPrice",
+                                            ],
+                                          },
+                                          100,
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                ],
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupSubAgent.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
+                                  "$markupSubAgent.markup",
+                                ],
+                              },
+                              childPrice: {
+                                $sum: [
+                                  "$$activity.childPrice",
+                                  "$markupSubAgent.markup",
+                                ],
+                              },
+                              infantPrice: {
+                                $cond: [
+                                  {
+                                    $eq: ["$$activity.infantPrice", 0],
+                                  },
+                                  0,
+                                  {
+                                    $sum: [
+                                      "$$activity.infantPrice",
+                                      "$markupSubAgent.markup",
+                                    ],
+                                  },
+                                ],
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$markupSubAgent.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              "$markupSubAgent.markup",
-                            ],
-                          },
-                          childPrice: {
-                            $sum: [
-                              "$$activity.childPrice",
-                              "$markupSubAgent.markup",
-                            ],
-                          },
-                          infantPrice: {
-                            $cond: [
-                              {
-                                $eq: ["$$activity.infantPrice", 0],
-                              },
-                              0,
-                              {
+                          $eq: ["$markupSubAgent.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
                                 $sum: [
-                                  "$$activity.infantPrice",
+                                  "$$activity.sharedTransferPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupSubAgent.markup",
+                                          "$$activity.sharedTransferPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    price: {
+                                      $sum: [
+                                        "$$transfers.price",
+                                        {
+                                          $divide: [
+                                            {
+                                              $multiply: [
+                                                "$markupSubAgent.markup",
+                                                "$$transfers.price",
+                                              ],
+                                            },
+                                            100,
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupSubAgent.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
                                   "$markupSubAgent.markup",
                                 ],
                               },
-                            ],
-                          },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    $mergeObjects: [
+                                      "$$transfers",
+                                      {
+                                        price: {
+                                          $sum: [
+                                            "$$transfers.price",
+                                            "$markupSubAgent.markup",
+                                          ],
+                                        },
+                                      },
+                                    ],
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$markupSubAgent.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
@@ -502,6 +717,7 @@ module.exports = {
             },
           },
         },
+
         {
           $addFields: {
             activities: {
@@ -511,59 +727,26 @@ module.exports = {
                 in: {
                   $cond: [
                     {
-                      $eq: ["$markupClient.markupType", "percentage"],
+                      $eq: ["$$activity.activityType", "normal"],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              {
-                                $divide: [
-                                  {
-                                    $multiply: [
-                                      "$markupClient.markup",
-                                      "$$activity.adultPrice",
-                                    ],
-                                  },
-                                  100,
-                                ],
-                              },
-                            ],
-                          },
-                          childPrice: {
-                            $sum: [
-                              "$$activity.childPrice",
-                              {
-                                $divide: [
-                                  {
-                                    $multiply: [
-                                      "$markupClient.markup",
-                                      "$$activity.childPrice",
-                                    ],
-                                  },
-                                  100,
-                                ],
-                              },
-                            ],
-                          },
-                          infantPrice: {
-                            $cond: [
-                              {
-                                $eq: ["$$activity.infantPrice", 0],
-                              },
-                              0,
-                              {
+                          $eq: ["$markupClient.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
                                 $sum: [
-                                  "$$activity.infantPrice",
+                                  "$$activity.adultPrice",
                                   {
                                     $divide: [
                                       {
                                         $multiply: [
                                           "$markupClient.markup",
-                                          "$$activity.infantPrice",
+                                          "$$activity.adultPrice",
                                         ],
                                       },
                                       100,
@@ -571,41 +754,211 @@ module.exports = {
                                   },
                                 ],
                               },
-                            ],
-                          },
+                              childPrice: {
+                                $sum: [
+                                  "$$activity.childPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupClient.markup",
+                                          "$$activity.childPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                              infantPrice: {
+                                $cond: [
+                                  {
+                                    $eq: ["$$activity.infantPrice", 0],
+                                  },
+                                  0,
+                                  {
+                                    $sum: [
+                                      "$$activity.infantPrice",
+                                      {
+                                        $divide: [
+                                          {
+                                            $multiply: [
+                                              "$markupClient.markup",
+                                              "$$activity.infantPrice",
+                                            ],
+                                          },
+                                          100,
+                                        ],
+                                      },
+                                    ],
+                                  },
+                                ],
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupClient.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
+                                  "$markupClient.markup",
+                                ],
+                              },
+                              childPrice: {
+                                $sum: [
+                                  "$$activity.childPrice",
+                                  "$markupClient.markup",
+                                ],
+                              },
+                              infantPrice: {
+                                $cond: [
+                                  {
+                                    $eq: ["$$activity.infantPrice", 0],
+                                  },
+                                  0,
+                                  {
+                                    $sum: [
+                                      "$$activity.infantPrice",
+                                      "$markupClient.markup",
+                                    ],
+                                  },
+                                ],
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$markupClient.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              "$markupClient.markup",
-                            ],
-                          },
-                          childPrice: {
-                            $sum: [
-                              "$$activity.childPrice",
-                              "$markupClient.markup",
-                            ],
-                          },
-                          infantPrice: {
-                            $cond: [
-                              {
-                                $eq: ["$$activity.infantPrice", 0],
-                              },
-                              0,
-                              {
+                          $eq: ["$markupClient.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
                                 $sum: [
-                                  "$$activity.infantPrice",
+                                  "$$activity.sharedTransferPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupClient.markup",
+                                          "$$activity.sharedTransferPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    price: {
+                                      $sum: [
+                                        "$$transfers.price",
+                                        {
+                                          $divide: [
+                                            {
+                                              $multiply: [
+                                                "$markupClient.markup",
+                                                "$$transfers.price",
+                                              ],
+                                            },
+                                            100,
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupClient.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
                                   "$markupClient.markup",
                                 ],
                               },
-                            ],
-                          },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    $mergeObjects: [
+                                      "$$transfers",
+                                      {
+                                        price: {
+                                          $sum: [
+                                            "$$transfers.price",
+                                            "$markupClient.markup",
+                                          ],
+                                        },
+                                      },
+                                    ],
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$markupClient.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
@@ -619,6 +972,8 @@ module.exports = {
         {
           $project: {
             totalReviews: 0,
+            activitiesSpecial: 0,
+            activitiesSubAgent: 0,
           },
         },
       ]);
@@ -636,16 +991,18 @@ module.exports = {
         }
       }
 
-      console.log(attraction[0].activity, "attraction");
+      console.log(attraction[0], "attraction atttraction");
 
       if (!attraction || attraction?.length < 1) {
         return sendErrorResponse(res, 404, "Attraction not found");
       }
       // res.status(200).json(attraction[0]);
 
-      res
-        .status(200)
-        .json({ attraction: attraction[0], ticketStatus, ticketCount });
+      res.status(200).json({
+        attraction: attraction[0],
+        ticketStatus,
+        ticketCount,
+      });
     } catch (err) {
       sendErrorResponse(res, 500, err);
     }
@@ -655,7 +1012,7 @@ module.exports = {
     try {
       const { skip = 0, limit = 10, destination, category, search } = req.query;
 
-      const filters1 = { isDeleted: false, isActive: true , isActive : true };
+      const filters1 = { isDeleted: false, isActive: true };
 
       if (category && category !== "") {
         if (!isValidObjectId(category)) {
@@ -698,15 +1055,46 @@ module.exports = {
               {
                 $match: {
                   $expr: {
-                    $eq: ["$attraction", "$$attraction"],
+                    $and: [
+                      {
+                        $eq: ["$attraction", "$$attraction"],
+                      },
+                      { $eq: ["$isDeleted", false] },
+                    ],
+                  },
+                },
+              },
+
+              {
+                $addFields: {
+                  privateTransfer: {
+                    $arrayElemAt: ["$privateTransfers", 0],
+                  },
+                },
+              },
+              {
+                $addFields: {
+                  lowPrice: {
+                    $cond: {
+                      if: {
+                        $eq: ["$activityType", "normal"],
+                      },
+                      then: "$adultPrice",
+                      else: {
+                        $cond: {
+                          if: {
+                            $eq: ["$isSharedTransferAvailable", true],
+                          },
+                          then: "$sharedTransferPrice",
+                          else: "$privateTransfer.price",
+                        },
+                      },
+                    },
                   },
                 },
               },
               {
                 $sort: { adultPrice: 1 },
-              },
-              {
-                $limit: 1,
               },
             ],
             as: "activities",
@@ -733,7 +1121,9 @@ module.exports = {
                           "$resellerId",
                           {
                             $cond: {
-                              if: { $eq: [req.reseller.role, "sub-agent"] },
+                              if: {
+                                $eq: [req.reseller.role, "sub-agent"],
+                              },
                               then: req.reseller?.referredBy,
                               else: req.reseller?._id,
                             },
@@ -843,13 +1233,6 @@ module.exports = {
         },
         {
           $addFields: {
-            // activitiesSpecial: {
-            //   $filter: {
-            //     input: "$activities",
-            //     as: "item",
-            //     cond: { $eq: ["$$item.isDeleted", false] },
-            //   },
-            // },
             activitiesSpecial: {
               $map: {
                 input: "$activities",
@@ -857,41 +1240,180 @@ module.exports = {
                 in: {
                   $cond: [
                     {
-                      $eq: ["$specialMarkup.markupType", "percentage"],
+                      $eq: ["$$activity.activityType", "normal"],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              {
-                                $divide: [
+                          $eq: ["$specialMarkup.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
                                   {
-                                    $multiply: [
-                                      "$specialMarkup.markup",
-                                      "$$activity.adultPrice",
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$specialMarkup.markup",
+                                          "$$activity.adultPrice",
+                                        ],
+                                      },
+                                      100,
                                     ],
                                   },
-                                  100,
                                 ],
                               },
-                            ],
-                          },
+
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$specialMarkup.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
+                                  "$specialMarkup.markup",
+                                ],
+                              },
+
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$specialMarkup.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              "$specialMarkup.markup",
-                            ],
-                          },
+                          $eq: ["$specialMarkup.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$specialMarkup.markup",
+                                          "$$activity.sharedTransferPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    price: {
+                                      $sum: [
+                                        "$$transfers.price",
+                                        {
+                                          $divide: [
+                                            {
+                                              $multiply: [
+                                                "$specialMarkup.markup",
+                                                "$$transfers.price",
+                                              ],
+                                            },
+                                            100,
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$specialMarkup.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
+                                  "$specialMarkup.markup",
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    $mergeObjects: [
+                                      "$$transfers",
+                                      {
+                                        price: {
+                                          $sum: [
+                                            "$$transfers.price",
+                                            "$specialMarkup.markup",
+                                          ],
+                                        },
+                                      },
+                                    ],
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$specialMarkup.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
@@ -904,54 +1426,186 @@ module.exports = {
         {
           $addFields: {
             activitiesSubAgent: {
-              $filter: {
-                input: "$activitiesSpecial",
-                as: "item",
-                cond: { $eq: ["$$item.isDeleted", false] },
-              },
-            },
-            activitiesSubAgent: {
               $map: {
                 input: "$activitiesSpecial",
                 as: "activity",
                 in: {
                   $cond: [
                     {
-                      $eq: ["$markupSubAgent.markupType", "percentage"],
+                      $eq: ["$$activity.activityType", "normal"],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              {
-                                $divide: [
+                          $eq: ["$markupSubAgent.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
                                   {
-                                    $multiply: [
-                                      "$markupSubAgent.markup",
-                                      "$$activity.adultPrice",
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupSubAgent.markup",
+                                          "$$activity.adultPrice",
+                                        ],
+                                      },
+                                      100,
                                     ],
                                   },
-                                  100,
                                 ],
                               },
-                            ],
-                          },
+
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupSubAgent.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
+                                  "$markupSubAgent.markup",
+                                ],
+                              },
+
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$markupSubAgent.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              "$markupSubAgent.markup",
-                            ],
-                          },
+                          $eq: ["$markupSubAgent.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupSubAgent.markup",
+                                          "$$activity.sharedTransferPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    price: {
+                                      $sum: [
+                                        "$$transfers.price",
+                                        {
+                                          $divide: [
+                                            {
+                                              $multiply: [
+                                                "$markupSubAgent.markup",
+                                                "$$transfers.price",
+                                              ],
+                                            },
+                                            100,
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupSubAgent.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
+                                  "$markupSubAgent.markup",
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    $mergeObjects: [
+                                      "$$transfers",
+                                      {
+                                        price: {
+                                          $sum: [
+                                            "$$transfers.price",
+                                            "$markupSubAgent.markup",
+                                          ],
+                                        },
+                                      },
+                                    ],
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$markupSubAgent.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
@@ -961,6 +1615,7 @@ module.exports = {
             },
           },
         },
+
         {
           $addFields: {
             activity: {
@@ -970,41 +1625,180 @@ module.exports = {
                 in: {
                   $cond: [
                     {
-                      $eq: ["$markupClient.markupType", "percentage"],
+                      $eq: ["$$activity.activityType", "normal"],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              {
-                                $divide: [
+                          $eq: ["$markupClient.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
                                   {
-                                    $multiply: [
-                                      "$markupClient.markup",
-                                      "$$activity.adultPrice",
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupClient.markup",
+                                          "$$activity.adultPrice",
+                                        ],
+                                      },
+                                      100,
                                     ],
                                   },
-                                  100,
                                 ],
                               },
-                            ],
-                          },
+
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupClient.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
+                                  "$markupClient.markup",
+                                ],
+                              },
+
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$markupClient.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              "$markupClient.markup",
-                            ],
-                          },
+                          $eq: ["$markupClient.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupClient.markup",
+                                          "$$activity.sharedTransferPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    price: {
+                                      $sum: [
+                                        "$$transfers.price",
+                                        {
+                                          $divide: [
+                                            {
+                                              $multiply: [
+                                                "$markupClient.markup",
+                                                "$$transfers.price",
+                                              ],
+                                            },
+                                            100,
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupClient.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
+                                  "$markupClient.markup",
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    $mergeObjects: [
+                                      "$$transfers",
+                                      {
+                                        price: {
+                                          $sum: [
+                                            "$$transfers.price",
+                                            "$markupSubAgent.markup",
+                                          ],
+                                        },
+                                      },
+                                    ],
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$markupClient.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
@@ -1022,7 +1816,6 @@ module.exports = {
         {
           $project: {
             title: 1,
-            activitiesSpecial: 1,
             destination: 1,
             category: {
               categoryName: 1,
@@ -1031,34 +1824,6 @@ module.exports = {
             images: 1,
             bookingType: 1,
             activity: 1,
-            // activity: {
-            //   adultPrice: {
-            //     $cond: [
-            //       {
-            //         $eq: ["$markup.markupType", "percentage"],
-            //       },
-            //       {
-            //         $sum: [
-            //           "$activity.adultPrice",
-            //           {
-            //             $divide: [
-            //               {
-            //                 $multiply: [
-            //                   "$markup.markup",
-            //                   "$activity.adultPrice",
-            //                 ],
-            //               },
-            //               100,
-            //             ],
-            //           },
-            //         ],
-            //       },
-            //       {
-            //         $sum: ["$activity.adultPrice", "$markup.markup"],
-            //       },
-            //     ],
-            //   },
-            // },
             duration: 1,
             durationType: 1,
             totalReviews: 1,
@@ -1098,7 +1863,7 @@ module.exports = {
         },
       ]);
 
-      console.log(attractions[0].data[0], "attractions");
+      console.log(attractions[0].data[0].activity, "attractions");
 
       res.status(200).json({
         attractions: attractions[0],
@@ -1117,7 +1882,7 @@ module.exports = {
       const { skip = 0, limit = 10, search } = req.query;
       console.log(req.reseller._id, "resellerId");
 
-      const filters1 = { isDeleted: false, isActive: true , isActive : true };
+      const filters1 = { isDeleted: false, isActive: true };
 
       if (search && search !== "") {
         filters1.title = { $regex: search, $options: "i" };
@@ -1137,15 +1902,46 @@ module.exports = {
               {
                 $match: {
                   $expr: {
-                    $eq: ["$attraction", "$$attraction"],
+                    $and: [
+                      {
+                        $eq: ["$attraction", "$$attraction"],
+                      },
+                      { $eq: ["$isDeleted", false] },
+                    ],
+                  },
+                },
+              },
+
+              {
+                $addFields: {
+                  privateTransfer: {
+                    $arrayElemAt: ["$privateTransfers", 0],
+                  },
+                },
+              },
+              {
+                $addFields: {
+                  lowPrice: {
+                    $cond: {
+                      if: {
+                        $eq: ["$activityType", "normal"],
+                      },
+                      then: "$adultPrice",
+                      else: {
+                        $cond: {
+                          if: {
+                            $eq: ["$isSharedTransferAvailable", true],
+                          },
+                          then: "$sharedTransferPrice",
+                          else: "$privateTransfer.price",
+                        },
+                      },
+                    },
                   },
                 },
               },
               {
                 $sort: { adultPrice: 1 },
-              },
-              {
-                $limit: 1,
               },
             ],
             as: "activities",
@@ -1164,7 +1960,9 @@ module.exports = {
                           "$resellerId",
                           {
                             $cond: {
-                              if: { $eq: [req.reseller.role, "sub-agent"] },
+                              if: {
+                                $eq: [req.reseller.role, "sub-agent"],
+                              },
                               then: req.reseller?.referredBy,
                               else: req.reseller?._id,
                             },
@@ -1204,7 +2002,6 @@ module.exports = {
             as: "markupClient",
           },
         },
-
         {
           $lookup: {
             from: "b2bsubagentattractionmarkups",
@@ -1230,6 +2027,32 @@ module.exports = {
             as: "markupSubagent",
           },
         },
+
+        {
+          $lookup: {
+            from: "b2bsubagentattractionmarkups",
+            let: {
+              attraction: "$_id",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      {
+                        $eq: ["$resellerId", req.reseller?.referredBy],
+                      },
+                      {
+                        $eq: ["$attraction", "$$attraction"],
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "markupTo",
+          },
+        },
         {
           $lookup: {
             from: "destinations",
@@ -1245,6 +2068,7 @@ module.exports = {
               $arrayElemAt: ["$markupSubagent", 0],
             },
             specialMarkup: { $arrayElemAt: ["$specialMarkup", 0] },
+            markupToAdd: { $arrayElemAt: ["$markupToAdd", 0] },
 
             markupClient: { $arrayElemAt: ["$markupClient", 0] },
             destination: { $arrayElemAt: ["$destination", 0] },
@@ -1252,55 +2076,187 @@ module.exports = {
         },
         {
           $addFields: {
-            activities: {
-              $filter: {
-                input: "$activities",
-                as: "item",
-                cond: { $eq: ["$$item.isDeleted", false] },
-              },
-            },
-            activities: {
+            activitiesSpecial: {
               $map: {
                 input: "$activities",
                 as: "activity",
                 in: {
                   $cond: [
                     {
-                      $eq: ["$specialMarkup.markupType", "percentage"],
+                      $eq: ["$$activity.activityType", "normal"],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              {
-                                $divide: [
+                          $eq: ["$specialMarkup.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
                                   {
-                                    $multiply: [
-                                      "$specialMarkup.markup",
-                                      "$$activity.adultPrice",
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$specialMarkup.markup",
+                                          "$$activity.adultPrice",
+                                        ],
+                                      },
+                                      100,
                                     ],
                                   },
-                                  100,
                                 ],
                               },
-                            ],
-                          },
+
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$specialMarkup.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
+                                  "$specialMarkup.markup",
+                                ],
+                              },
+
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$specialMarkup.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
                     {
-                      $mergeObjects: [
-                        "$$activity",
+                      $cond: [
                         {
-                          adultPrice: {
-                            $sum: [
-                              "$$activity.adultPrice",
-                              "$specialMarkup.markup",
-                            ],
-                          },
+                          $eq: ["$specialMarkup.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$specialMarkup.markup",
+                                          "$$activity.sharedTransferPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    price: {
+                                      $sum: [
+                                        "$$transfers.price",
+                                        {
+                                          $divide: [
+                                            {
+                                              $multiply: [
+                                                "$specialMarkup.markup",
+                                                "$$transfers.price",
+                                              ],
+                                            },
+                                            100,
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$specialMarkup.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
+                                  "$specialMarkup.markup",
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    $mergeObjects: [
+                                      "$$transfers",
+                                      {
+                                        price: {
+                                          $sum: [
+                                            "$$transfers.price",
+                                            "$specialMarkup.markup",
+                                          ],
+                                        },
+                                      },
+                                    ],
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$specialMarkup.markup",
+                                ],
+                              },
+                            },
+                          ],
                         },
                       ],
                     },
@@ -1310,6 +2266,199 @@ module.exports = {
             },
           },
         },
+        {
+          $addFields: {
+            activities: {
+              $map: {
+                input: "$activitiesSpecial",
+                as: "activity",
+                in: {
+                  $cond: [
+                    {
+                      $eq: ["$$activity.activityType", "normal"],
+                    },
+                    {
+                      $cond: [
+                        {
+                          $eq: ["$markupToAdd.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupToAdd.markup",
+                                          "$$activity.adultPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupToAdd.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              adultPrice: {
+                                $sum: [
+                                  "$$activity.adultPrice",
+                                  "$markupToAdd.markup",
+                                ],
+                              },
+
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$markupToAdd.markup",
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      $cond: [
+                        {
+                          $eq: ["$markupToAdd.markupType", "percentage"],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupSubAgent.markup",
+                                          "$$activity.sharedTransferPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    price: {
+                                      $sum: [
+                                        "$$transfers.price",
+                                        {
+                                          $divide: [
+                                            {
+                                              $multiply: [
+                                                "$markupToAdd.markup",
+                                                "$$transfers.price",
+                                              ],
+                                            },
+                                            100,
+                                          ],
+                                        },
+                                      ],
+                                    },
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  {
+                                    $divide: [
+                                      {
+                                        $multiply: [
+                                          "$markupToAdd.markup",
+                                          "$$activity.lowPrice",
+                                        ],
+                                      },
+                                      100,
+                                    ],
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        {
+                          $mergeObjects: [
+                            "$$activity",
+                            {
+                              sharedTransferPrice: {
+                                $sum: [
+                                  "$$activity.sharedTransferPrice",
+                                  "$markupToAdd.markup",
+                                ],
+                              },
+                              privateTransfers: {
+                                $map: {
+                                  input: "$$activity.privateTransfers",
+                                  as: "transfers",
+                                  in: {
+                                    $mergeObjects: [
+                                      "$$transfers",
+                                      {
+                                        price: {
+                                          $sum: [
+                                            "$$transfers.price",
+                                            "$markupToAdd.markup",
+                                          ],
+                                        },
+                                      },
+                                    ],
+                                  },
+                                },
+                              },
+                              lowPrice: {
+                                $sum: [
+                                  "$$activity.lowPrice",
+                                  "$markupToAdd.markup",
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+
         {
           $set: {
             activities: { $arrayElemAt: ["$activities", 0] },
@@ -1325,7 +2474,7 @@ module.exports = {
             markupSubagent: 1,
             bookingType: 1,
             activities: {
-              adultPrice: 1,
+              lowPrice: 1,
             },
           },
         },
@@ -1344,7 +2493,7 @@ module.exports = {
         },
       ]);
 
-      console.log(attractions[0].data[0], "hiiii");
+      console.log(attractions[0].data);
 
       res.status(200).json({
         attractions: attractions[0],
