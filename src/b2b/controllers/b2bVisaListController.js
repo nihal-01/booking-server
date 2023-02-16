@@ -405,7 +405,6 @@ module.exports = {
             },
           },
         },
-        
       ]);
 
       console.log(visaType, "visaType");
@@ -507,6 +506,27 @@ module.exports = {
         },
         {
           $lookup: {
+            from: "b2bsubagentvisamarkups",
+            let: {
+              visaType: "$_id",
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $eq: ["$resellerId", req.reseller.referredBy] },
+                      { $eq: ["$visaType", "$$visaType"] },
+                    ],
+                  },
+                },
+              },
+            ],
+            as: "markupAddSubAgent",
+          },
+        },
+        {
+          $lookup: {
             from: "countries",
             localField: "visa.country",
             foreignField: "_id",
@@ -519,12 +539,13 @@ module.exports = {
             visa: { $arrayElemAt: ["$country.countryName", 0] },
             markupClient: { $arrayElemAt: ["$markupClient", 0] },
             markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
-            specialMarkup : { $arrayElemAt: ["$specialMarkup", 0] }
+            markupAddSubAgent: { $arrayElemAt: ["$markupAddSubAgent", 0] },
+            specialMarkup: { $arrayElemAt: ["$specialMarkup", 0] },
           },
         },
         {
           $addFields: {
-            totalspecialPrice: {
+            totalspecilPrice: {
               $cond: [
                 {
                   $eq: ["$specialMarkup.markupType", "percentage"],
@@ -553,10 +574,10 @@ module.exports = {
         },
         {
           $addFields: {
-            totalPrice: {
+            totalVisaPrice: {
               $cond: [
                 {
-                  $eq: ["$markupSubAgent.markupType", "percentage"],
+                  $eq: ["$markupAddSubAgent.markupType", "percentage"],
                 },
 
                 {
@@ -566,7 +587,7 @@ module.exports = {
                       $divide: [
                         {
                           $multiply: [
-                            "$markupSubAgent.markup",
+                            "$markupAddSubAgent.markup",
                             "$totalspecialPrice",
                           ],
                         },
@@ -577,7 +598,7 @@ module.exports = {
                 },
 
                 {
-                  $sum: ["$totalspecialPrice", "$markupSubAgent.markup"],
+                  $sum: ["$totalspecialPrice", "$markupAddSubAgent.markup"],
                 },
               ],
             },
