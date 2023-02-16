@@ -751,8 +751,9 @@ module.exports = {
         .populate(
           "activities.attraction",
           "title isOffer offerAmount offerAmountType"
-        )
+        ).populate("country")
         .lean();
+        
       if (!attractionOrder) {
         return sendErrorResponse(res, 400, "Attraction not found");
       }
@@ -909,25 +910,5 @@ module.exports = {
     }
   },
 
-  getSingleUserSingleOrder: async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      if (!isValidObjectId(id)) {
-        return sendErrorResponse(res, 400, "Invalid attraction id");
-      }
-
-      const attractionOrder = await AttractionOrder.findById(id)
-        .populate("orders.activity")
-        .populate("attraction", "title isOffer offerAmount offerAmountType")
-        .lean();
-      if (!attractionOrder) {
-        return sendErrorResponse(res, 400, "Attraction not found");
-      }
-
-      res.status(200).json(attractionOrder);
-    } catch (err) {
-      sendErrorResponse(res, 500, err);
-    }
-  },
+ 
 };
