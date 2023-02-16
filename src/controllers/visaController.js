@@ -214,9 +214,8 @@ module.exports = {
         if (!isValidObjectId(country)) {
           return sendErrorResponse(res, 400, "Invalid country id");
         }
-        
 
-        console.log(req.user , "hiiii")
+        console.log(req.user, "hiiii");
         const countryDetails = await Country.findOne({
           _id: country,
           isDeleted: false,
@@ -228,7 +227,7 @@ module.exports = {
 
         // console.log(travellers[0].firstName , "travellers[0].firstname")
 
-        user = await User.findOne({ email  });
+        user = await User.findOne({ email });
         if (!user) {
           const password = crypto.randomBytes(6);
           user = new User({
@@ -245,6 +244,7 @@ module.exports = {
             `username : ${email} password : ${password}`
           );
 
+          console.log(user, "user");
           await user.save();
         }
       }
@@ -362,7 +362,7 @@ module.exports = {
 
   capturePayalVisaApplication: async (req, res) => {
     try {
-      const { paymentId, orderId } = req.body;
+      const { paymentId, paymentOrderId, orderId } = req.body;
 
       // const { _, error } = visaOrderCaptureSchema.validate(
       //     req.body
@@ -398,7 +398,7 @@ module.exports = {
         await transaction.save();
       }
 
-      const orderObject = await fetchOrder(orderId);
+      const orderObject = await fetchOrder(paymentOrderId);
 
       if (orderObject.statusCode == "500") {
         transaction.status = "failed";
@@ -443,10 +443,10 @@ module.exports = {
       }
 
       transaction.status = "success";
-      visaApplication.status = "payed";
-      visaApplication.save();
-
       await transaction.save();
+
+      visaApplication.status = "payed";
+      await visaApplication.save();
 
       res.status(200).json({ visaApplication, status: "Transation Success" });
 
