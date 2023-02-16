@@ -750,10 +750,11 @@ module.exports = {
         .populate("activities.activity")
         .populate(
           "activities.attraction",
-          "title isOffer offerAmount offerAmountType"
-        ).populate("country")
+          "title isOffer offerAmount offerAmountType logo images"
+        )
+        .populate("country")
         .lean();
-        
+
       if (!attractionOrder) {
         return sendErrorResponse(res, 400, "Attraction not found");
       }
@@ -909,6 +910,4 @@ module.exports = {
       sendErrorResponse(res, 500, err);
     }
   },
-
- 
 };
