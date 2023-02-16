@@ -24,7 +24,6 @@ const { convertCurrency } = require("../b2b/helpers/currencyHelpers");
 const {
     completeOrderAfterPayment,
 } = require("../helpers/attractionOrderHelpers");
-
 const { getUserOrder } = require("../helpers/userOrderHelper");
 
 const dayNames = [
@@ -677,16 +676,21 @@ module.exports = {
             const encryption = ccavPOST.encResp;
             const ccavResponse = ccav.decrypt(encryption);
 
-            const attractionOrder = await AttractionOrder.findOne({
-                _id: req.body?.order_id,
-            });
-            if (!attractionOrder) {
-                return sendErrorResponse(
-                    res,
-                    404,
-                    "Attraction order not found"
-                );
+            console.log(req.body?.order_status);
+            if (req.body?.order_status === "Success") {
+                const attractionOrder = await AttractionOrder.findOne({
+                    _id: req.body?.order_id,
+                });
+                if (!attractionOrder) {
+                    return sendErrorResponse(
+                        res,
+                        404,
+                        "Attraction order not found"
+                    );
+                }
             }
+
+            console.log(ccavEncResponse);
 
             let pData = "";
             pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
