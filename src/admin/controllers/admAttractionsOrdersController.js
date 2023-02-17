@@ -235,7 +235,7 @@ module.exports = {
                     $in: ["booked", "confirmed", "cancelled", "pending"],
                 },
             };
-            
+
             const filters2 = {};
 
             if (bookingType && bookingType != "") {
@@ -518,13 +518,8 @@ module.exports = {
 
     confirmBooking: async (req, res) => {
         try {
-            const {
-                orderId,
-                bookingId,
-                bookingConfirmationNumber,
-                driver,
-                orderedBy,
-            } = req.body;
+            const { orderId, bookingId, bookingConfirmationNumber, orderedBy } =
+                req.body;
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "invalid order id");
@@ -571,28 +566,6 @@ module.exports = {
                 );
             }
 
-            if (
-                orderDetails?.activities[0]?.transferType !== "without" &&
-                !driver
-            ) {
-                return sendErrorResponse(res, 400, "Driver is required");
-            }
-
-            let driverDetails;
-            if (orderDetails?.activities[0]?.transferType !== "without") {
-                if (!isValidObjectId(driver)) {
-                    return sendErrorResponse(res, 400, "Invalid driver id");
-                }
-
-                driverDetails = await Driver.findOne({
-                    _id: driver,
-                    isDeleted: false,
-                });
-                if (!driverDetails) {
-                    return sendErrorResponse(res, 404, "Driver not found");
-                }
-            }
-
             if (orderedBy === "b2c") {
                 await AttractionOrder.findOneAndUpdate(
                     {
@@ -603,11 +576,6 @@ module.exports = {
                         "activities.$.status": "confirmed",
                         "activities.$.bookingConfirmationNumber":
                             bookingConfirmationNumber,
-                        "activities.$.driver":
-                            orderDetails?.activities[0]?.transferType !==
-                            "without"
-                                ? driver
-                                : undefined,
                     },
                     { runValidators: true }
                 );
@@ -621,11 +589,6 @@ module.exports = {
                         "activities.$.status": "confirmed",
                         "activities.$.bookingConfirmationNumber":
                             bookingConfirmationNumber,
-                        "activities.$.driver":
-                            orderDetails?.activities[0]?.transferType !==
-                            "without"
-                                ? driver
-                                : undefined,
                     },
                     { runValidators: true }
                 );
@@ -659,8 +622,6 @@ module.exports = {
                     { "activities.$": 1, referenceNumber: 1, reseller: 1 }
                 ).populate("reseller activities.attraction");
 
-                console.log(orderAttraction, "orderAttraction");
-
                 await sendOrderConfirmationEmail(
                     orderAttraction.reseller.email,
                     orderAttraction.reseller.name,
@@ -670,7 +631,6 @@ module.exports = {
             res.status(200).json({
                 message: "Booking confirmed successfully",
                 bookingConfirmationNumber,
-                driver: driverDetails,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
@@ -793,7 +753,7 @@ module.exports = {
 
     updateDriverForOrder: async (req, res) => {
         try {
-            const { orderId, orderItemId, driver, orderedBy } = req.body;
+            const { orderId, orderItemId, drivers, orderedBy } = req.body;
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "Invalid order id");
@@ -803,8 +763,8 @@ module.exports = {
                 return sendErrorResponse(res, 400, "Invalid order item id");
             }
 
-            if (!isValidObjectId(driver)) {
-                return sendErrorResponse(res, 400, "Invalid Driver id");
+            if (!drivers || drivers.length < 1) {
+                return sendErrorResponse(res, 400, "driver is required");
             }
 
             let orderDetails;
@@ -844,12 +804,30 @@ module.exports = {
                 );
             }
 
-            const driverDetails = await Driver.findOne({
-                _id: driver,
+            let driversRequired = 0;
+            if (orderDetails.activities[0]?.transferType === "shared") {
+                driversRequired = 1;
+            } else if (orderDetails.activities[0]?.transferType === "private") {
+                const total = orderDetails.activities[0]?.privateTransfers
+                    .map((item) => item.count)
+                    .reduce((prev, next) => prev + next);
+                driversRequired = total || 0;
+            }
+
+            if (driversRequired !== drivers.length) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    `${driversRequired} drivers should be provided`
+                );
+            }
+
+            const driverDetails = await Driver.find({
+                _id: drivers,
                 isDeleted: false,
             });
-            if (!driverDetails) {
-                return sendErrorResponse(res, 404, "Driver not found");
+            if (!driverDetails || driverDetails.length < 1) {
+                return sendErrorResponse(res, 404, "driver not found");
             }
 
             if (orderedBy === "b2c") {
@@ -859,7 +837,7 @@ module.exports = {
                         "activities._id": orderItemId,
                     },
                     {
-                        "activities.$.driver": driver,
+                        "activities.$.drivers": drivers,
                     },
                     { runValidators: true }
                 );
@@ -870,7 +848,7 @@ module.exports = {
                         "activities._id": orderItemId,
                     },
                     {
-                        "activities.$.driver": driver,
+                        "activities.$.drivers": drivers,
                     },
                     { runValidators: true }
                 );
@@ -878,7 +856,7 @@ module.exports = {
 
             // send mail here
 
-            res.status(200).json({ driver: driverDetails });
+            res.status(200).json({ driverDetails });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

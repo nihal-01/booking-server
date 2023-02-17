@@ -9,6 +9,7 @@ const {
     downloadTicket,
     deleteAttractionTicket,
     singleAttractionTicket,
+    getActivityTicketsStatistics,
 } = require("../controllers/admAttractionTicketsController");
 
 const storage = multer.diskStorage({
@@ -49,5 +50,6 @@ router.delete("/delete/:ticketId", deleteAttractionTicket);
 router.get("/:activityId", getSingleActivitiesTicket);
 router.get("/download/:id", downloadTicket);
 router.get("/single/:ticketId", singleAttractionTicket);
+router.get("/activities/:activityId/statistics", getActivityTicketsStatistics);
 
 module.exports = router;

@@ -314,4 +314,65 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+    getActivityTicketsStatistics: async (req, res) => {
+        try {
+            const { activityId } = req.params;
+
+            if (!isValidObjectId(activityId)) {
+                return sendErrorResponse(res, 400, "invalid activity id");
+            }
+
+            const activity = await AttractionActivity.findOne({
+                _id: activityId,
+                isDeleted: false,
+            }).populate("attraction", "bookingType");
+            if (!activity) {
+                return sendErrorResponse(res, 404, "activity not found");
+            }
+
+            if (activity?.attraction?.bookingType !== "ticket") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "invalid attraction booking type"
+                );
+            }
+
+            const totalTickets = await AttractionTicket.find({
+                activity: activityId,
+            }).count();
+            const soldTickets = await AttractionTicket.find({
+                status: "used",
+                activity: activityId,
+            }).count();
+            const expiredTickets = await AttractionTicket.find({
+                status: "ok",
+                validTill: { $lte: new Date() },
+                activity: activityId,
+            }).count();
+            const availableTickets = await AttractionTicket.find({
+                $or: [
+                    {
+                        validity: true,
+                        validTill: {
+                            $gte: new Date(),
+                        },
+                    },
+                    { validity: false },
+                ],
+                status: "ok",
+                activity: activityId,
+            }).count();
+
+            res.status(200).json({
+                totalTickets,
+                soldTickets,
+                expiredTickets,
+                availableTickets,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 400, err);
+        }
+    },
 };
