@@ -4,7 +4,12 @@ const { isValidObjectId } = require("mongoose");
 const {
   resellerStatusUpdateSchema,
 } = require("../validations/admResllers.schema");
-const { B2BWallet, B2BTransaction } = require("../../b2b/models");
+const {
+  B2BWallet,
+  B2BTransaction,
+  B2BSpecialVisaMarkup,
+  B2BSpecialAttractionMarkup,
+} = require("../../b2b/models");
 const adminApprovalEmail = require("../helpers/adminApprovalEmail");
 
 module.exports = {
@@ -51,16 +56,24 @@ module.exports = {
   changeResellerStatus: async (req, res) => {
     try {
       const { id } = req.params;
-      const { status } = req.body;
+      const { status, formData } = req.body;
+      const {
+        attractionMarkupType,
+        attractionMarkup,
+        visaMarkupType,
+        visaMarkup,
+      } = formData;
 
-      const { _, error } = resellerStatusUpdateSchema.validate(req.body);
-      if (error) {
-        return sendErrorResponse(
-          res,
-          400,
-          error.details ? error?.details[0]?.message : error.message
-        );
-      }
+      console.log(formData, visaMarkup, attractionMarkup, "visaMarkup");
+
+      // const { _, error } = resellerStatusUpdateSchema.validate(req.body);
+      // if (error) {
+      //   return sendErrorResponse(
+      //     res,
+      //     400,
+      //     error.details ? error?.details[0]?.message : error.message
+      //   );
+      // }
 
       if (!isValidObjectId(id)) {
         return sendErrorResponse(res, 400, "Invalid reseller id");
@@ -75,8 +88,34 @@ module.exports = {
       if (!reseller) {
         return sendErrorResponse(res, 404, "Reseller not found");
       }
-    
-      let email = reseller.email
+
+      if (status === "ok" && !attractionMarkupType == "") {
+        await B2BSpecialAttractionMarkup.findOneAndUpdate(
+          {
+            resellerId: reseller._id,
+          },
+          {
+            markupType: attractionMarkupType,
+            markup: attractionMarkup,
+          },
+          { upsert: true, new: true }
+        );
+      }
+
+      if (status === "ok" && !visaMarkupType == "") {
+        await B2BSpecialVisaMarkup.findOneAndUpdate(
+          {
+            resellerId: reseller._id,
+          },
+          {
+            markupType: visaMarkupType,
+            markup: visaMarkup,
+          },
+          { upsert: true, new: true }
+        );
+      }
+
+      let email = reseller.email;
       if (status == "ok") {
         adminApprovalEmail(
           email,

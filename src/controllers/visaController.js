@@ -281,6 +281,10 @@ module.exports = {
       const { orderId } = req.params;
       const { paymentProcessor } = req.body;
 
+      if (!isValidObjectId(orderId)) {
+        return sendErrorResponse(res, 400, "Invalid orderId ");
+      }
+
       let visaApplication = await B2CVisaApplication.findById(orderId);
 
       if (!visaApplication) {
