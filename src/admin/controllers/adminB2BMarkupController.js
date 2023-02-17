@@ -6,6 +6,7 @@ const {
 } = require("../../b2b/models");
 
 const { sendErrorResponse } = require("../../helpers");
+const { AttractionActivity } = require("../../models");
 const {
   b2bSpecialMarkupSchema,
 } = require("../validations/b2bSpecialMarkupSchema");
@@ -32,9 +33,7 @@ module.exports = {
         return sendErrorResponse(res, 400, "Invalid reseller id");
       }
 
-      console.log(reseller, "reseller");
-
-      console.log(resellerId);
+     
 
       const b2bAttractionSpecialMarkup =
         await B2BSpecialAttractionMarkup.findOneAndUpdate(
@@ -48,11 +47,13 @@ module.exports = {
           { upsert: true, new: true }
         );
 
-      // await Reseller.findByIdAndUpdate({
-      //     resellerId
-      // },
-      // {specialMarkup: false },
-      // { new: true, runValidators: true })
+      await Reseller.findByIdAndUpdate({
+          resellerId
+      },
+      {specialMarkup: false },
+      { new: true, runValidators: true })
+
+     
 
       console.log(b2bAttractionSpecialMarkup, "b2bAttractionSpecialMarkup");
 

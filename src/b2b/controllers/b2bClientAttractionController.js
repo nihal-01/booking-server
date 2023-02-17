@@ -162,61 +162,7 @@ module.exports = {
             },
           },
         },
-        // {
-        //   $lookup: {
-        //     from: "attractionactivities",
-        //     let: {
-        //       attraction: "$_id",
-        //     },
-        //     pipeline: [
-        //       {
-        //         $match: {
-        //           $expr: {
-        //             $and: [
-        //               {
-        //                 $eq: ["$attraction", "$$attraction"],
-        //               },
-        //               { $eq: ["$isDeleted", false] },
-        //             ],
-        //           },
-        //         },
-        //       },
 
-        //       {
-        //         $addFields: {
-        //           privateTransfer: {
-        //             $arrayElemAt: ["$privateTransfers", 0],
-        //           },
-        //         },
-        //       },
-        //       {
-        //         $addFields: {
-        //           lowPrice: {
-        //             $cond: {
-        //               if: {
-        //                 $eq: ["$activityType", "normal"],
-        //               },
-        //               then: "$adultPrice",
-        //               else: {
-        //                 $cond: {
-        //                   if: {
-        //                     $eq: ["$isSharedTransferAvailable", true],
-        //                   },
-        //                   then: "$sharedTransferPrice",
-        //                   else: "$privateTransfer.price",
-        //                 },
-        //               },
-        //             },
-        //           },
-        //         },
-        //       },
-        //       {
-        //         $sort: { adultPrice: 1 },
-        //       },
-        //     ],
-        //     as: "activities",
-        //   },
-        // },
         {
           $lookup: {
             from: "attractionactivities",
@@ -283,7 +229,10 @@ module.exports = {
                       },
                     },
                     {
-                      $count: "ticketCount",
+                      $group: {
+                        _id: "$ticketFor",
+                        count: { $sum: 1 },
+                      },
                     },
                   ],
                   as: "ticketCounts",
@@ -291,12 +240,68 @@ module.exports = {
               },
               {
                 $addFields: {
-                  ticketCount: {
-                    $ifNull: [
-                      { $arrayElemAt: ["$ticketCounts.ticketCount", 0] },
-                      0,
-                    ],
+                  ticketCounts: {
+                    $filter: {
+                      input: "$ticketCounts",
+                      as: "item",
+                      cond: { $ne: ["$$item._id", null] },
+                    },
                   },
+                },
+              },
+              {
+                $addFields: {
+                  ticketCounts: {
+                    $arrayToObject: {
+                      $map: {
+                        input: "$ticketCounts",
+                        in: {
+                          k: { $toString: "$$this._id" },
+                          v: "$$this.count",
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              // {
+              //   $addFields: {
+              //     childTicketCount: {
+              //       $cond: {
+              //         if: { $isArray: "$ticketCounts.child" },
+              //         then: { $arrayElemAt: ["$ticketCounts.child", 0] },
+              //         else: 0,
+              //       },
+              //     },
+              //     adultTicketCount: {
+              //       $cond: {
+              //         if: { $isArray: "$ticketCounts.adult" },
+              //         then: { $arrayElemAt: ["$ticketCounts.adult", 0] },
+              //         else: 0,
+              //       },
+              //     },
+              //     infantTicketCount: {
+              //       $cond: {
+              //         if: { $isArray: "$ticketCounts.infant" },
+              //         then: { $arrayElemAt: ["$ticketCounts.infant", 0] },
+              //         else: 0,
+              //       },
+              //     },
+              //     commonTicketCount: {
+              //       $cond: {
+              //         if: { $isArray: "$ticketCounts.common" },
+              //         then: { $arrayElemAt: ["$ticketCounts.common", 0] },
+              //         else: 0,
+              //       },
+              //     },
+              //   },
+              // },
+              {
+                $addFields: {
+                  childTicketCount: { $ifNull: ["$ticketCounts.child", 0] },
+                  adultTicketCount: { $ifNull: ["$ticketCounts.adult", 0] },
+                  infantTicketCount: { $ifNull: ["$ticketCounts.infant", 0] },
+                  commonTicketCount: { $ifNull: ["$ticketCounts.common", 0] },
                 },
               },
               {
@@ -306,33 +311,97 @@ module.exports = {
             as: "activities",
           },
         },
+
         // {
         //   $lookup: {
-        //     from: "attractiontickets",
+        //     from: "attractionactivities",
         //     let: {
-        //       activities: "$activities._id",
+        //       attraction: "$_id",
         //     },
         //     pipeline: [
         //       {
         //         $match: {
         //           $expr: {
         //             $and: [
-        //               { $eq: ["$activity", "$$activities"] },
-        //               // { $eq: ["$status", "ok"] },
+        //               {
+        //                 $eq: ["$attraction", "$$attraction"],
+        //               },
+        //               { $eq: ["$isDeleted", false] },
         //             ],
         //           },
         //         },
         //       },
         //       {
-        //         $group: {
-        //           _id: "$activity",
-        //           count: { $sum: 1 },
+        //         $addFields: {
+        //           privateTransfer: {
+        //             $arrayElemAt: ["$privateTransfers", 0],
+        //           },
         //         },
         //       },
+        //       {
+        //         $addFields: {
+        //           lowPrice: {
+        //             $cond: {
+        //               if: {
+        //                 $eq: ["$activityType", "normal"],
+        //               },
+        //               then: "$adultPrice",
+        //               else: {
+        //                 $cond: {
+        //                   if: {
+        //                     $eq: ["$isSharedTransferAvailable", true],
+        //                   },
+        //                   then: "$sharedTransferPrice",
+        //                   else: "$privateTransfer.price",
+        //                 },
+        //               },
+        //             },
+        //           },
+        //         },
+        //       },
+        //       {
+        //         $sort: { adultPrice: 1 },
+        //       },
+        //       {
+        //         $lookup: {
+        //           from: "attractiontickets",
+        //           let: { activityId: "$_id" },
+        //           pipeline: [
+        //             {
+        //               $match: {
+        //                 $expr: {
+        //                   $and: [
+        //                     { $eq: ["$activity", "$$activityId"] },
+        //                     { $eq: ["$status", "ok"] },
+        //                   ],
+        //                 },
+        //               },
+        //             },
+        //             {
+        //               $count: "ticketCount",
+        //             },
+        //           ],
+        //           as: "ticketCounts",
+        //         },
+        //       },
+        //       {
+        //         $addFields: {
+        //           ticketCount: {
+        //             $ifNull: [
+        //               { $arrayElemAt: ["$ticketCounts.ticketCount", 0] },
+        //               0,
+        //             ],
+        //           },
+        //         },
+        //       },
+        //       {
+        //         $project: { ticketCounts: 0 },
+        //       },
         //     ],
-        //     as: "activities.ticketCounts",
+        //     as: "activities",
         //   },
         // },
+
         {
           $addFields: {
             activitiesSpecial: {
