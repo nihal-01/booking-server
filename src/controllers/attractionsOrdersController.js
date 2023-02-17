@@ -681,9 +681,14 @@ module.exports = {
 
             req.on("data", function (data) {
                 ccavEncResponse += data;
-                const ccavPOST = qs.parse(ccavEncResponse);
-                const encryption = ccavPOST.encResp;
-                decryptedData = ccav.decrypt(encryption);
+                // const ccavPOST = qs.parse(ccavEncResponse);
+                // const encryption = ccavPOST.encResp;
+                // decryptedData = ccav.decrypt(encryption);
+
+                const decryptedJsonResponse =
+                    ccav.redirectResponseToJson(ccavEncResponse);
+
+                console.log(decryptedJsonResponse.order_status);
             });
 
             req.on("error", function (e) {
@@ -702,11 +707,6 @@ module.exports = {
             // }
 
             req.on("end", function () {
-                const decryptedJsonResponse =
-                    ccav.redirectResponseToJson(encResp);
-
-                console.log(decryptedJsonResponse.order_status);
-
                 res.writeHead(301, { Location: "http://w3docs.com" });
                 res.end();
             });
