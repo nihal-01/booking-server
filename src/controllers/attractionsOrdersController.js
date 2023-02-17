@@ -26,6 +26,7 @@ const {
 } = require("../helpers/attractionOrderHelpers");
 
 const { getUserOrder } = require("../helpers/userOrderHelper");
+const encodeUrl = require("encodeurl");
 
 const dayNames = [
     "sunday",
