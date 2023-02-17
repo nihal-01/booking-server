@@ -529,7 +529,7 @@ module.exports = {
                 console.log(data);
                 let accessCode = process.env.CCAVENUE_ACCESS_CODE;
 
-                const encRequest = ccav.encrypt(JSON.stringify(data));
+                const encRequest = ccav.encrypt(`merchant_id=${process.env.CCAVENUE_MERCHANT_ID}&order_id=${attractionOrder?._id}&currency=INR&amount=1.00&redirect_url=http%3A%2F%2F127.0.0.1%3A3001%2FccavResponseHandler&cancel_url=http%3A%2F%2F127.0.0.1%3A3001%2FccavResponseHandler&language=EN&billing_name=Peter&billing_address=Santacruz&billing_city=Mumbai&billing_state=MH&billing_zip=400054&billing_country=India&billing_tel=9876543210&billing_email=testing%40domain.com&delivery_name=Sam&delivery_address=Vile+Parle&delivery_city=Mumbai&delivery_state=Maharashtra&delivery_zip=400038&delivery_country=India&delivery_tel=0123456789&merchant_param1=additional+Info.&merchant_param2=additional+Info.&merchant_param3=additional+Info.&merchant_param4=additional+Info.&merchant_param5=additional+Info.&promo_code=&customer_identifier=`);
                 const formbody =
                     '<form id="nonseamless" method="post" name="redirect" action="https://secure.ccavenue.ae/transaction/transaction.do?command=initiateTransaction"/> <input type="hidden" id="encRequest" name="encRequest" value="' +
                     encRequest +
