@@ -26,7 +26,6 @@ const {
 } = require("../helpers/attractionOrderHelpers");
 
 const { getUserOrder } = require("../helpers/userOrderHelper");
-const encodeUrl = require("encodeurl");
 
 const dayNames = [
     "sunday",
@@ -524,7 +523,7 @@ module.exports = {
                 return res.status(200).json(order);
             } else if (paymentProcessor === "ccavenue") {
                 let data = encodeUrl(
-                    `merchant_id=${process.env.CCAVENUE_MERCHANT_ID}&order_id=${newTransation?._id}&currency=INR&amount=${amount}&redirect_url=${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture&cancel_url=${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture&language=EN`
+                    `merchant_id=${process.env.CCAVENUE_MERCHANT_ID}&order_id=${attractionOrder?._id}&currency=INR&amount=${attractionOrder?.totalAmount}&redirect_url=${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture&cancel_url=${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture&language=EN`
                 );
                 console.log(data);
                 let accessCode = process.env.CCAVENUE_ACCESS_CODE;
