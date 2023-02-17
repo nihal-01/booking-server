@@ -674,26 +674,20 @@ module.exports = {
 
     captureCCAvenueAttractionPayment: async (req, res) => {
         try {
-            let ccavEncResponse;
-
-            // console.log(req.body);
+            let ccavEncResponse = "";
 
             req.on("data", function (data) {
                 ccavEncResponse += data;
                 const ccavPOST = qs.parse(ccavEncResponse);
                 const encryption = ccavPOST.encResp;
-                console.log(ccavPOST)
-                console.log(encryption)
-
-                const decryptedJsonResponse =
-                    ccav.redirectResponseToJson(ccavEncResponse);
-
-                console.log(decryptedJsonResponse.order_status);
+                const decryptedJsonResponse = ccav.redirectResponseToJson(encryption);
+                // const decryptedData = ccav.decrypt(encryption);
+                console.log(decryptedJsonResponse);
             });
 
-            req.on("error", function (e) {
-                return sendErrorResponse(res, 400, "something went wrong");
-            });
+            // req.on("error", function (e) {
+            //     return sendErrorResponse(res, 400, "something went wrong");
+            // });
 
             // const attractionOrder = await AttractionOrder.findOne({
             //     _id: req.body?.order_id,
