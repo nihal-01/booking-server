@@ -1,5 +1,6 @@
 const nodeCCAvenue = require("node-ccavenue");
 const qs = require("querystring");
+const encodeUrl = require("encodeurl");
 
 const { sendErrorResponse } = require("../../helpers");
 const { HomeSettings } = require("../../models");
@@ -51,19 +52,13 @@ module.exports = {
                 await newTransation.save();
                 res.status(200).json(resultFinal);
             } else if (paymentProcessor === "ccavenue") {
-                let body = "";
-                body += {
-                    merchant_id: process.env.CCAVENUE_MERCHANT_ID,
-                    order_id: newTransation?._id,
-                    currency: "INR",
-                    amount: Number(amount),
-                    redirect_url: "",
-                    cancel_url: "",
-                    language: "EN",
-                };
+                let data = encodeUrl(
+                    `merchant_id=${process.env.CCAVENUE_MERCHANT_ID}&order_id=${newTransation?._id}&currency=INR&amount=${amount}&redirect_url=/hi&cancel_url=/hi&language=EN`
+                );
+                console.log(data);
                 let accessCode = process.env.CCAVENUE_ACCESS_CODE;
 
-                const encRequest = ccav.encrypt(body);
+                const encRequest = ccav.encrypt(data);
                 const formbody =
                     '<form id="nonseamless" method="post" name="redirect" action="https://secure.ccavenue.ae/transaction/transaction.do?command=initiateTransaction"/> <input type="hidden" id="encRequest" name="encRequest" value="' +
                     encRequest +
