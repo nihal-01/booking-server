@@ -522,19 +522,13 @@ module.exports = {
                 const order = await instance.orders.create(options);
                 return res.status(200).json(order);
             } else if (paymentProcessor === "ccavenue") {
-                const body = {
-                    currency: "INR",
-                    merchant_id: process.env.CCAVENUE_MERCHANT_ID,
-                    order_id: attractionOrder?._id,
-                    amount: Number(attractionOrder?.totalAmount),
-                    redirect_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
-                    cancel_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
-                    language: "EN",
-                };
+                let data = encodeUrl(
+                    `merchant_id=${process.env.CCAVENUE_MERCHANT_ID}&order_id=${newTransation?._id}&currency=INR&amount=${amount}&redirect_url=${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture&cancel_url=${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture&language=EN`
+                );
+                console.log(data);
                 let accessCode = process.env.CCAVENUE_ACCESS_CODE;
 
-                console.log(body);
-                const encRequest = ccav.encrypt(JSON.stringify(body));
+                const encRequest = ccav.encrypt(JSON.stringify(data));
                 const formbody =
                     '<form id="nonseamless" method="post" name="redirect" action="https://secure.ccavenue.ae/transaction/transaction.do?command=initiateTransaction"/> <input type="hidden" id="encRequest" name="encRequest" value="' +
                     encRequest +
