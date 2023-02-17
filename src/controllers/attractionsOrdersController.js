@@ -686,7 +686,7 @@ module.exports = {
                 console.log(encryption)
 
                 const decryptedJsonResponse =
-                    ccav.redirectResponseToJson(ccavPOST);
+                    ccav.redirectResponseToJson(ccavEncResponse);
 
                 console.log(decryptedJsonResponse.order_status);
             });
