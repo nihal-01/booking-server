@@ -675,13 +675,21 @@ module.exports = {
 
             req.on("data", function (data) {
                 ccavEncResponse += data;
-                console.log(ccavResponse);
+                console.log(ccavEncResponse);
 
                 const decryptedData = ccav.decrypt(ccavEncResponse);
                 console.log(decryptedData);
                 // const ccavPOST = qs.parse(ccavEncResponse);
                 // const encryption = ccavPOST.encResp;
                 // const ccavResponse = ccav.decrypt(encryption);
+            });
+
+            req.on("error", () => {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "something went wrong on razorpay payment"
+                );
             });
 
             const attractionOrder = await AttractionOrder.findOne({
