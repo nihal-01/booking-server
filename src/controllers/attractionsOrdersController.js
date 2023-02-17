@@ -678,18 +678,14 @@ module.exports = {
                 console.log(ccavEncResponse);
                 const ccavPOST = qs.parse(ccavEncResponse);
                 const encryption = ccavPOST.encResp;
-                console.log(encryption)
+                console.log(encryption);
                 const decryptedData = ccav.decrypt(encryption);
                 console.log(decryptedData);
                 // const ccavResponse = ccav.decrypt(encryption);
             });
 
-            req.on("error", () => {
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "something went wrong on razorpay payment"
-                );
+            req.on("error", function (e) {
+                return sendErrorResponse(res, 400, "something went wrong");
             });
 
             const attractionOrder = await AttractionOrder.findOne({
