@@ -682,9 +682,11 @@ module.exports = {
                 ccavEncResponse += data;
                 const ccavPOST = qs.parse(ccavEncResponse);
                 const encryption = ccavPOST.encResp;
+                console.log(ccavPOST)
+                console.log(encryption)
 
                 const decryptedJsonResponse =
-                    ccav.redirectResponseToJson(encryption);
+                    ccav.redirectResponseToJson(ccavPOST);
 
                 console.log(decryptedJsonResponse.order_status);
             });
