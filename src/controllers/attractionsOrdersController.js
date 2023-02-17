@@ -670,17 +670,19 @@ module.exports = {
     captureCCAvenueAttractionPayment: async (req, res) => {
         try {
             let ccavEncResponse = "";
-            ccavEncResponse += req.body;
 
             console.log(req.body);
 
             req.on("data", function (data) {
-                console.log(data);
-            });
+                ccavEncResponse += data;
+                console.log(ccavResponse);
 
-            const ccavPOST = qs.parse(ccavEncResponse);
-            const encryption = ccavPOST.encResp;
-            const ccavResponse = ccav.decrypt(encryption);
+                const decryptedData = ccav.decrypt(ccavEncResponse);
+                console.log(decryptedData);
+                // const ccavPOST = qs.parse(ccavEncResponse);
+                // const encryption = ccavPOST.encResp;
+                // const ccavResponse = ccav.decrypt(encryption);
+            });
 
             const attractionOrder = await AttractionOrder.findOne({
                 _id: req.body?.order_id,
