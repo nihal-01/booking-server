@@ -523,13 +523,19 @@ module.exports = {
                 const order = await instance.orders.create(options);
                 return res.status(200).json(order);
             } else if (paymentProcessor === "ccavenue") {
-                let data = encodeUrl(
-                    `merchant_id=${process.env.CCAVENUE_MERCHANT_ID}&order_id=${attractionOrder?._id}&currency=AED&amount=${attractionOrder?.totalAmount}&redirect_url=${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture&cancel_url=${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture&language=EN`
-                );
-                console.log(data);
+                const orderParams = {
+                    merchant_id: process.env.CCAVENUE_MERCHANT_ID,
+                    order_id: attractionOrder?._id,
+                    currency: "AED",
+                    amount: attractionOrder?.totalAmount,
+                    redirect_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
+                    cancel_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
+                    language: "EN",
+                };
                 let accessCode = process.env.CCAVENUE_ACCESS_CODE;
 
-                const encRequest = ccav.encrypt(data);
+                const encRequest = ccav.getEncryptedOrder(orderParams);
+                // const encRequest = ccav.encrypt(data);
                 const formbody =
                     '<form id="nonseamless" method="post" name="redirect" action="https://secure.ccavenue.ae/transaction/transaction.do?command=initiateTransaction"/> <input type="hidden" id="encRequest" name="encRequest" value="' +
                     encRequest +
@@ -669,48 +675,55 @@ module.exports = {
 
     captureCCAvenueAttractionPayment: async (req, res) => {
         try {
-            let ccavEncResponse = "";
+            const { encResp } = req.body;
+            const decryptedJsonResponse = ccav.redirectResponseToJson(encResp);
 
-            console.log(req.body);
+            console.log(decryptedJsonResponse.order_status);
 
-            req.on("data", function (data) {
-                ccavEncResponse += data;
-                console.log(ccavEncResponse);
-                const ccavPOST = qs.parse(ccavEncResponse);
-                const encryption = ccavPOST.encResp;
-                console.log(encryption);
-                const decryptedData = ccav.decrypt(encryption);
-                console.log(decryptedData);
-                // const ccavResponse = ccav.decrypt(encryption);
-            });
+            // console.log(req.body);
 
-            req.on("error", function (e) {
-                return sendErrorResponse(res, 400, "something went wrong");
-            });
+            // req.on("data", function (data) {
+            //     ccavEncResponse += data;
+            //     console.log(ccavEncResponse);
+            //     const ccavPOST = qs.parse(ccavEncResponse);
+            //     const encryption = ccavPOST.encResp;
+            //     console.log(encryption);
+            //     const decryptedData = ccav.decrypt(encryption);
+            //     console.log(decryptedData);
+            //     // const ccavResponse = ccav.decrypt(encryption);
+            // });
 
-            const attractionOrder = await AttractionOrder.findOne({
-                _id: req.body?.order_id,
-            });
-            if (!attractionOrder) {
-                return sendErrorResponse(
-                    res,
-                    404,
-                    "Attraction order not found"
-                );
-            }
+            // req.on("error", function (e) {
+            //     return sendErrorResponse(res, 400, "something went wrong");
+            // });
 
-            let pData = "";
-            pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
-            pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
-            pData = pData.replace(/&/gi, "</td></tr><tr><td>");
-            pData = pData + "</td></tr></table>";
-            const htmlcode =
-                '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Response Handler</title></head><body><center><font size="4" color="blue"><b>Response Page</b></font><br>' +
-                pData +
-                "</center><br></body></html>";
-            res.writeHeader(200, { "Content-Type": "text/html" });
-            res.write(htmlcode);
+            // const attractionOrder = await AttractionOrder.findOne({
+            //     _id: req.body?.order_id,
+            // });
+            // if (!attractionOrder) {
+            //     return sendErrorResponse(
+            //         res,
+            //         404,
+            //         "Attraction order not found"
+            //     );
+            // }
+
+            // req.on("end", function () {
+            res.writeHead(301, { Location: "http://w3docs.com" });
             res.end();
+            // });
+            // let pData = "";
+            // pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
+            // pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
+            // pData = pData.replace(/&/gi, "</td></tr><tr><td>");
+            // pData = pData + "</td></tr></table>";
+            // const htmlcode =
+            //     '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Response Handler</title></head><body><center><font size="4" color="blue"><b>Response Page</b></font><br>' +
+            //     pData +
+            //     "</center><br></body></html>";
+            // res.writeHeader(200, { "Content-Type": "text/html" });
+            // res.write(htmlcode);
+            // res.end();
         } catch (err) {
             console.log(err);
             sendErrorResponse(res, 500, err);
