@@ -682,11 +682,12 @@ module.exports = {
                 ccavEncResponse += data;
                 const ccavPOST = qs.parse(ccavEncResponse);
                 const encryption = ccavPOST.encResp;
-                console.log(ccavPOST)
-                console.log(encryption)
+                const ccavResponse = ccav.decrypt(encryption);
+
+                console.log(ccavResponse)
 
                 const decryptedJsonResponse =
-                    ccav.redirectResponseToJson(ccavEncResponse);
+                    ccav.redirectResponseToJson(ccavResponse);
 
                 console.log(decryptedJsonResponse.order_status);
             });
@@ -723,7 +724,6 @@ module.exports = {
             // res.write(htmlcode);
             // res.end();
         } catch (err) {
-            console.log(err);
             sendErrorResponse(res, 500, err);
         }
     },
