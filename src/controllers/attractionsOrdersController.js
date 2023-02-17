@@ -676,11 +676,11 @@ module.exports = {
             req.on("data", function (data) {
                 ccavEncResponse += data;
                 console.log(ccavEncResponse);
-
-                const decryptedData = ccav.decrypt(ccavEncResponse);
+                const ccavPOST = qs.parse(ccavEncResponse);
+                const encryption = ccavPOST.encResp;
+                console.log(encryption)
+                const decryptedData = ccav.decrypt(encryption);
                 console.log(decryptedData);
-                // const ccavPOST = qs.parse(ccavEncResponse);
-                // const encryption = ccavPOST.encResp;
                 // const ccavResponse = ccav.decrypt(encryption);
             });
 
