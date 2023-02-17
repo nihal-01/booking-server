@@ -1167,20 +1167,8 @@ module.exports = {
         },
       ]);
 
-      let ticketCount;
-      let ticketStatus = true;
-      if (attraction[0].bookingType == "ticket") {
-        ticketCount = await AttractionTicket.find({
-          activity: attraction[0].activities[0]._id,
-          status: "ok",
-        }).count();
-
-        if (ticketCount < 1) {
-          ticketStatus = false;
-        }
-      }
-
-      console.log(attraction[0].activities[0], "attraction atttraction");
+      
+      
 
       if (!attraction || attraction?.length < 1) {
         return sendErrorResponse(res, 404, "Attraction not found");
@@ -1189,12 +1177,10 @@ module.exports = {
 
       res.status(200).json({
         attraction: attraction[0],
-        ticketStatus,
-        ticketCount,
-        privateTransfer: 0,
+        
       });
     } catch (err) {
-      console.log(err, "error");
+      
       sendErrorResponse(res, 500, err);
     }
   },
