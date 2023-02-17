@@ -534,8 +534,7 @@ module.exports = {
                 };
                 let accessCode = process.env.CCAVENUE_ACCESS_CODE;
 
-                const data = ccav.getEncryptedOrder(orderParams);
-                const encRequest = ccav.encrypt(data);
+                const encRequest = ccav.getEncryptedOrder(orderParams);
                 const formbody =
                     '<form id="nonseamless" method="post" name="redirect" action="https://secure.ccavenue.ae/transaction/transaction.do?command=initiateTransaction"/> <input type="hidden" id="encRequest" name="encRequest" value="' +
                     encRequest +
@@ -675,7 +674,7 @@ module.exports = {
 
     captureCCAvenueAttractionPayment: async (req, res) => {
         try {
-            let ccavEncResponse;
+            let ccavEncResponse = "";
 
             req.on("data", function (data) {
                 ccavEncResponse += data;
