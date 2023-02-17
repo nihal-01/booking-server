@@ -122,9 +122,9 @@ module.exports = {
                 {
                     $lookup: {
                         from: "drivers",
-                        localField: "activities.driver",
+                        localField: "activities.drivers",
                         foreignField: "_id",
-                        as: "activities.driver",
+                        as: "activities.drivers",
                     },
                 },
                 {
@@ -145,9 +145,6 @@ module.exports = {
                         },
                         country: { $arrayElemAt: ["$country", 0] },
                         reseller: { $arrayElemAt: ["$reseller", 0] },
-                        "activities.driver": {
-                            $arrayElemAt: ["$activities.driver", 0],
-                        },
                     },
                 },
                 {
@@ -205,16 +202,16 @@ module.exports = {
                             adultCost: 1,
                             childCost: 1,
                             transferType: 1,
-                            offerAmount: 1,
-                            amount: 1,
+                            grandTotal: 1,
                             adultTickets: 1,
                             childTickets: 1,
                             status: 1,
                             isRefunded: 1,
                             profit: 1,
                             bookingConfirmationNumber: 1,
-                            driver: 1,
+                            drivers: 1,
                             _id: 1,
+                            privateTransfers: 1,
                         },
                         referenceNumber: 1,
                         reseller: {
@@ -374,9 +371,9 @@ module.exports = {
                 {
                     $lookup: {
                         from: "drivers",
-                        localField: "activities.driver",
+                        localField: "activities.drivers",
                         foreignField: "_id",
-                        as: "activities.driver",
+                        as: "activities.drivers",
                     },
                 },
                 {
@@ -397,9 +394,6 @@ module.exports = {
                         },
                         country: { $arrayElemAt: ["$country", 0] },
                         reseller: { $arrayElemAt: ["$reseller", 0] },
-                        "activities.driver": {
-                            $arrayElemAt: ["$activities.driver", 0],
-                        },
                     },
                 },
                 { $match: filters2 },
@@ -433,15 +427,14 @@ module.exports = {
                             adultCost: 1,
                             childCost: 1,
                             transferType: 1,
-                            offerAmount: 1,
-                            amount: 1,
+                            grandTotal: 1,
                             adultTickets: 1,
                             childTickets: 1,
                             status: 1,
                             isRefunded: 1,
                             profit: 1,
                             bookingConfirmationNumber: 1,
-                            driver: 1,
+                            drivers: 1,
                             _id: 1,
                         },
                         reseller: {
@@ -561,7 +554,7 @@ module.exports = {
                     );
                 }
                 ws.cell(i + 2, 16).number(
-                    Number(order?.activities?.amount) || 0
+                    Number(order?.activities?.grandTotal) || 0
                 );
                 ws.cell(i + 2, 17).number(
                     Number(order?.activities?.profit) || 0

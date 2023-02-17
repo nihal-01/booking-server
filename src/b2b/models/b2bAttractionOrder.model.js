@@ -156,6 +156,9 @@ const b2battractionOrderSchema = new Schema(
                         },
                         default: 0,
                     },
+                    drivers: {
+                        type: [{ type: Schema.Types.ObjectId, ref: "Driver" }],
+                    },
                     privateTransfers: {
                         type: [
                             {
@@ -195,16 +198,6 @@ const b2battractionOrderSchema = new Schema(
                     },
                     bookingConfirmationNumber: {
                         type: String,
-                        required: function () {
-                            return (
-                                this.status === "confirmed" &&
-                                this.bookingType === "booking"
-                            );
-                        },
-                    },
-                    driver: {
-                        type: Schema.Types.ObjectId,
-                        ref: "Driver",
                         required: function () {
                             return (
                                 this.status === "confirmed" &&
