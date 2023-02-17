@@ -621,17 +621,22 @@ module.exports = {
 
   listAllCountry: async (req, res) => {
     try {
-      const visaCountry = await Visa.find({ isDeleted: false }).populate({
-        path: "country",
-        select: "countryName",
-      });
+      const visaCountry = await Visa.find({ isDeleted: false })
+        .select("country")
+        .populate({
+          path: "country",
+          select: "countryName",
+        });
 
       if (!visaCountry) {
         return sendErrorResponse(res, 400, "No Visa Available");
       }
 
+      console.log(visaCountry, "visaCountry");
+
       res.status(200).json(visaCountry);
     } catch (err) {
+      console.log(err, "error");
       sendErrorResponse(res, 500, err);
     }
   },

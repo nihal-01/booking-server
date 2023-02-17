@@ -162,6 +162,61 @@ module.exports = {
             },
           },
         },
+        // {
+        //   $lookup: {
+        //     from: "attractionactivities",
+        //     let: {
+        //       attraction: "$_id",
+        //     },
+        //     pipeline: [
+        //       {
+        //         $match: {
+        //           $expr: {
+        //             $and: [
+        //               {
+        //                 $eq: ["$attraction", "$$attraction"],
+        //               },
+        //               { $eq: ["$isDeleted", false] },
+        //             ],
+        //           },
+        //         },
+        //       },
+
+        //       {
+        //         $addFields: {
+        //           privateTransfer: {
+        //             $arrayElemAt: ["$privateTransfers", 0],
+        //           },
+        //         },
+        //       },
+        //       {
+        //         $addFields: {
+        //           lowPrice: {
+        //             $cond: {
+        //               if: {
+        //                 $eq: ["$activityType", "normal"],
+        //               },
+        //               then: "$adultPrice",
+        //               else: {
+        //                 $cond: {
+        //                   if: {
+        //                     $eq: ["$isSharedTransferAvailable", true],
+        //                   },
+        //                   then: "$sharedTransferPrice",
+        //                   else: "$privateTransfer.price",
+        //                 },
+        //               },
+        //             },
+        //           },
+        //         },
+        //       },
+        //       {
+        //         $sort: { adultPrice: 1 },
+        //       },
+        //     ],
+        //     as: "activities",
+        //   },
+        // },
         {
           $lookup: {
             from: "attractionactivities",
@@ -181,7 +236,6 @@ module.exports = {
                   },
                 },
               },
-
               {
                 $addFields: {
                   privateTransfer: {
@@ -213,10 +267,72 @@ module.exports = {
               {
                 $sort: { adultPrice: 1 },
               },
+              {
+                $lookup: {
+                  from: "attractiontickets",
+                  let: { activityId: "$_id" },
+                  pipeline: [
+                    {
+                      $match: {
+                        $expr: {
+                          $and: [
+                            { $eq: ["$activity", "$$activityId"] },
+                            { $eq: ["$status", "ok"] },
+                          ],
+                        },
+                      },
+                    },
+                    {
+                      $count: "ticketCount",
+                    },
+                  ],
+                  as: "ticketCounts",
+                },
+              },
+              {
+                $addFields: {
+                  ticketCount: {
+                    $ifNull: [
+                      { $arrayElemAt: ["$ticketCounts.ticketCount", 0] },
+                      0,
+                    ],
+                  },
+                },
+              },
+              {
+                $project: { ticketCounts: 0 },
+              },
             ],
             as: "activities",
           },
         },
+        // {
+        //   $lookup: {
+        //     from: "attractiontickets",
+        //     let: {
+        //       activities: "$activities._id",
+        //     },
+        //     pipeline: [
+        //       {
+        //         $match: {
+        //           $expr: {
+        //             $and: [
+        //               { $eq: ["$activity", "$$activities"] },
+        //               // { $eq: ["$status", "ok"] },
+        //             ],
+        //           },
+        //         },
+        //       },
+        //       {
+        //         $group: {
+        //           _id: "$activity",
+        //           count: { $sum: 1 },
+        //         },
+        //       },
+        //     ],
+        //     as: "activities.ticketCounts",
+        //   },
+        // },
         {
           $addFields: {
             activitiesSpecial: {
@@ -974,6 +1090,10 @@ module.exports = {
             totalReviews: 0,
             activitiesSpecial: 0,
             activitiesSubAgent: 0,
+            specialMarkup: 0,
+            activities: {
+              privateTransfer: 0,
+            },
           },
         },
       ]);
@@ -991,7 +1111,7 @@ module.exports = {
         }
       }
 
-      console.log(attraction[0], "attraction atttraction");
+      console.log(attraction[0].activities[0], "attraction atttraction");
 
       if (!attraction || attraction?.length < 1) {
         return sendErrorResponse(res, 404, "Attraction not found");
@@ -1002,8 +1122,10 @@ module.exports = {
         attraction: attraction[0],
         ticketStatus,
         ticketCount,
+        privateTransfer: 0,
       });
     } catch (err) {
+      console.log(err, "error");
       sendErrorResponse(res, 500, err);
     }
   },
@@ -1783,7 +1905,7 @@ module.exports = {
                                         price: {
                                           $sum: [
                                             "$$transfers.price",
-                                            "$markupSubAgent.markup",
+                                            "$markupClient.markup",
                                           ],
                                         },
                                       },

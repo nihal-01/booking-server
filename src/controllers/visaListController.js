@@ -16,7 +16,7 @@ module.exports = {
         }).populate({
             path: 'country',
             select: 'countryName'
-          });  
+          })
           
           if (!visaCountry) {
             return sendErrorResponse(res, 400, "No Visa Available");
