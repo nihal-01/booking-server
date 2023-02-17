@@ -676,25 +676,17 @@ module.exports = {
         try {
             let ccavEncResponse;
 
-            // console.log(req.body);
-
             req.on("data", function (data) {
                 ccavEncResponse += data;
                 const ccavPOST = qs.parse(ccavEncResponse);
                 const encryption = ccavPOST.encResp;
-                const ccavResponse = ccav.decrypt(encryption);
-
-                console.log(ccavResponse)
-
-                const decryptedJsonResponse =
-                    ccav.redirectResponseToJson(ccavResponse);
-
-                console.log(decryptedJsonResponse.order_status);
+                const decryptedData = ccav.decrypt(encryption);
+                console.log(decryptedData)
             });
 
-            req.on("error", function (e) {
-                return sendErrorResponse(res, 400, "something went wrong");
-            });
+            // req.on("error", function (e) {
+            //     return sendErrorResponse(res, 400, "something went wrong");
+            // });
 
             // const attractionOrder = await AttractionOrder.findOne({
             //     _id: req.body?.order_id,
@@ -724,6 +716,7 @@ module.exports = {
             // res.write(htmlcode);
             // res.end();
         } catch (err) {
+            console.log(err);
             sendErrorResponse(res, 500, err);
         }
     },
