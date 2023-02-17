@@ -674,28 +674,21 @@ module.exports = {
 
     captureCCAvenueAttractionPayment: async (req, res) => {
         try {
-            const { encResp } = req.body;
-            console.log(encResp);
-            const decryptedJsonResponse = ccav.redirectResponseToJson(encResp);
-
-            console.log(decryptedJsonResponse.order_status);
+            let ccavEncResponse;
+            let decryptedData;
 
             // console.log(req.body);
 
-            // req.on("data", function (data) {
-            //     ccavEncResponse += data;
-            //     console.log(ccavEncResponse);
-            //     const ccavPOST = qs.parse(ccavEncResponse);
-            //     const encryption = ccavPOST.encResp;
-            //     console.log(encryption);
-            //     const decryptedData = ccav.decrypt(encryption);
-            //     console.log(decryptedData);
-            //     // const ccavResponse = ccav.decrypt(encryption);
-            // });
+            req.on("data", function (data) {
+                ccavEncResponse += data;
+                const ccavPOST = qs.parse(ccavEncResponse);
+                const encryption = ccavPOST.encResp;
+                decryptedData = ccav.decrypt(encryption);
+            });
 
-            // req.on("error", function (e) {
-            //     return sendErrorResponse(res, 400, "something went wrong");
-            // });
+            req.on("error", function (e) {
+                return sendErrorResponse(res, 400, "something went wrong");
+            });
 
             // const attractionOrder = await AttractionOrder.findOne({
             //     _id: req.body?.order_id,
@@ -708,10 +701,15 @@ module.exports = {
             //     );
             // }
 
-            // req.on("end", function () {
-            res.writeHead(301, { Location: "http://w3docs.com" });
-            res.end();
-            // });
+            req.on("end", function () {
+                const decryptedJsonResponse =
+                    ccav.redirectResponseToJson(encResp);
+
+                console.log(decryptedJsonResponse.order_status);
+
+                res.writeHead(301, { Location: "http://w3docs.com" });
+                res.end();
+            });
             // let pData = "";
             // pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
             // pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
