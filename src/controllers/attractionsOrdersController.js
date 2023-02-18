@@ -674,38 +674,13 @@ module.exports = {
 
     captureCCAvenueAttractionPayment: async (req, res) => {
         try {
-            let ccavEncResponse = "";
-            console.log("BODYYYY", req.body);
+            const { encResp } = req.body;
 
-            req.on("data", function (data) {
-                ccavEncResponse += data;
-                const ccavPOST = qs.parse(ccavEncResponse);
-                const encryption = ccavPOST.encResp;
-                const decryptedJsonResponse =
-                    ccav.redirectResponseToJson(encryption);
-                // const decryptedData = ccav.decrypt(encryption);
-                console.log(decryptedJsonResponse);
-            });
+            const decryptedJsonResponse = ccav.redirectResponseToJson(encResp);
 
-            // req.on("error", function (e) {
-            //     return sendErrorResponse(res, 400, "something went wrong");
-            // });
-
-            // const attractionOrder = await AttractionOrder.findOne({
-            //     _id: req.body?.order_id,
-            // });
-            // if (!attractionOrder) {
-            //     return sendErrorResponse(
-            //         res,
-            //         404,
-            //         "Attraction order not found"
-            //     );
-            // }
-
-            req.on("end", function () {
-                res.writeHead(301, { Location: "http://w3docs.com" });
-                res.end();
-            });
+            console.log(decryptedJsonResponse);
+            res.writeHead(301, { Location: "http://w3docs.com" });
+            res.end();
             // let pData = "";
             // pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
             // pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
