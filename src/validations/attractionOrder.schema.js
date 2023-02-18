@@ -16,6 +16,9 @@ const attractionOrderSchema = Joi.object({
             infantCount: Joi.number().allow("", null),
             transferType: Joi.string().valid("without", "shared", "private"),
         }),
+    paymentProcessor: Joi.string()
+        .required()
+        .valid("ccavenue", "paypal", "razorpay"),
 });
 
 const attractionOrderCaptureSchema = Joi.object({

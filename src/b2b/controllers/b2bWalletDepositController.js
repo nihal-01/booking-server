@@ -72,6 +72,7 @@ module.exports = {
           cancel_url: `${process.env.SERVER_URL}/api/v1/b2b/resellers/wallet/ccavenue/capture`,
           language: "EN",
         };
+
         let accessCode = process.env.CCAVENUE_ACCESS_CODE;
 
         const encRequest = ccav.getEncryptedOrder(orderParams);
@@ -197,48 +198,60 @@ module.exports = {
 
   captureCCAvenueWalletPayment: async (req, res) => {
     try {
-      let ccavEncResponse = "";
+      const { encResp } = req.body;
 
-      req.on("data", function (data) {
-        ccavEncResponse += data;
-        const ccavPOST = qs.parse(ccavEncResponse);
-        const encryption = ccavPOST.encResp;
-        const decryptedJsonResponse = ccav.redirectResponseToJson(encryption);
-        // const decryptedData = ccav.decrypt(encryption);
-        console.log(decryptedJsonResponse);
+      const decryptedJsonResponse = ccav.redirectResponseToJson(encResp);
+      const { order_id, order_status } = decryptedJsonResponse;
+
+      let transaction = await B2BTransaction.findOne({
+        _id: order_id,
+        paymentProcessor: "ccavenue",
+        status: "pending",
       });
 
-      // req.on("error", function (e) {
-      //     return sendErrorResponse(res, 400, "something went wrong");
-      // });
-
-      // const attractionOrder = await AttractionOrder.findOne({
-      //     _id: req.body?.order_id,
-      // });
-      // if (!attractionOrder) {
-      //     return sendErrorResponse(
-      //         res,
-      //         404,
-      //         "Attraction order not found"
-      //     );
+      // if (!transaction) {
+      //     const transaction = new B2BTransaction({
+      //         user: attractionOrder.user,
+      //         amount: attractionOrder?.totalAmount,
+      //         status: "pending",
+      //         transactionType: "deduct",
+      //         paymentProcessor: "ccavenue",
+      //         orderId: attractionOrder?._id,
+      //     });
+      //     await transaction.save();
       // }
 
-      req.on("end", function () {
-        res.writeHead(301, { Location: "http://w3docs.com" });
+      if (order_status !== "Success") {
+        transaction.status = "failed";
+        await transaction.save();
+
+        res.writeHead(301, {
+          Location: `https://mytravellerschoice.com/attractions/orders/${order_id}/cancelled`,
+        });
         res.end();
-      });
-      // let pData = "";
-      // pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
-      // pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
-      // pData = pData.replace(/&/gi, "</td></tr><tr><td>");
-      // pData = pData + "</td></tr></table>";
-      // const htmlcode =
-      //     '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Response Handler</title></head><body><center><font size="4" color="blue"><b>Response Page</b></font><br>' +
-      //     pData +
-      //     "</center><br></body></html>";
-      // res.writeHeader(200, { "Content-Type": "text/html" });
-      // res.write(htmlcode);
-      // res.end();
+      } else {
+        transaction.status = "success";
+        await transaction.save();
+
+        await B2BWallet.updateOne(
+          {
+            reseller: req.reseller._id,
+          },
+          {
+            $inc: { balance: Number(transaction.amount) },
+          },
+          { upsert: true, runValidators: true, new: true }
+        );
+
+        let reseller = req.reseller;
+        const companyDetails = await HomeSettings.findOne();
+        sendWalletDeposit(reseller, transaction, companyDetails);
+
+        res.writeHead(301, {
+          Location: `https://mytravellerschoice.com/print${order_id}`,
+        });
+        res.end();
+      }
     } catch (err) {
       console.log(err);
       sendErrorResponse(res, 500, err);
@@ -299,16 +312,12 @@ module.exports = {
       if (generated_signature.digest("hex") !== razorpay_signature) {
         transaction.status = "failed";
         await transaction.save();
-       
 
         return sendErrorResponse(res, 400, "Transaction failed");
       }
 
       transaction.status = "success";
       await transaction.save();
-      
-
-
 
       return res.status(200).json({
         message: "Transaction Successful",

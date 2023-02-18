@@ -4,26 +4,37 @@ module.exports = {
     completeOrderAfterPayment: async (attractionOrder) => {
         try {
             for (let i = 0; i < attractionOrder.activities?.length; i++) {
-                let activity = attractionOrder.activities[i];
+                const activity = await AttractionActivity.findOne({
+                    _id: attractionOrder.activities[i].activity,
+                });
 
-                if (activity.bookingType === "ticket") {
+                let totalPurchaseCost = attractionOrder.activities[i].totalCost;
+                if (attractionOrder.activities[i].bookingType === "ticket") {
                     let adultTickets = [];
                     let childTickets = [];
-                    let totalAdultPurchaseCost = 0;
-                    let totalChildPurchaseCost = 0;
+                    let infantTickets = [];
 
-                    for (let i = 0; i < activity.adultsCount; i++) {
+                    for (
+                        let j = 0;
+                        j < attractionOrder.activities[i].adultsCount;
+                        j++
+                    ) {
                         const ticket = await AttractionTicket.findOneAndUpdate(
                             {
-                                activity: activity.activity,
+                                activity: activity._id,
                                 status: "ok",
-                                ticketFor: "adult",
+                                $or: [
+                                    { ticketFor: "adult" },
+                                    { ticketFor: "common" },
+                                ],
                                 $or: [
                                     {
                                         validity: true,
                                         validTill: {
                                             $gte: new Date(
-                                                activity.date
+                                                attractionOrder.activities[
+                                                    i
+                                                ].date
                                             ).toISOString(),
                                         },
                                     },
@@ -36,7 +47,7 @@ module.exports = {
                             return sendErrorResponse(
                                 res,
                                 400,
-                                "Ooh. sorry, We know you already paid. But tickets sold out. We are trying maximum to provide tickets for you. Otherwise amount will be refunded within 24hrs"
+                                "tickets sold out."
                             );
                         }
                         adultTickets.push({
@@ -45,24 +56,35 @@ module.exports = {
                             lotNo: ticket?.lotNo,
                             ticketFor: ticket?.ticketFor,
                             validity: ticket.validity,
-                            validTill: ticket.validTill,
+                            validTill: ticket.validTill || undefined,
                             cost: ticket?.ticketCost,
                         });
-                        totalAdultPurchaseCost += ticket?.ticketCost;
+
+                        totalPurchaseCost += ticket.ticketCost;
                     }
 
-                    for (let i = 0; i < activity.childrenCount; i++) {
+                    for (
+                        let j = 0;
+                        j < attractionOrder.activities[i].childrenCount;
+                        j++
+                    ) {
                         const ticket = await AttractionTicket.findOneAndUpdate(
                             {
-                                activity: activity.activity,
+                                activity:
+                                    attractionOrder.activities[i].activity,
                                 status: "ok",
-                                ticketFor: "child",
+                                $or: [
+                                    { ticketFor: "child" },
+                                    { ticketFor: "common" },
+                                ],
                                 $or: [
                                     {
                                         validity: true,
                                         validTill: {
                                             $gte: new Date(
-                                                activity.date
+                                                attractionOrder.activities[
+                                                    i
+                                                ].date
                                             ).toISOString(),
                                         },
                                     },
@@ -84,21 +106,78 @@ module.exports = {
                             lotNo: ticket?.lotNo,
                             ticketFor: ticket?.ticketFor,
                             validity: ticket.validity,
-                            validTill: ticket.validTill,
+                            validTill: ticket.validTill || undefined,
                             cost: ticket?.ticketCost,
                         });
-                        totalChildPurchaseCost += ticket?.ticketCost;
+
+                        totalPurchaseCost += ticket.ticketCost;
+                    }
+
+                    if (activity.infantPrice > 0) {
+                        for (
+                            let j = 0;
+                            j < attractionOrder.activities[i].childrenCount;
+                            j++
+                        ) {
+                            const ticket =
+                                await AttractionTicket.findOneAndUpdate(
+                                    {
+                                        activity:
+                                            attractionOrder.activities[i]
+                                                .activity,
+                                        status: "ok",
+                                        $or: [
+                                            { ticketFor: "infant" },
+                                            { ticketFor: "common" },
+                                        ],
+                                        $or: [
+                                            {
+                                                validity: true,
+                                                validTill: {
+                                                    $gte: new Date(
+                                                        attractionOrder.activities[
+                                                            i
+                                                        ].date
+                                                    ).toISOString(),
+                                                },
+                                            },
+                                            { validity: false },
+                                        ],
+                                    },
+                                    { status: "used" }
+                                );
+                            if (!ticket) {
+                                return sendErrorResponse(
+                                    res,
+                                    404,
+                                    "Ooh. sorry, We know you already paid. But tickets sold out. We are trying maximum to provide tickets for you. Otherwise amount will be refunded within 24hrs"
+                                );
+                            }
+                            infantTickets.push({
+                                ticketId: ticket._id,
+                                ticketNo: ticket?.ticketNo,
+                                lotNo: ticket?.lotNo,
+                                ticketFor: ticket?.ticketFor,
+                                validity: ticket.validity,
+                                validTill: ticket.validTill || undefined,
+                                cost: ticket?.ticketCost,
+                            });
+
+                            totalPurchaseCost += ticket.ticketCost;
+                        }
                     }
 
                     attractionOrder.activities[i].adultTickets = adultTickets;
                     attractionOrder.activities[i].childTickets = childTickets;
-                    attractionOrder.activities[i].profit =
-                        attractionOrder.activities[i].amount -
-                        (totalAdultPurchaseCost + totalChildPurchaseCost);
+                    attractionOrder.activities[i].infantTickets = infantTickets;
                     attractionOrder.activities[i].status = "confirmed";
                 } else {
                     attractionOrder.activities[i].status = "booked";
                 }
+                attractionOrder.activities[i].totalCost = totalPurchaseCost;
+                attractionOrder.activities[i].profit =
+                    attractionOrder.activities[i].grandTotal -
+                    attractionOrder.activities[i].totalCost;
             }
         } catch (err) {
             throw err;
