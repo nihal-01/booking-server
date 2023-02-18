@@ -844,7 +844,12 @@ module.exports = {
                     );
                 }
 
-                return res.status(200).json(response.result);
+                return res
+                    .status(200)
+                    .json({
+                        order: response.result,
+                        orderId: newAttractionOrder?._id,
+                    });
             } else if (paymentProcessor === "razorpay") {
                 const currency = "INR";
                 const totalAmountINR = await convertCurrency(
@@ -856,7 +861,9 @@ module.exports = {
                     currency,
                 };
                 const order = await instance.orders.create(options);
-                return res.status(200).json(order);
+                return res
+                    .status(200)
+                    .json({ order, orderId: newAttractionOrder?._id });
             } else if (paymentProcessor === "ccavenue") {
                 const orderParams = {
                     merchant_id: process.env.CCAVENUE_MERCHANT_ID,
