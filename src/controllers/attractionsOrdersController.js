@@ -807,7 +807,7 @@ module.exports = {
             const newAttractionOrder = new AttractionOrder({
                 activities: selectedActivities,
                 totalAmount,
-                totalOfferAmount: totalOfferAmount,
+                totalOfferAmount,
                 user: buyer?._id,
                 country,
                 name,

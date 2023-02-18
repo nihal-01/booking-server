@@ -1,6 +1,8 @@
+
+const crypto = require("crypto");
+const Razorpay = require("razorpay");
 const nodeCCAvenue = require("node-ccavenue");
 const qs = require("querystring");
-const encodeUrl = require("encodeurl");
 
 const { sendErrorResponse } = require("../../helpers");
 const { HomeSettings } = require("../../models");
@@ -10,6 +12,12 @@ const { B2BTransaction, B2BWallet } = require("../models");
 const {
   b2bAttractionOrderCaptureSchema,
 } = require("../validations/b2bAttractionOrder.schema");
+
+
+const instance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 const ccav = new nodeCCAvenue.Configure({
   merchant_id: process.env.CCAVENUE_MERCHANT_ID,
@@ -31,6 +39,8 @@ module.exports = {
         status: "pending",
       });
 
+      await newTransation.save();
+
       if (paymentProcessor === "paypal") {
         const currency = "USD";
         const response = await createOrder(amount, currency);
@@ -51,14 +61,29 @@ module.exports = {
 
         await newTransation.save();
         res.status(200).json(resultFinal);
+      } else if (paymentProcessor === "razorpay") {
+        const currency = "INR";
+        const totalAmountINR = await convertCurrency(amount, currency);
+        const options = {
+          amount: totalAmountINR * 100,
+          currency,
+        };
+        const order = await instance.orders.create(options);
+        return res.status(200).json(order);
       } else if (paymentProcessor === "ccavenue") {
-        let data = encodeUrl(
-          `merchant_id=${process.env.CCAVENUE_MERCHANT_ID}&order_id=${newTransation?._id}&currency=INR&amount=${amount}&redirect_url=/hi&cancel_url=/hi&language=EN`
-        );
-        console.log(data);
+        const orderParams = {
+          merchant_id: process.env.CCAVENUE_MERCHANT_ID,
+          order_id: newTransation?._id,
+          currency: "AED",
+          amount: amount,
+          redirect_url: `${process.env.SERVER_URL}/api/v1/b2b/resellers/wallet/ccavenue/capture`,
+          cancel_url: `${process.env.SERVER_URL}/api/v1/b2b/resellers/wallet/ccavenue/capture`,
+          language: "EN",
+        };
+
         let accessCode = process.env.CCAVENUE_ACCESS_CODE;
 
-        const encRequest = ccav.encrypt(data);
+        const encRequest = ccav.getEncryptedOrder(orderParams);
         const formbody =
           '<form id="nonseamless" method="post" name="redirect" action="https://secure.ccavenue.ae/transaction/transaction.do?command=initiateTransaction"/> <input type="hidden" id="encRequest" name="encRequest" value="' +
           encRequest +
@@ -66,18 +91,12 @@ module.exports = {
           accessCode +
           '"><script language="javascript">document.redirect.submit();</script></form>';
 
-        await newTransation.save();
-
         res.setHeader("Content-Type", "text/html");
         res.write(formbody);
         res.end();
         return;
       } else {
-        return sendErrorResponse(
-          res,
-          400,
-          "Invalid payment processor. Please select a valid one"
-        );
+        return sendErrorResponse(res, 400, "Invalid payment processor");
       }
     } catch (err) {
       // handle transaction fail here
@@ -85,7 +104,7 @@ module.exports = {
     }
   },
 
-  captureWalletDeposit: async (req, res) => {
+  capturePaypalWalletDeposit: async (req, res) => {
     try {
       const { orderId, paymentId } = req.body;
 
@@ -185,33 +204,134 @@ module.exports = {
     }
   },
 
-  captureCCAvenueWalletDeposit: async (req, res) => {
+  captureCCAvenueWalletPayment: async (req, res) => {
     try {
-      let ccavEncResponse = "";
-      ccavEncResponse += req.body;
+      const { encResp } = req.body;
 
-      const ccavPOST = qs.parse(ccavEncResponse);
-      const encryption = ccavPOST.encResp;
-      const ccavResponse = ccav.decrypt(encryption);
+      const decryptedJsonResponse = ccav.redirectResponseToJson(encResp);
+      const { order_id, order_status } = decryptedJsonResponse;
 
-      // complete transaction here
-      console.log("Transaction completed...!");
+      let transaction = await B2BTransaction.findOne({
+        _id: order_id,
+        paymentProcessor: "ccavenue",
+        status: "pending",
+      });
 
-      let pData = "";
-      pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
-      pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
-      pData = pData.replace(/&/gi, "</td></tr><tr><td>");
-      pData = pData + "</td></tr></table>";
-      htmlcode =
-        '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Response Handler</title></head><body><center><font size="4" color="blue"><b>Response Page</b></font><br>' +
-        pData +
-        "</center><br></body></html>";
+      // if (!transaction) {
+      //     const transaction = new B2BTransaction({
+      //         user: attractionOrder.user,
+      //         amount: attractionOrder?.totalAmount,
+      //         status: "pending",
+      //         transactionType: "deduct",
+      //         paymentProcessor: "ccavenue",
+      //         orderId: attractionOrder?._id,
+      //     });
+      //     await transaction.save();
+      // }
 
-      res.writeHeader(200, { "Content-Type": "text/html" });
-      res.write(htmlcode);
-      res.end();
+      if (order_status !== "Success") {
+        transaction.status = "failed";
+        await transaction.save();
+
+        res.writeHead(301, {
+          Location: `https://mytravellerschoice.com/attractions/orders/${order_id}/cancelled`,
+        });
+        res.end();
+      } else {
+        transaction.status = "success";
+        await transaction.save();
+
+        await B2BWallet.updateOne(
+          {
+            reseller: req.reseller._id,
+          },
+          {
+            $inc: { balance: Number(transaction.amount) },
+          },
+          { upsert: true, runValidators: true, new: true }
+        );
+
+        let reseller = req.reseller;
+        const companyDetails = await HomeSettings.findOne();
+        sendWalletDeposit(reseller, transaction, companyDetails);
+
+        res.writeHead(301, {
+          Location: `https://mytravellerschoice.com/print${order_id}`,
+        });
+        res.end();
+      }
     } catch (err) {
+      console.log(err);
       sendErrorResponse(res, 500, err);
+    }
+  },
+
+  captureRazorpayAttractionPayment: async (req, res) => {
+    try {
+      const { razorpay_order_id, transactionid, razorpay_signature, orderId } =
+        req.body;
+
+      if (!isValidObjectId(orderId)) {
+        return sendErrorResponse(res, 400, "invalid order id");
+      }
+
+      const B2BTransaction = await B2BTransaction.findOne({
+        _id: orderId,
+      });
+      if (!B2BTransaction) {
+        return sendErrorResponse(
+          res,
+          400,
+          "Attraction order not found!. Please create an order first. Check with our team if amount is debited from your bank!"
+        );
+      }
+
+      if (B2BTransaction.status === "completed") {
+        return sendErrorResponse(
+          res,
+          400,
+          "This order already completed, Thank you. Check with our team if you paid multiple times."
+        );
+      }
+
+      let transaction = await B2BTransaction.findOne({
+        paymentProcessor: "razorpay",
+        orderId: attractionOrder?._id,
+        status: "pending",
+      });
+      if (!transaction) {
+        const newTransaction = new B2CTransaction({
+          user: attractionOrder.user,
+          amount: attractionOrder?.totalAmount,
+          status: "pending",
+          transactionType: "deduct",
+          paymentProcessor: "razorpay",
+          orderId: attractionOrder?._id,
+        });
+        await newTransaction.save();
+      }
+
+      const generated_signature = crypto.createHmac(
+        "sha256",
+        process.env.RAZORPAY_KEY_SECRET
+      );
+      generated_signature.update(razorpay_order_id + "|" + transactionid);
+
+      if (generated_signature.digest("hex") !== razorpay_signature) {
+        transaction.status = "failed";
+        await transaction.save();
+
+        return sendErrorResponse(res, 400, "Transaction failed");
+      }
+
+      transaction.status = "success";
+      await transaction.save();
+
+      return res.status(200).json({
+        message: "Transaction Successful",
+      });
+    } catch (err) {
+      sendErrorResponse(res, 400, err);
     }
   },
 };
