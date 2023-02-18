@@ -1,6 +1,8 @@
+
+const crypto = require("crypto");
+const Razorpay = require("razorpay");
 const nodeCCAvenue = require("node-ccavenue");
 const qs = require("querystring");
-const encodeUrl = require("encodeurl");
 
 const { sendErrorResponse } = require("../../helpers");
 const { HomeSettings } = require("../../models");
@@ -10,6 +12,12 @@ const { B2BTransaction, B2BWallet } = require("../models");
 const {
   b2bAttractionOrderCaptureSchema,
 } = require("../validations/b2bAttractionOrder.schema");
+
+
+const instance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
 const ccav = new nodeCCAvenue.Configure({
   merchant_id: process.env.CCAVENUE_MERCHANT_ID,
