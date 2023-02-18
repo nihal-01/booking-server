@@ -10,15 +10,21 @@ const attractionOrderSchema = new Schema(
                         ref: "Attraction",
                         required: true,
                     },
+                    bookingType: {
+                        type: String,
+                        required: true,
+                        enum: ["booking", "ticket"],
+                    },
                     activity: {
                         type: Schema.Types.ObjectId,
                         ref: "AttractionActivity",
                         required: true,
                     },
-                    bookingType: {
+                    activityType: {
                         type: String,
                         required: true,
-                        enum: ["booking", "ticket"],
+                        lowercase: true,
+                        enum: ["normal", "transfer"],
                     },
                     date: {
                         type: Date,
@@ -36,18 +42,144 @@ const attractionOrderSchema = new Schema(
                         type: Number,
                         required: true,
                     },
-                    profit: {
+                    adultActivityPrice: {
                         type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    childActivityPrice: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    infantActivityPrice: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    adultActivityTotalPrice: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    childActivityTotalPrice: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    infantActivityTotalPrice: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    adultActivityCost: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    childActivityCost: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    infantActivityCost: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    adultActivityTotalCost: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    childActivityTotalCost: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    infantActivityTotalCost: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    activityTotalPrice: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
+                    activityTotalCost: {
+                        type: Number,
+                        required: true,
+                        default: 0,
                     },
                     transferType: {
                         type: String,
                         lowercase: true,
                         enum: ["without", "private", "shared"],
                     },
-                    offerAmount: { type: Number, required: true },
-                    amount: { type: Number, required: true },
+                    sharedTransferPrice: {
+                        type: Number,
+                        required: function () {
+                            return this.transferType === "shared";
+                        },
+                        default: 0,
+                    },
+                    sharedTransferCost: {
+                        type: Number,
+                        required: function () {
+                            return this.transferType === "shared";
+                        },
+                        default: 0,
+                    },
+                    sharedTransferTotalPrice: {
+                        type: Number,
+                        required: function () {
+                            return this.transferType === "shared";
+                        },
+                        default: 0,
+                    },
+                    sharedTransferTotalCost: {
+                        type: Number,
+                        required: function () {
+                            return this.transferType === "shared";
+                        },
+                        default: 0,
+                    },
+                    drivers: {
+                        type: [{ type: Schema.Types.ObjectId, ref: "Driver" }],
+                    },
+                    privateTransfers: {
+                        type: [
+                            {
+                                pvtTransferId: {
+                                    type: Schema.Types.ObjectId,
+                                    required: true,
+                                },
+                                name: { type: String, required: true },
+                                maxCapacity: { type: Number, required: true },
+                                count: { type: Number, required: true },
+                                price: { type: Number, required: true },
+                                cost: { type: Number, required: true },
+                                totalPrice: { type: Number, required: true },
+                            },
+                        ],
+                        default: [],
+                    },
+                    privateTransfersTotalPrice: {
+                        type: Number,
+                        required: function () {
+                            return this.transferType === "private";
+                        },
+                        default: 0,
+                    },
+                    privateTransfersTotalCost: {
+                        type: Number,
+                        required: true,
+                        default: 0,
+                    },
                     adultTickets: { type: [] },
                     childTickets: { type: [] },
+                    infantTickets: { type: [] },
                     status: {
                         type: String,
                         lowercase: true,
@@ -62,16 +194,17 @@ const attractionOrderSchema = new Schema(
                             );
                         },
                     },
-                    driver: {
-                        type: Schema.Types.ObjectId,
-                        ref: "Driver",
-                        required: function () {
-                            return (
-                                this.status === "confirmed" &&
-                                this.bookingType === "booking"
-                            );
-                        },
+                    totalCost: {
+                        type: Number,
+                        required: true,
                     },
+                    profit: {
+                        type: Number,
+                        required: true,
+                    },
+                    offerAmount: { type: Number, required: true },
+                    totalWithoutOffer: { type: Number, required: true },
+                    grandTotal: { type: Number, required: true },
                     cancelledBy: {
                         type: String,
                         required: function () {
@@ -104,7 +237,7 @@ const attractionOrderSchema = new Schema(
                 },
             ],
         },
-        totalOffer: {
+        totalOfferAmount: {
             type: Number,
             required: true,
         },

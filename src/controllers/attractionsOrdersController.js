@@ -2,7 +2,6 @@ const { isValidObjectId } = require("mongoose");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const nodeCCAvenue = require("node-ccavenue");
-const qs = require("querystring");
 
 const { sendErrorResponse } = require("../helpers");
 const {
@@ -26,7 +25,6 @@ const {
 } = require("../helpers/attractionOrderHelpers");
 
 const { getUserOrder } = require("../helpers/userOrderHelper");
-const encodeUrl = require("encodeurl");
 
 const dayNames = [
     "sunday",
@@ -55,8 +53,14 @@ const ccav = new nodeCCAvenue.Configure({
 module.exports = {
     createAttractionOrder: async (req, res) => {
         try {
-            const { selectedActivities, name, email, phoneNumber, country } =
-                req.body;
+            const {
+                selectedActivities,
+                name,
+                email,
+                phoneNumber,
+                country,
+                paymentProcessor,
+            } = req.body;
 
             const { _, error } = attractionOrderSchema.validate(req.body);
             if (error) {
@@ -64,7 +68,7 @@ module.exports = {
             }
 
             let totalAmount = 0;
-            let totalOffer = 0;
+            let totalOfferAmount = 0;
             for (let i = 0; i < selectedActivities?.length; i++) {
                 if (!isValidObjectId(selectedActivities[i]?.activity)) {
                     return sendErrorResponse(res, 400, "Invalid activity id");
@@ -85,18 +89,48 @@ module.exports = {
                     isActive: true,
                 });
                 if (!attraction) {
-                    return sendErrorResponse(res, 500, "Attraction not found!");
+                    return sendErrorResponse(res, 500, "attraction not found!");
                 }
 
                 if (
-                    new Date(selectedActivities[i]?.date) <
-                    new Date(new Date().setDate(new Date().getDate() + 2))
+                    new Date(selectedActivities[i]?.date).setHours(
+                        0,
+                        0,
+                        0,
+                        0
+                    ) <= new Date().setHours(0, 0, 0, 0)
                 ) {
                     return sendErrorResponse(
                         res,
                         400,
                         `"selectedActivities[${i}].date" must be a valid date`
                     );
+                }
+
+                if (
+                    attraction.bookingType === "booking" &&
+                    attraction.bookingPriorDays
+                ) {
+                    if (
+                        new Date(selectedActivities[i]?.date).setHours(
+                            0,
+                            0,
+                            0,
+                            0
+                        ) <
+                        new Date(
+                            new Date().setDate(
+                                new Date().getDate() +
+                                    Number(attraction.bookingPriorDays)
+                            )
+                        ).setHours(0, 0, 0, 0)
+                    ) {
+                        return sendErrorResponse(
+                            res,
+                            400,
+                            `"selectedActivities[${i}].date" must be a valid date`
+                        );
+                    }
                 }
 
                 if (
@@ -135,7 +169,7 @@ module.exports = {
                     return sendErrorResponse(
                         res,
                         400,
-                        `Sorry, ${activity?.name} is off on ${selectedDay}`
+                        `sorry, ${activity?.name} is off on ${selectedDay}`
                     );
                 }
 
@@ -158,247 +192,585 @@ module.exports = {
                     }
                 }
 
-                if (attraction.bookingType === "ticket") {
-                    let adultTicketError = false;
-                    let childTicketError = false;
-                    const adultTickets = await AttractionTicket.find({
-                        activity: activity._id,
-                        status: "ok",
-                        ticketFor: "adult",
-                        $or: [
-                            {
-                                validity: true,
-                                validTill: {
-                                    $gte: new Date(
-                                        selectedActivities[i]?.date
-                                    ).toISOString(),
-                                },
-                            },
-                            { validity: false },
-                        ],
-                    }).count();
-                    const childrenTickets = await AttractionTicket.find({
-                        activity: activity._id,
-                        status: "ok",
-                        ticketFor: "child",
-                        $or: [
-                            {
-                                validity: true,
-                                validTill: {
-                                    $gte: new Date(
-                                        selectedActivities[i]?.date
-                                    ).toISOString(),
-                                },
-                            },
-                            { validity: false },
-                        ],
-                    }).count();
-
-                    if (
-                        adultTickets <
-                        Number(selectedActivities[i]?.adultsCount)
-                    ) {
-                        adultTicketError = true;
-                    }
-
-                    if (
-                        childrenTickets <
-                        Number(selectedActivities[i]?.childrenCount)
-                    ) {
-                        childTicketError = true;
-                    }
-
-                    if (adultTicketError || childTicketError) {
-                        return sendErrorResponse(
-                            res,
-                            500,
-                            `${adultTicketError && "Adult Tickets"} ${
-                                adultTicketError && childTicketError
-                                    ? "and"
-                                    : ""
-                            } ${childTicketError && "Child Tickets"} Sold Out`
-                        );
-                    }
-                }
-
                 let b2cMarkup = await B2CAttractionMarkup.findOne({
                     attraction: attraction?._id,
                 });
+                let adultActivityPrice = activity.adultPrice;
+                let childActivityPrice = activity.childPrice;
+                let infantActivityPrice = activity.infantPrice;
+                let adultActivityTotalPrice = 0;
+                let childActivityTotalPrice = 0;
+                let infantActivityTotalPrice = 0;
+                let adultActivityTotalCost = 0;
+                let childActivityTotalCost = 0;
+                let infantActivityTotalCost = 0;
+                let sharedTransferPrice = activity.sharedTransferPrice;
+                let sharedTransferTotalPrice = 0;
+                let sharedTransferTotalCost = 0;
+                let privateTransfers = [];
+                let privateTransfersTotalPrice = 0;
+                let privateTransfersTotalCost = 0;
+                let totalPax =
+                    (Number(selectedActivities[i]?.adultsCount) || 0) +
+                    (Number(selectedActivities[i]?.childrenCount) || 0);
+                let totalWithoutOffer = 0;
+                let offerAmount = 0;
+                let grandTotal = 0;
 
-                let totalMarkup = 0;
-                let price = 0;
-                if (
-                    Number(selectedActivities[i]?.adultsCount) > 0 &&
-                    activity.adultPrice
-                ) {
-                    price +=
-                        Number(selectedActivities[i]?.adultsCount) *
-                        activity.adultPrice;
-
-                    if (b2cMarkup) {
-                        let markup = 0;
-                        if (b2cMarkup.markupType === "flat") {
-                            markup = b2cMarkup.markup;
-                        } else {
-                            markup =
-                                (b2cMarkup.markup * activity.adultPrice) / 100;
-                        }
-                        price +=
-                            markup * Number(selectedActivities[i]?.adultsCount);
-                        totalMarkup +=
-                            markup * Number(selectedActivities[i]?.adultsCount);
+                if (activity?.activityType === "transfer") {
+                    if (attraction.bookingType === "ticket") {
+                        return sendErrorResponse(
+                            res,
+                            4000,
+                            "sorry, this attraction not available at this momemnt"
+                        );
                     }
-                }
-                if (
-                    Number(selectedActivities[i]?.childrenCount) > 0 &&
-                    activity?.childPrice
-                ) {
-                    price +=
-                        Number(selectedActivities[i]?.childrenCount) *
-                        activity?.childPrice;
-
-                    if (b2cMarkup) {
-                        let markup = 0;
-                        if (b2cMarkup.markupType === "flat") {
-                            markup = b2cMarkup.markup;
-                        } else {
-                            markup =
-                                (b2cMarkup.markup * activity.childPrice) / 100;
+                    if (selectedActivities[i]?.transferType === "without") {
+                        return sendErrorResponse(
+                            res,
+                            400,
+                            "please select a transfer option."
+                        );
+                    } else if (
+                        selectedActivities[i]?.transferType === "shared"
+                    ) {
+                        if (
+                            activity.isSharedTransferAvailable === false ||
+                            !sharedTransferPrice ||
+                            !activity.sharedTransferCost
+                        ) {
+                            return sendErrorResponse(
+                                res,
+                                400,
+                                "this activity doesn't have a shared transfer option"
+                            );
                         }
-                        price +=
-                            markup *
+
+                        if (b2cMarkup) {
+                            let markup = 0;
+                            if (b2cMarkup.markupType === "flat") {
+                                markup = b2cMarkup.markup;
+                            } else {
+                                markup =
+                                    (b2cMarkup.markup * sharedTransferPrice) /
+                                    100;
+                            }
+                            sharedTransferPrice += markup;
+                        }
+
+                        sharedTransferTotalPrice +=
+                            sharedTransferPrice * totalPax;
+                        sharedTransferTotalCost +=
+                            activity?.sharedTransferCost * totalPax;
+                    } else if (
+                        selectedActivities[i]?.transferType === "private"
+                    ) {
+                        if (
+                            activity.isPrivateTransferAvailable === false ||
+                            !activity.privateTransfers ||
+                            activity.privateTransfers?.length < 1
+                        ) {
+                            return sendErrorResponse(
+                                res,
+                                400,
+                                "this activity doesn't have a private transfer option"
+                            );
+                        }
+
+                        const sortedPvtTransfers =
+                            activity.privateTransfers.sort(
+                                (a, b) => a.maxCapacity - b.maxCapacity
+                            );
+
+                        let tempPax = totalPax;
+                        while (tempPax > 0) {
+                            for (
+                                let j = 0;
+                                j < sortedPvtTransfers.length;
+                                j++
+                            ) {
+                                if (
+                                    tempPax <=
+                                        sortedPvtTransfers[j].maxCapacity ||
+                                    j === sortedPvtTransfers.length - 1
+                                ) {
+                                    let currentPax =
+                                        tempPax >
+                                        sortedPvtTransfers[j].maxCapacity
+                                            ? sortedPvtTransfers[j].maxCapacity
+                                            : tempPax;
+                                    let pvtTransferPrice =
+                                        sortedPvtTransfers[j].price;
+                                    let pvtTransferCost =
+                                        sortedPvtTransfers[j].cost;
+
+                                    if (b2cMarkup) {
+                                        let markup = 0;
+                                        if (b2cMarkup.markupType === "flat") {
+                                            markup = b2cMarkup.markup;
+                                        } else {
+                                            markup =
+                                                (b2cMarkup.markup *
+                                                    pvtTransferPrice) /
+                                                100;
+                                        }
+                                        pvtTransferPrice += markup;
+                                    }
+
+                                    privateTransfersTotalPrice +=
+                                        pvtTransferPrice;
+                                    privateTransfersTotalCost +=
+                                        pvtTransferCost;
+                                    tempPax -= currentPax;
+
+                                    const objIndex = privateTransfers.findIndex(
+                                        (obj) => {
+                                            return (
+                                                obj?.pvtTransferId ===
+                                                sortedPvtTransfers[j]?._id
+                                            );
+                                        }
+                                    );
+
+                                    if (objIndex === -1) {
+                                        privateTransfers.push({
+                                            pvtTransferId:
+                                                sortedPvtTransfers[j]?._id,
+                                            name: sortedPvtTransfers[j].name,
+                                            maxCapacity:
+                                                sortedPvtTransfers[j]
+                                                    .maxCapacity,
+                                            count: 1,
+                                            price: pvtTransferPrice,
+                                            cost: sortedPvtTransfers[j].cost,
+                                            totalPrice: pvtTransferPrice,
+                                        });
+                                    } else {
+                                        privateTransfers[objIndex].count += 1;
+                                        privateTransfers[objIndex].totalPrice +=
+                                            pvtTransferPrice;
+                                    }
+
+                                    if (tempPax <= 0) {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        return sendErrorResponse(
+                            res,
+                            400,
+                            "please select a valid transfer option."
+                        );
+                    }
+                } else if (activity?.activityType === "normal") {
+                    if (attraction.bookingType === "ticket") {
+                        let adultTicketError = false;
+                        let childTicketError = false;
+
+                        let commonTickets = await AttractionTicket.find({
+                            activity: activity._id,
+                            status: "ok",
+                            ticketFor: "common",
+                            $or: [
+                                {
+                                    validity: true,
+                                    validTill: {
+                                        $gte: new Date(
+                                            selectedActivities[i]?.date
+                                        ).toISOString(),
+                                    },
+                                },
+                                { validity: false },
+                            ],
+                        }).count();
+                        const adultTickets = await AttractionTicket.find({
+                            activity: activity._id,
+                            status: "ok",
+                            ticketFor: "adult",
+                            $or: [
+                                {
+                                    validity: true,
+                                    validTill: {
+                                        $gte: new Date(
+                                            selectedActivities[i]?.date
+                                        ).toISOString(),
+                                    },
+                                },
+                                { validity: false },
+                            ],
+                        }).count();
+                        const childrenTickets = await AttractionTicket.find({
+                            activity: activity._id,
+                            status: "ok",
+                            ticketFor: "child",
+                            $or: [
+                                {
+                                    validity: true,
+                                    validTill: {
+                                        $gte: new Date(
+                                            selectedActivities[i]?.date
+                                        ).toISOString(),
+                                    },
+                                },
+                                { validity: false },
+                            ],
+                        }).count();
+
+                        if (
+                            adultTickets <
+                            Number(selectedActivities[i]?.adultsCount)
+                        ) {
+                            if (
+                                commonTickets - adultTickets <
+                                Number(selectedActivities[i]?.adultsCount)
+                            ) {
+                                adultTicketError = true;
+                            } else {
+                                commonTickets -=
+                                    Number(selectedActivities[i]?.adultsCount) -
+                                    adultTickets;
+                            }
+                        }
+
+                        if (
+                            childrenTickets <
+                            Number(selectedActivities[i]?.childrenCount)
+                        ) {
+                            if (
+                                commonTickets - childrenTickets <
+                                Number(selectedActivities[i]?.childrenCount)
+                            ) {
+                                childTicketError = true;
+                            } else {
+                                commonTickets -=
+                                    Number(
+                                        selectedActivities[i]?.childrenCount
+                                    ) - childrenTickets;
+                            }
+                        }
+
+                        if (adultTicketError || childTicketError) {
+                            return sendErrorResponse(
+                                res,
+                                500,
+                                `${adultTicketError ? "adult tickets" : ""}${
+                                    adultTicketError && childTicketError
+                                        ? " and "
+                                        : ""
+                                }${
+                                    childTicketError ? "child tickets" : ""
+                                } sold out`
+                            );
+                        }
+                    }
+
+                    if (Number(selectedActivities[i]?.adultsCount) > 0) {
+                        if (!adultActivityPrice) {
+                            return sendErrorResponse(
+                                res,
+                                500,
+                                "sorry, something went wrong with our end. please try again later"
+                            );
+                        }
+
+                        if (b2cMarkup) {
+                            let markup = 0;
+                            if (b2cMarkup.markupType === "flat") {
+                                markup = b2cMarkup.markup;
+                            } else {
+                                markup =
+                                    (b2cMarkup.markup * adultActivityPrice) /
+                                    100;
+                            }
+                            adultActivityPrice += markup;
+                        }
+
+                        adultActivityTotalPrice +=
+                            adultActivityPrice *
+                            Number(selectedActivities[i]?.adultsCount);
+                        if (attraction.bookingType === "booking") {
+                            adultActivityTotalCost +=
+                                activity.adultCost *
+                                    Number(
+                                        selectedActivities[i]?.adultsCount
+                                    ) || 0;
+                        }
+                    }
+
+                    if (Number(selectedActivities[i]?.childrenCount) > 0) {
+                        if (!childActivityPrice) {
+                            return sendErrorResponse(
+                                res,
+                                400,
+                                "sorry, something went wrong with our end. please try again later"
+                            );
+                        }
+                        if (b2cMarkup) {
+                            let markup = 0;
+                            if (b2cMarkup.markupType === "flat") {
+                                markup = b2cMarkup.markup;
+                            } else {
+                                markup =
+                                    (b2cMarkup.markup * childActivityPrice) /
+                                    100;
+                            }
+                            childActivityPrice += markup;
+                        }
+
+                        childActivityTotalPrice +=
+                            childActivityPrice *
                             Number(selectedActivities[i]?.childrenCount);
-                        totalMarkup +=
-                            markup * Number(selectedActivities[i]?.adultsCount);
+                        if (attraction.bookingType === "booking") {
+                            childActivityTotalCost +=
+                                activity.childCost *
+                                    Number(
+                                        selectedActivities[i]?.childrenCount
+                                    ) || 0;
+                        }
                     }
-                }
-                if (
-                    Number(selectedActivities[i]?.infantCount) > 0 &&
-                    activity?.infantPrice
-                ) {
-                    price +=
-                        Number(selectedActivities[i]?.infantCount) *
-                        activity?.infantPrice;
 
-                    if (b2cMarkup) {
-                        let markup = 0;
-                        if (b2cMarkup.markupType === "flat") {
-                            markup = b2cMarkup.markup;
+                    if (
+                        Number(selectedActivities[i]?.infantCount) > 0 &&
+                        infantActivityPrice > 0
+                    ) {
+                        if (b2cMarkup) {
+                            let markup = 0;
+                            if (b2cMarkup.markupType === "flat") {
+                                markup = b2cMarkup.markup;
+                            } else {
+                                markup =
+                                    (b2cMarkup.markup * infantActivityPrice) /
+                                    100;
+                            }
+                            infantActivityPrice += markup;
+                        }
+
+                        infantActivityTotalPrice +=
+                            infantActivityPrice *
+                            Number(selectedActivities[i]?.infantCount);
+                        if (attraction.bookingType === "booking") {
+                            infantActivityTotalCost +=
+                                activity.infantCost *
+                                    Number(
+                                        selectedActivities[i]?.infantCount
+                                    ) || 0;
+                        }
+                    }
+
+                    if (selectedActivities[i]?.transferType === "shared") {
+                        if (
+                            activity.isSharedTransferAvailable === false ||
+                            !sharedTransferPrice ||
+                            !activity.sharedTransferCost
+                        ) {
+                            return sendErrorResponse(
+                                res,
+                                400,
+                                "this activity doesn't have a shared transfer option"
+                            );
+                        }
+
+                        sharedTransferTotalPrice +=
+                            sharedTransferPrice * totalPax;
+                        sharedTransferTotalCost +=
+                            activity?.sharedTransferCost * totalPax;
+                    } else if (
+                        selectedActivities[i]?.transferType === "private"
+                    ) {
+                        if (
+                            activity.isPrivateTransferAvailable === false ||
+                            !activity.privateTransfers ||
+                            activity.privateTransfers?.length < 1
+                        ) {
+                            return sendErrorResponse(
+                                res,
+                                400,
+                                "this activity doesn't have a private transfer option"
+                            );
+                        }
+
+                        const sortedPvtTransfers =
+                            activity.privateTransfers.sort(
+                                (a, b) => a.maxCapacity - b.maxCapacity
+                            );
+
+                        let tempPax = totalPax;
+                        while (tempPax > 0) {
+                            for (
+                                let j = 0;
+                                j < sortedPvtTransfers.length;
+                                j++
+                            ) {
+                                if (
+                                    tempPax <=
+                                        sortedPvtTransfers[j].maxCapacity ||
+                                    j === sortedPvtTransfers.length - 1
+                                ) {
+                                    let currentPax =
+                                        tempPax >
+                                        sortedPvtTransfers[j].maxCapacity
+                                            ? sortedPvtTransfers[j].maxCapacity
+                                            : tempPax;
+                                    let pvtTransferPrice =
+                                        sortedPvtTransfers[j].price;
+                                    let pvtTransferCost =
+                                        sortedPvtTransfers[j].cost;
+
+                                    privateTransfersTotalPrice +=
+                                        pvtTransferPrice;
+                                    privateTransfersTotalCost +=
+                                        pvtTransferCost;
+                                    tempPax -= currentPax;
+
+                                    const objIndex = privateTransfers.findIndex(
+                                        (obj) => {
+                                            return (
+                                                obj?.pvtTransferId ===
+                                                sortedPvtTransfers[j]?._id
+                                            );
+                                        }
+                                    );
+
+                                    if (objIndex === -1) {
+                                        privateTransfers.push({
+                                            pvtTransferId:
+                                                sortedPvtTransfers[j]?._id,
+                                            name: sortedPvtTransfers[j].name,
+                                            maxCapacity:
+                                                sortedPvtTransfers[j]
+                                                    .maxCapacity,
+                                            count: 1,
+                                            price: pvtTransferPrice,
+                                            cost: sortedPvtTransfers[j].cost,
+                                            totalPrice: pvtTransferPrice,
+                                        });
+                                    } else {
+                                        privateTransfers[objIndex].count += 1;
+                                        privateTransfers[objIndex].totalPrice +=
+                                            pvtTransferPrice;
+                                    }
+
+                                    if (tempPax <= 0) {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    return sendErrorResponse(
+                        res,
+                        500,
+                        "invalid activity type, please try again"
+                    );
+                }
+
+                // Calculating OFFER
+                if (activity?.activityType === "transfer") {
+                    let totalWithoutOffer =
+                        sharedTransferTotalPrice + privateTransfersTotalPrice;
+                    if (attraction?.isOffer) {
+                        if (attraction.offerAmountType === "flat") {
+                            offerAmount = attraction.offerAmount;
                         } else {
-                            markup =
-                                (b2cMarkup.markup * activity.infantCount) / 100;
+                            offerAmount =
+                                (totalWithoutOffer / 100) *
+                                attraction.offerAmount;
                         }
-
-                        price +=
-                            markup * Number(selectedActivities[i]?.infantCount);
-                        totalMarkup +=
-                            markup * Number(selectedActivities[i]?.adultsCount);
                     }
-                }
-
-                let offer = 0;
-                if (attraction?.isOffer) {
-                    if (attraction.offerAmountType === "flat") {
-                        offer = attraction.offerAmount;
-                    } else {
-                        offer = (price / 100) * attraction.offerAmount;
-                    }
-                }
-
-                price -= offer;
-                if (price < 0) {
-                    price = 0;
-                }
-
-                if (attraction.bookingType === "booking") {
-                    let totalAdultPurchaseCost = 0;
-                    if (selectedActivities[i]?.adultsCount >= 1) {
-                        totalAdultPurchaseCost =
-                            (selectedActivities[i]?.adultsCount || 0) *
-                            (activity.adultCost || 0);
-                    }
-                    let totalChildPurchaseCost = 0;
-                    if (selectedActivities[i]?.childrenCount >= 1) {
-                        totalChildPurchaseCost =
-                            (selectedActivities[i]?.childrenCount || 0) *
-                            (activity.childCost || 0);
-                    }
-                    let totalInfantPurchaseCost = 0;
-                    if (selectedActivities[i]?.infantCount >= 1) {
-                        totalInfantPurchaseCost =
-                            (selectedActivities[i]?.infantCount || 0) *
-                            (activity.infantCost || 0);
-                    }
-
-                    let profit =
-                        price -
-                        (totalAdultPurchaseCost +
-                            totalChildPurchaseCost +
-                            totalInfantPurchaseCost);
-
-                    selectedActivities[i].profit = profit;
-                }
-
-                if (selectedActivities[i]?.transferType === "private") {
-                    if (
-                        activity.isTransferAvailable &&
-                        activity.privateTransferPrice
-                    ) {
-                        if (selectedActivities[i]?.adultsCount) {
-                            price +=
-                                Number(selectedActivities[i]?.adultsCount) *
-                                activity.privateTransferPrice;
+                    grandTotal = totalWithoutOffer - offerAmount;
+                } else {
+                    let totalWithoutOffer =
+                        adultActivityTotalPrice +
+                        childActivityTotalPrice +
+                        infantActivityTotalPrice;
+                    if (attraction?.isOffer) {
+                        if (attraction.offerAmountType === "flat") {
+                            offerAmount = attraction.offerAmount;
+                        } else {
+                            offerAmount =
+                                (totalWithoutOffer / 100) *
+                                attraction.offerAmount;
                         }
-                        if (selectedActivities[i]?.childrenCount) {
-                            price +=
-                                Number(selectedActivities[i]?.childrenCount) *
-                                activity.privateTransferPrice;
-                        }
-                    } else {
-                        return sendErrorResponse(
-                            res,
-                            400,
-                            `Private transfer not available for ${activity?.name}`
-                        );
                     }
+                    totalWithoutOffer +=
+                        sharedTransferTotalPrice + privateTransfersTotalPrice;
+                    grandTotal = totalWithoutOffer - offerAmount;
                 }
 
-                if (selectedActivities[i]?.transferType === "shared") {
-                    if (
-                        activity.isTransferAvailable &&
-                        activity.sharedTransferPrice
-                    ) {
-                        if (selectedActivities[i]?.adultsCount) {
-                            price +=
-                                Number(selectedActivities[i]?.adultsCount) *
-                                activity.sharedTransferPrice;
-                        }
-                        if (selectedActivities[i]?.childrenCount) {
-                            price +=
-                                Number(selectedActivities[i]?.childrenCount) *
-                                activity.sharedTransferPrice;
-                        }
-                    } else {
-                        return sendErrorResponse(
-                            res,
-                            400,
-                            `Shared Transfer not available for ${activity?.name}`
-                        );
-                    }
+                selectedActivities[i].activityType = activity.activityType;
+                // ACTIVITY PRICE
+                if (activity.activityType === "normal") {
+                    selectedActivities[i].adultActivityPrice =
+                        adultActivityPrice || 0;
+                    selectedActivities[i].childActivityPrice =
+                        childActivityPrice || 0;
+                    selectedActivities[i].infantActivityPrice =
+                        infantActivityPrice || 0;
+                    selectedActivities[i].adultActivityTotalPrice =
+                        adultActivityTotalPrice;
+                    selectedActivities[i].childActivityTotalPrice =
+                        childActivityTotalPrice;
+                    selectedActivities[i].infantActivityTotalPrice =
+                        infantActivityTotalPrice;
+                    // ACTIVITY COST
+                    selectedActivities[i].adultActivityCost =
+                        activity.adultCost || 0;
+                    selectedActivities[i].childActivityCost =
+                        activity.childCost || 0;
+                    selectedActivities[i].infantActivityCost =
+                        activity.infantCost || 0;
+                    selectedActivities[i].adultActivityTotalCost =
+                        adultActivityTotalCost;
+                    selectedActivities[i].childActivityTotalCost =
+                        childActivityTotalCost;
+                    selectedActivities[i].infantActivityTotalCost =
+                        infantActivityTotalCost;
+
+                    selectedActivities[i].activityTotalPrice =
+                        adultActivityTotalPrice +
+                        childActivityTotalPrice +
+                        infantActivityTotalPrice;
+                    selectedActivities[i].activityTotalCost =
+                        adultActivityTotalCost +
+                        childActivityTotalCost +
+                        infantActivityTotalCost;
                 }
 
-                selectedActivities[i].amount = price;
-                selectedActivities[i].attraction = attraction?._id;
-                selectedActivities[i].offerAmount = offer;
+                if (selectedActivities[i].transferType === "shared") {
+                    selectedActivities[i].sharedTransferPrice =
+                        sharedTransferPrice;
+                    selectedActivities[i].sharedTransferTotalPrice =
+                        sharedTransferTotalPrice;
+                    selectedActivities[i].sharedTransferCost =
+                        activity.sharedTransferCost;
+                    selectedActivities[i].sharedTransferTotalCost =
+                        sharedTransferTotalCost;
+                }
+
+                if (selectedActivities[i].transferType === "private") {
+                    selectedActivities[i].privateTransfers = privateTransfers;
+                    selectedActivities[i].privateTransfersTotalPrice =
+                        privateTransfersTotalPrice;
+                    selectedActivities[i].privateTransfersTotalCost =
+                        privateTransfersTotalCost;
+                }
+
+                selectedActivities[i].grandTotal = grandTotal;
+                selectedActivities[i].totalWithoutOffer = totalWithoutOffer;
+                selectedActivities[i].offerAmount = offerAmount;
+                selectedActivities[i].totalCost =
+                    (selectedActivities[i].activityTotalCost || 0) +
+                    sharedTransferTotalCost +
+                    privateTransfersTotalCost;
+                selectedActivities[i].profit = 0;
                 selectedActivities[i].status = "pending";
                 selectedActivities[i].bookingType = attraction.bookingType;
-                if (attraction.bookingType === "booking") {
-                    selectedActivities[i].adultCost = activity.adultCost;
-                    selectedActivities[i].childCost = activity.childCost;
-                    selectedActivities[i].infantCost = activity.infantCost;
-                }
-                totalAmount += price;
-                totalOffer += offer;
+                selectedActivities[i].attraction = attraction?._id;
+
+                totalAmount += selectedActivities[i].grandTotal;
             }
 
             let user;
@@ -406,8 +778,6 @@ module.exports = {
                 if (!isValidObjectId(country)) {
                     return sendErrorResponse(res, 400, "Invalid country id");
                 }
-
-                console.log(req.user, "user");
 
                 const countryDetails = await Country.findOne({
                     _id: country,
@@ -431,8 +801,6 @@ module.exports = {
                 }
             }
 
-            console.log(req.user, "userlisting");
-
             let buyer = req.user || user;
 
             const newAttractionOrder = new AttractionOrder({
@@ -449,47 +817,13 @@ module.exports = {
             });
             await newAttractionOrder.save();
 
-            res.status(200).json(newAttractionOrder);
-        } catch (err) {
-            sendErrorResponse(res, 500, err);
-        }
-    },
-
-    initiateAttractionOrderPayment: async (req, res) => {
-        try {
-            const { orderId } = req.params;
-            const { paymentProcessor } = req.body;
-
-            if (!isValidObjectId(orderId)) {
-                return sendErrorResponse(res, 400, "Invalid order id");
-            }
-
-            const attractionOrder = await AttractionOrder.findById(orderId);
-            if (!attractionOrder) {
-                return sendErrorResponse(
-                    res,
-                    404,
-                    "Attraction order not found"
-                );
-            }
-
-            if (attractionOrder.orderStatus === "completed") {
-                return sendErrorResponse(
-                    res,
-                    400,
-                    "sorry, you have already completed this order"
-                );
-            }
-
-            let totalAmount = attractionOrder.totalAmount;
-
             const newTransaction = new B2CTransaction({
-                user: attractionOrder.user,
-                amount: attractionOrder?.totalAmount,
+                user: buyer?._id,
+                amount: totalAmount,
                 status: "pending",
                 transactionType: "deduct",
                 paymentProcessor,
-                orderId: attractionOrder?._id,
+                orderId: newAttractionOrder?._id,
             });
             await newTransaction.save();
 
@@ -525,9 +859,9 @@ module.exports = {
             } else if (paymentProcessor === "ccavenue") {
                 const orderParams = {
                     merchant_id: process.env.CCAVENUE_MERCHANT_ID,
-                    order_id: attractionOrder?._id,
+                    order_id: newAttractionOrder?._id,
                     currency: "AED",
-                    amount: attractionOrder?.totalAmount,
+                    amount: totalAmount,
                     redirect_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
                     cancel_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
                     language: "EN",
@@ -614,7 +948,7 @@ module.exports = {
                 return sendErrorResponse(
                     res,
                     400,
-                    "Error while fetching order status from paypal. Check with XYZ team if amount is debited from your bank!"
+                    "Error while fetching order status from paypal. Check with our team if amount is debited from your bank!"
                 );
             } else if (orderObject.status !== "COMPLETED") {
                 transaction.status = "failed";
@@ -623,7 +957,7 @@ module.exports = {
                 return sendErrorResponse(
                     res,
                     400,
-                    "Paypal order status is not Completed. Check with XYZ team if amount is debited from your bank!"
+                    "Paypal order status is not Completed. Check with our team if amount is debited from your bank!"
                 );
             } else {
                 const paymentObject = await fetchPayment(paymentId);
@@ -635,7 +969,7 @@ module.exports = {
                     return sendErrorResponse(
                         res,
                         400,
-                        "Error while fetching payment status from paypal. Check with XYZ team if amount is debited from your bank!"
+                        "Error while fetching payment status from paypal. Check with our team if amount is debited from your bank!"
                     );
                 } else if (paymentObject.result.status !== "COMPLETED") {
                     transaction.status = "failed";
@@ -677,24 +1011,69 @@ module.exports = {
             const { encResp } = req.body;
 
             const decryptedJsonResponse = ccav.redirectResponseToJson(encResp);
+            const { order_id, order_status } = decryptedJsonResponse;
 
-            console.log(decryptedJsonResponse);
-            res.writeHead(301, { Location: "http://w3docs.com" });
-            res.end();
-            // let pData = "";
-            // pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
-            // pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
-            // pData = pData.replace(/&/gi, "</td></tr><tr><td>");
-            // pData = pData + "</td></tr></table>";
-            // const htmlcode =
-            //     '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Response Handler</title></head><body><center><font size="4" color="blue"><b>Response Page</b></font><br>' +
-            //     pData +
-            //     "</center><br></body></html>";
-            // res.writeHeader(200, { "Content-Type": "text/html" });
-            // res.write(htmlcode);
-            // res.end();
+            const attractionOrder = await AttractionOrder.findOne({
+                _id: order_id,
+            });
+            if (!attractionOrder) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "Attraction order not found!. Please create an order first. Check with our team if amount is debited from your bank!"
+                );
+            }
+
+            if (attractionOrder.orderStatus === "completed") {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "This order already completed, Thank you. Check with our team if you paid multiple times."
+                );
+            }
+
+            let transaction = await B2CTransaction.findOne({
+                paymentProcessor: "ccavenue",
+                orderId: attractionOrder?._id,
+                status: "pending",
+            });
+            if (!transaction) {
+                const transaction = new B2CTransaction({
+                    user: attractionOrder.user,
+                    amount: attractionOrder?.totalAmount,
+                    status: "pending",
+                    transactionType: "deduct",
+                    paymentProcessor: "ccavenue",
+                    orderId: attractionOrder?._id,
+                });
+                await transaction.save();
+            }
+
+            if (order_status !== "Success") {
+                transaction.status = "failed";
+                await transaction.save();
+
+                res.writeHead(301, {
+                    Location: `https://mytravellerschoice.com/attractions/orders/${order_id}/cancelled`,
+                });
+                res.end();
+            } else {
+                transaction.status = "success";
+                await transaction.save();
+                attractionOrder.isPaid = true;
+                await attractionOrder.save();
+
+                await completeOrderAfterPayment(attractionOrder);
+
+                attractionOrder.orderStatus = "completed";
+                await attractionOrder.save();
+
+                res.writeHead(301, {
+                    Location: `https://mytravellerschoice.com/print${order_id}`,
+                });
+                res.end();
+            }
         } catch (err) {
-            console.log(err);
             sendErrorResponse(res, 500, err);
         }
     },

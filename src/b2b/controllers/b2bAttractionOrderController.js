@@ -590,7 +590,8 @@ module.exports = {
                             }
 
                             totalResellerMarkup +=
-                                markup * selectedActivities[i]?.adultsCount;
+                                markup *
+                                Number(selectedActivities[i]?.adultsCount);
                             adultActivityPrice += markup;
                         }
 
@@ -605,13 +606,14 @@ module.exports = {
                                     100;
                             }
                             totalSubAgentMarkup +=
-                                markup * selectedActivities[i]?.adultsCount;
+                                markup *
+                                Number(selectedActivities[i]?.adultsCount);
                             adultActivityPrice += markup;
                         }
 
                         adultActivityTotalPrice +=
                             adultActivityPrice *
-                            selectedActivities[i]?.adultsCount;
+                            Number(selectedActivities[i]?.adultsCount);
                         if (attraction.bookingType === "booking") {
                             adultActivityTotalCost +=
                                 activity.adultCost *
@@ -654,7 +656,8 @@ module.exports = {
                                     100;
                             }
                             totalResellerMarkup +=
-                                markup * selectedActivities[i]?.childrenCount;
+                                markup *
+                                Number(selectedActivities[i]?.childrenCount);
                             childActivityPrice += markup;
                         }
 
@@ -669,13 +672,14 @@ module.exports = {
                                     100;
                             }
                             totalSubAgentMarkup +=
-                                markup * selectedActivities[i]?.childrenCount;
+                                markup *
+                                Number(selectedActivities[i]?.childrenCount);
                             childActivityPrice += markup;
                         }
 
                         childActivityTotalPrice +=
                             childActivityPrice *
-                            selectedActivities[i]?.childrenCount;
+                            Number(selectedActivities[i]?.childrenCount);
                         if (attraction.bookingType === "booking") {
                             childActivityTotalCost +=
                                 activity.childCost *
@@ -715,7 +719,7 @@ module.exports = {
                                     100;
                             }
                             totalResellerMarkup +=
-                                markup * selectedActivities[i]?.infantCount;
+                                markup * Number(selectedActivities[i]?.infantCount);
                             infantActivityPrice += markup;
                         }
 
@@ -730,13 +734,13 @@ module.exports = {
                                     100;
                             }
                             totalSubAgentMarkup +=
-                                markup * selectedActivities[i]?.infantCount;
+                                markup * Number(selectedActivities[i]?.infantCount);
                             infantActivityPrice += markup;
                         }
 
                         infantActivityTotalPrice +=
                             infantActivityPrice *
-                            selectedActivities[i]?.infantCount;
+                            Number(selectedActivities[i]?.infantCount);
                         if (attraction.bookingType === "booking") {
                             infantActivityTotalCost +=
                                 activity.infantCost *
@@ -1045,8 +1049,7 @@ module.exports = {
                 const activity = await AttractionActivity.findOne({
                     _id: attractionOrder.activities[i].activity,
                 });
-                let totalPurchaseCost =
-                    attractionOrder.activities[i].totalCost;
+                let totalPurchaseCost = attractionOrder.activities[i].totalCost;
                 if (attractionOrder.activities[i].bookingType === "ticket") {
                     let adultTickets = [];
                     let childTickets = [];
