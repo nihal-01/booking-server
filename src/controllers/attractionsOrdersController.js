@@ -771,6 +771,7 @@ module.exports = {
                 selectedActivities[i].attraction = attraction?._id;
 
                 totalAmount += selectedActivities[i].grandTotal;
+                totalOfferAmount += offerAmount;
             }
 
             let user;
@@ -806,7 +807,7 @@ module.exports = {
             const newAttractionOrder = new AttractionOrder({
                 activities: selectedActivities,
                 totalAmount,
-                totalOffer,
+                totalOfferAmount: totalOfferAmount,
                 user: buyer?._id,
                 country,
                 name,
