@@ -675,12 +675,14 @@ module.exports = {
     captureCCAvenueAttractionPayment: async (req, res) => {
         try {
             let ccavEncResponse = "";
+            console.log("BODYYYY", req.body);
 
             req.on("data", function (data) {
                 ccavEncResponse += data;
                 const ccavPOST = qs.parse(ccavEncResponse);
                 const encryption = ccavPOST.encResp;
-                const decryptedJsonResponse = ccav.redirectResponseToJson(encryption);
+                const decryptedJsonResponse =
+                    ccav.redirectResponseToJson(encryption);
                 // const decryptedData = ccav.decrypt(encryption);
                 console.log(decryptedJsonResponse);
             });

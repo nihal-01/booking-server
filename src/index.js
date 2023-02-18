@@ -27,6 +27,11 @@ const app = express();
 const PORT = process.env.PORT || 8089;
 
 app.use(express.json());
+app.use(
+    express.urlencoded({
+        extended: true,
+    })
+);
 app.use(cors());
 app.use("/public", express.static("public"));
 
