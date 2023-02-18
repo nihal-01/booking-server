@@ -528,8 +528,8 @@ module.exports = {
                     order_id: attractionOrder?._id,
                     currency: "AED",
                     amount: attractionOrder?.totalAmount,
-                    redirect_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
-                    cancel_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
+                    redirect_url: `${process.env.SERVER_URL}/api/v1/b2b/attractions/orders/ccavenue/capture`,
+                    cancel_url: `${process.env.SERVER_URL}/api/v1/b2b/attractions/orders/ccavenue/capture`,
                     language: "EN",
                 };
                 let accessCode = process.env.CCAVENUE_ACCESS_CODE;
