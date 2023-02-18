@@ -516,7 +516,10 @@ module.exports = {
                               infantPrice: {
                                 $cond: [
                                   {
-                                    $eq: ["$$activity.infantPrice", 0],
+                                    $or: [
+                                      { $eq: ["$$activity.infantPrice", null] },
+                                      { $eq: ["$$activity.infantPrice", 0] },
+                                    ],
                                   },
                                   0,
                                   {
@@ -707,7 +710,10 @@ module.exports = {
                               infantPrice: {
                                 $cond: [
                                   {
-                                    $eq: ["$$activity.infantPrice", 0],
+                                    $or: [
+                                      { $eq: ["$$activity.infantPrice", null] },
+                                      { $eq: ["$$activity.infantPrice", 0] },
+                                    ],
                                   },
                                   0,
                                   {
@@ -766,7 +772,10 @@ module.exports = {
                               infantPrice: {
                                 $cond: [
                                   {
-                                    $eq: ["$$activity.infantPrice", 0],
+                                    $or: [
+                                      { $eq: ["$$activity.infantPrice", null] },
+                                      { $eq: ["$$activity.infantPrice", 0] },
+                                    ],
                                   },
                                   0,
                                   {
@@ -958,7 +967,10 @@ module.exports = {
                               infantPrice: {
                                 $cond: [
                                   {
-                                    $eq: ["$$activity.infantPrice", 0],
+                                    $or: [
+                                      { $eq: ["$$activity.infantPrice", null] },
+                                      { $eq: ["$$activity.infantPrice", 0] },
+                                    ],
                                   },
                                   0,
                                   {
@@ -1017,7 +1029,10 @@ module.exports = {
                               infantPrice: {
                                 $cond: [
                                   {
-                                    $eq: ["$$activity.infantPrice", 0],
+                                    $or: [
+                                      { $eq: ["$$activity.infantPrice", null] },
+                                      { $eq: ["$$activity.infantPrice", 0] },
+                                    ],
                                   },
                                   0,
                                   {
@@ -1167,20 +1182,16 @@ module.exports = {
         },
       ]);
 
-      
-      
-
       if (!attraction || attraction?.length < 1) {
         return sendErrorResponse(res, 404, "Attraction not found");
       }
-      // res.status(200).json(attraction[0]);
+      
 
+      
       res.status(200).json({
         attraction: attraction[0],
-        
       });
     } catch (err) {
-      
       sendErrorResponse(res, 500, err);
     }
   },

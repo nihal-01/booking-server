@@ -33,8 +33,6 @@ module.exports = {
         return sendErrorResponse(res, 400, "Invalid reseller id");
       }
 
-     
-
       const b2bAttractionSpecialMarkup =
         await B2BSpecialAttractionMarkup.findOneAndUpdate(
           {
@@ -46,16 +44,6 @@ module.exports = {
           },
           { upsert: true, new: true }
         );
-
-      await Reseller.findByIdAndUpdate({
-          resellerId
-      },
-      {specialMarkup: false },
-      { new: true, runValidators: true })
-
-     
-
-      console.log(b2bAttractionSpecialMarkup, "b2bAttractionSpecialMarkup");
 
       let tempObj = Object(b2bAttractionSpecialMarkup);
       tempObj.attraction = {
