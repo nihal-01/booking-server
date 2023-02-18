@@ -1,5 +1,7 @@
 const { isValidObjectId, Types } = require("mongoose");
 const crypto = require("crypto");
+const Razorpay = require("razorpay");
+const nodeCCAvenue = require("node-ccavenue");
 const { generateUniqueString } = require("../utils");
 const {
   sendMobileOtp,
@@ -28,6 +30,16 @@ const {
 } = require("../helpers/attractionOrderHelpers");
 const sendAdminVisaApplicationEmail = require("../b2b/helpers/sendVisaAdminEmail");
 
+
+const instance = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+const ccav = new nodeCCAvenue.Configure({
+  merchant_id: process.env.CCAVENUE_MERCHANT_ID,
+  working_key: process.env.CCAVENUE_WORKING_KEY,
+});
 module.exports = {
   applyVisa: async (req, res) => {
     try {
@@ -332,19 +344,18 @@ module.exports = {
         const order = await instance.orders.create(options);
         return res.status(200).json(order);
       } else if (paymentProcessor === "ccavenue") {
-        let body = "";
-        body += {
+       const orderParams = {
           merchant_id: process.env.CCAVENUE_MERCHANT_ID,
           order_id: visaApplication?._id,
           currency: "AED",
-          amount: Number(visaApplication?.totalAmount),
-          redirect_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
-          cancel_url: `${process.env.SERVER_URL}/api/v1/attractions/orders/ccavenue/capture`,
+          amount: visaApplication.totalAmount,
+          redirect_url: `${process.env.SERVER_URL}/api/v1/visa/application/ccavenue/capture`,
+          cancel_url: `${process.env.SERVER_URL}/api/v1/visa/application/ccavenue/capture`,
           language: "EN",
         };
         let accessCode = process.env.CCAVENUE_ACCESS_CODE;
 
-        const encRequest = ccav.encrypt(body);
+        const encRequest = ccav.getEncryptedOrder(orderParams);
         const formbody =
           '<form id="nonseamless" method="post" name="redirect" action="https://secure.ccavenue.ae/transaction/transaction.do?command=initiateTransaction"/> <input type="hidden" id="encRequest" name="encRequest" value="' +
           encRequest +
@@ -464,37 +475,76 @@ module.exports = {
 
   captureCCAvenueAttractionPayment: async (req, res) => {
     try {
-      let ccavEncResponse = "";
-      ccavEncResponse += req.body;
+      const { encResp } = req.body;
 
-      const ccavPOST = qs.parse(ccavEncResponse);
-      const encryption = ccavPOST.encResp;
-      const ccavResponse = ccav.decrypt(encryption);
+      const decryptedJsonResponse = ccav.redirectResponseToJson(encResp);
+      const { order_id, order_status } = decryptedJsonResponse;
 
-      const visaApplication = await B2CVisaApplication.findOne({
-        _id: req.body?.order_id,
+      const visaOrder = await B2CVisaApplication.findOne({
+        _id: order_id,
       });
-      if (!visaApplication) {
-        return sendErrorResponse(res, 404, "visaApplication  not found");
+      if (!visaOrder) {
+        return sendErrorResponse(
+          res,
+          400,
+          "visaOrder order not found!. Please create an order first. Check with our team if amount is debited from your bank!"
+        );
       }
 
-      let pData = "";
-      pData = "<table border=1 cellspacing=2 cellpadding=2><tr><td>";
-      pData = pData + ccavResponse.replace(/=/gi, "</td><td>");
-      pData = pData.replace(/&/gi, "</td></tr><tr><td>");
-      pData = pData + "</td></tr></table>";
-      const htmlcode =
-        '<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>Response Handler</title></head><body><center><font size="4" color="blue"><b>Response Page</b></font><br>' +
-        pData +
-        "</center><br></body></html>";
-      res.writeHeader(200, { "Content-Type": "text/html" });
-      res.write(htmlcode);
-      res.end();
+      if (visaOrder.status === "payed") {
+        return sendErrorResponse(
+          res,
+          400,
+          "This order already completed, Thank you. Check with our team if you paid multiple times."
+        );
+      }
+
+      let transaction = await B2CTransaction.findOne({
+        paymentProcessor: "ccavenue",
+        orderId: visaOrder?._id,
+        status: "pending",
+      });
+      if (!transaction) {
+        const transaction = new B2CTransaction({
+          user: visaOrder.user,
+          amount: visaOrder?.totalAmount,
+          status: "pending",
+          transactionType: "deduct",
+          paymentProcessor: "ccavenue",
+          orderId: visaOrder?._id,
+        });
+        await transaction.save();
+      }
+
+      if (order_status !== "Success") {
+        transaction.status = "failed";
+        await transaction.save();
+
+        res.writeHead(301, {
+          Location: `https://mytravellerschoice.com/attractions/orders/${order_id}/cancelled`,
+        });
+        res.end();
+      } else {
+        transaction.status = "success";
+        await transaction.save();
+        visaOrder.status = "payed";
+        await visaOrder.save();
+
+        await completeOrderAfterPayment(visaOrder);
+
+        visaOrder.orderStatus = "completed";
+        await visaOrder.save();
+
+        res.writeHead(301, {
+          Location: `https://mytravellerschoice.com/print${order_id}`,
+        });
+        res.end();
+      }
     } catch (err) {
-      console.log(err);
       sendErrorResponse(res, 500, err);
     }
   },
+
 
   captureRazorpayAttractionPayment: async (req, res) => {
     try {

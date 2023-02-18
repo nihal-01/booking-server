@@ -1,4 +1,3 @@
-
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const nodeCCAvenue = require("node-ccavenue");
@@ -12,7 +11,7 @@ const { B2BTransaction, B2BWallet } = require("../models");
 const {
   b2bAttractionOrderCaptureSchema,
 } = require("../validations/b2bAttractionOrder.schema");
-
+const { convertCurrency } = require("../helpers/currencyHelpers");
 
 const instance = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -39,6 +38,8 @@ module.exports = {
         status: "pending",
       });
 
+      console.log("call reached");
+
       await newTransation.save();
 
       if (paymentProcessor === "paypal") {
@@ -62,6 +63,9 @@ module.exports = {
         await newTransation.save();
         res.status(200).json(resultFinal);
       } else if (paymentProcessor === "razorpay") {
+        const amount = await razorPayConverter(newTransation.amount, countryId);
+        newTransation.amount = amount;
+        await newTransation.save();
         const currency = "INR";
         const totalAmountINR = await convertCurrency(amount, currency);
         const options = {
@@ -211,6 +215,14 @@ module.exports = {
       const decryptedJsonResponse = ccav.redirectResponseToJson(encResp);
       const { order_id, order_status } = decryptedJsonResponse;
 
+      console.log(
+        encResp,
+        decryptedJsonResponse,
+        order_id,
+        order_status,
+        "order_status"
+      );
+
       let transaction = await B2BTransaction.findOne({
         _id: order_id,
         paymentProcessor: "ccavenue",
@@ -234,7 +246,7 @@ module.exports = {
         await transaction.save();
 
         res.writeHead(301, {
-          Location: `https://mytravellerschoice.com/attractions/orders/${order_id}/cancelled`,
+          Location: `https://mytravellerschoice.com/wallet/deposit/${order_id}/cancelled`,
         });
         res.end();
       } else {
@@ -275,10 +287,13 @@ module.exports = {
         return sendErrorResponse(res, 400, "invalid order id");
       }
 
-      const B2BTransaction = await B2BTransaction.findOne({
-        _id: orderId,
+      let transaction = await B2BTransaction.findOne({
+        paymentProcessor: "razorpay",
+        orderId: orderId,
+        status: "pending",
       });
-      if (!B2BTransaction) {
+
+      if (!transaction) {
         return sendErrorResponse(
           res,
           400,
@@ -286,7 +301,7 @@ module.exports = {
         );
       }
 
-      if (B2BTransaction.status === "completed") {
+      if (transaction.status === "success") {
         return sendErrorResponse(
           res,
           400,
@@ -294,22 +309,17 @@ module.exports = {
         );
       }
 
-      let transaction = await B2BTransaction.findOne({
-        paymentProcessor: "razorpay",
-        orderId: attractionOrder?._id,
-        status: "pending",
-      });
-      if (!transaction) {
-        const newTransaction = new B2CTransaction({
-          user: attractionOrder.user,
-          amount: attractionOrder?.totalAmount,
-          status: "pending",
-          transactionType: "deduct",
-          paymentProcessor: "razorpay",
-          orderId: attractionOrder?._id,
-        });
-        await newTransaction.save();
-      }
+      // if (!transaction) {
+      //   const newTransaction = new B2BTransaction({
+      //     user: attractionOrder.user,
+      //     amount: attractionOrder?.totalAmount,
+      //     status: "pending",
+      //     transactionType: "deduct",
+      //     paymentProcessor: "razorpay",
+      //     orderId: attractionOrder?._id,
+      //   });
+      //   await newTransaction.save();
+      // }
 
       const generated_signature = crypto.createHmac(
         "sha256",

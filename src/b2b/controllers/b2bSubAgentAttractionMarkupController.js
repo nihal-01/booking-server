@@ -16,7 +16,6 @@ module.exports = {
                 req.body
             );
             if (error) {
-                consolr.log(error, "error");
                 return sendErrorResponse(res, 400, error.details[0]?.message);
             }
 

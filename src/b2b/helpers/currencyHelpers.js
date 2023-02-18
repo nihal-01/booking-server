@@ -22,4 +22,28 @@ module.exports = {
             throw err;
         }
     },
+
+    
+    razorPayConverter: async (amount, country) => {
+        try {
+            const currency = await Currency.findOne({ country });
+            if (!currency) {
+                return new Error("currency not found");
+            }
+
+            if (Number(amount) < 0) {
+                return new Error("invalid amount");
+            }
+
+            const convertedAmount = (amount / currency?.conversionRate).toFixed(
+                2
+            );
+            return convertedAmount;
+        } catch (err) {
+            throw err;
+        }
+    },
+   
+
+
 };

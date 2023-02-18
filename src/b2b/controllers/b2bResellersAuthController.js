@@ -73,7 +73,6 @@ module.exports = {
                 status: "pending",
             });
 
-            console.log( req.body , "hiiiiiii")
 
             await newReseller.save((error, reseller) => {
                 if (error) {
@@ -286,4 +285,6 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+
 };

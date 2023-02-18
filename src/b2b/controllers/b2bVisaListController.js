@@ -632,7 +632,6 @@ module.exports = {
         return sendErrorResponse(res, 400, "No Visa Available");
       }
 
-      console.log(visaCountry, "visaCountry");
 
       res.status(200).json(visaCountry);
     } catch (err) {

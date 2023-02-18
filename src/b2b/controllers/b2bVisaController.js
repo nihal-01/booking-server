@@ -32,7 +32,6 @@ module.exports = {
         country,
       } = req.body;
 
-      console.log(req.body, "body ");
 
       const { _, error } = visaApplicationSchema.validate(req.body);
       if (error) {
@@ -67,7 +66,8 @@ module.exports = {
       if (noOfTravellers !== travellers.length) {
         return sendErrorResponse(res, 400, "PassengerDetails Not Added ");
       }
-      console.log(visaTypeDetails._id, visaType, "visaTypeDetails");
+
+
       const visaTypeList = await VisaType.aggregate([
         {
           $match: {
@@ -323,7 +323,6 @@ module.exports = {
         },
       ]);
 
-      console.log(visaTypeList, "visaTypeList");
 
       let profit =
         (visaTypeList[0].totalspecialPrice - visaTypeList[0].purchaseCost) *
@@ -367,10 +366,10 @@ module.exports = {
 
       await newVisaApplication.save();
 
-      console.log(newVisaApplication, "newVisaApplication");
 
       res.status(200).json(newVisaApplication);
     } catch (err) {
+
       console.log(err, "error");
       sendErrorResponse(res, 500, err);
     }
@@ -385,7 +384,6 @@ module.exports = {
       //   return sendErrorResponse(res, 400, "invalid order id");
       // }
 
-      console.log(otp);
 
       const VisaApplicationOrder = await VisaApplication.findOne({
         _id: orderId,
@@ -443,7 +441,6 @@ module.exports = {
         order: orderId,
       });
 
-      console.log(totalAmount, "totalAmount");
 
       wallet.balance -= totalAmount;
       await wallet.save();
@@ -570,8 +567,7 @@ module.exports = {
                 return reject(error);
               }
 
-              console.log(document, "document");
-              console.log("Calll");
+              
 
               visaApplication.travellers[i].documents = document._id;
               visaApplication.travellers[i].isStatus = "submitted";
@@ -736,9 +732,7 @@ module.exports = {
               return reject(error);
             }
 
-            console.log(document, "document");
-
-            console.log(parsedExpiryDate, parsedDateOfBirth, "jjjjj");
+      
 
             let upload = await VisaApplication.updateOne(
               {
@@ -762,7 +756,6 @@ module.exports = {
               }
             );
 
-            console.log(upload, "upload");
 
             resolve();
           });

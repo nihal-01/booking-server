@@ -1225,7 +1225,6 @@ module.exports = {
           });
         }
       }
-      console.log(search, "search");
 
       if (search && search !== "") {
         filters1.title = { $regex: search, $options: "i" };
@@ -2051,7 +2050,6 @@ module.exports = {
         },
       ]);
 
-      console.log(attractions[0].data[0].activity, "attractions");
 
       res.status(200).json({
         attractions: attractions[0],
@@ -2068,7 +2066,6 @@ module.exports = {
   listAllAttractions: async (req, res) => {
     try {
       const { skip = 0, limit = 10, search } = req.query;
-      console.log(req.reseller._id, "resellerId");
 
       const filters1 = { isDeleted: false, isActive: true };
 
@@ -2681,7 +2678,6 @@ module.exports = {
         },
       ]);
 
-      console.log(attractions[0].data);
 
       res.status(200).json({
         attractions: attractions[0],

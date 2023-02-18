@@ -77,12 +77,12 @@ module.exports = {
 
             const user = await User.findOne({ email });
             if (!user) {
-                return sendErrorResponse(res, 400, "Invalid credentials");
+                return sendErrorResponse(res, 400, "Invalid Email");
             }
 
             const isMatch = await compare(password, user.password);
             if (!isMatch) {
-                return sendErrorResponse(res, 400, "Invalid credentials");
+                return sendErrorResponse(res, 400, "Invalid Password");
             }
 
             const jwtToken = await user.generateAuthToken();
