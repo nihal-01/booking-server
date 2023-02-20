@@ -118,7 +118,7 @@ module.exports = {
                         as: "country",
                     },
                 },
-                
+
                 {
                     $lookup: {
                         from: "drivers",
@@ -156,14 +156,12 @@ module.exports = {
                     },
                 },
                 {
-                    $set : {
-
+                    $set: {
                         "activities.destination": {
                             $arrayElemAt: ["$activities.destination", 0],
-                        }
-                    } 
+                        },
+                    },
                 },
-
 
                 { $match: filters2 },
                 { $sort: { createdAt: -1 } },
@@ -184,15 +182,15 @@ module.exports = {
                         attraction: {
                             title: 1,
                             images: 1,
-                            logo : 1 
+                            logo: 1,
                         },
                         activities: {
                             activity: {
                                 name: 1,
-                                description : 1
+                                description: 1,
                             },
-                            destination : {
-                                 name : 1
+                            destination: {
+                                name: 1,
                             },
                             bookingType: 1,
                             date: 1,
@@ -268,6 +266,7 @@ module.exports = {
         activity,
         travellerEmail,
         res,
+        downloader,
     }) => {
         try {
             const filters1 = {
@@ -556,9 +555,21 @@ module.exports = {
                 ws.cell(i + 2, 16).number(
                     Number(order?.activities?.grandTotal) || 0
                 );
-                ws.cell(i + 2, 17).number(
-                    Number(order?.activities?.profit) || 0
-                );
+                if (downloader === "admin") {
+                    ws.cell(i + 2, 17).number(
+                        Number(order?.activities?.profit) || 0
+                    );
+                } else if (downloader === "reseller") {
+                    ws.cell(i + 2, 17).number(
+                        Number(order?.activities?.resellerMarkup) || 0
+                    );
+                } else if (downloader === "sub-agent") {
+                    ws.cell(i + 2, 17).number(
+                        Number(order?.activities?.subAgentMarkup) || 0
+                    );
+                } else {
+                    ws.cell(i + 2, 17).number(0);
+                }
                 ws.cell(i + 2, 18).string(order?.activities?.status || "N/A");
             }
 

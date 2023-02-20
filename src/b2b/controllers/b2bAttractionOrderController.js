@@ -1295,6 +1295,7 @@ module.exports = {
                 resellerId: req.reseller?._id,
                 orderedBy: "",
                 agentCode: "",
+                downloader: req.reseller?.role,
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
