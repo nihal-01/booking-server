@@ -35,6 +35,7 @@ const {
     admB2bWalletsRouter,
     admB2bSpecialMarkupRouter,
     admApiMasterRouter,
+    admAttractionItinerariesRouter,
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
@@ -45,6 +46,7 @@ router.use("/attractions/tickets", admAttractionsTicketsRouter);
 router.use("/attractions/categories", admAttractionCategoriesRouter);
 router.use("/attractions/orders", admAttractionsOrdersRouter);
 router.use("/attractions/b2c/markups", admB2cAttractionMarkupRouter);
+router.use("/attractions/itineraries", admAttractionItinerariesRouter);
 router.use("/attractions", admAttractionsRouter);
 router.use("/home", admHomeRouter);
 router.use("/blogs/categories", admBlogCategoriesRouter);

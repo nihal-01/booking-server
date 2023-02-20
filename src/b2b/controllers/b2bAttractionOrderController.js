@@ -937,14 +937,38 @@ module.exports = {
                         privateTransfersTotalCost;
                 }
 
+                let vatPercentage = 0;
+                let totalVat = 0;
+                if (activity.isVat) {
+                    vatPercentage = activity.vat || 0;
+                    if (activity.activityType === "transfer") {
+                        totalVat =
+                            ((sharedTransferTotalPrice +
+                                privateTransfersTotalPrice) /
+                                100) *
+                            vatPercentage;
+                    } else {
+                        totalVat =
+                            ((selectedActivities[i].activityTotalPrice || 0) /
+                                100) *
+                            vatPercentage;
+                    }
+                }
+
+                selectedActivities[i].isvat = activity.isVat;
+                selectedActivities[i].vatPercentage = vatPercentage;
+                selectedActivities[i].totalVat = totalVat;
+
                 selectedActivities[i].grandTotal =
                     (selectedActivities[i].activityTotalPrice || 0) +
                     sharedTransferTotalPrice +
-                    privateTransfersTotalPrice;
+                    privateTransfersTotalPrice +
+                    totalVat;
                 selectedActivities[i].totalCost =
                     (selectedActivities[i].activityTotalCost || 0) +
                     sharedTransferTotalCost +
-                    privateTransfersTotalCost;
+                    privateTransfersTotalCost +
+                    totalVat;
                 selectedActivities[i].profit = 0;
                 selectedActivities[i].status = "pending";
                 selectedActivities[i].bookingType = attraction.bookingType;

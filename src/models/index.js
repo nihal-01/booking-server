@@ -30,6 +30,7 @@ const HotelContract = require("./hotelContract.model");
 const RoomType = require("./roomType.model");
 const B2CVisaApplication = require("./b2cVisaApplication.model");
 const ApiMaster = require("./apiMaster.model");
+const AttractionItinerary = require("./attractionItinerary.model");
 
 module.exports = {
     HomeSettings,
@@ -65,4 +66,5 @@ module.exports = {
     HotelFacility,
     B2CVisaApplication,
     ApiMaster,
+    AttractionItinerary,
 };
