@@ -9,6 +9,7 @@ const {
     AttractionActivity,
     Country,
     AttractionTicket,
+    AttractionOrder,
 } = require("../../models");
 const {
     B2BClientAttractionMarkup,
@@ -719,7 +720,8 @@ module.exports = {
                                     100;
                             }
                             totalResellerMarkup +=
-                                markup * Number(selectedActivities[i]?.infantCount);
+                                markup *
+                                Number(selectedActivities[i]?.infantCount);
                             infantActivityPrice += markup;
                         }
 
@@ -734,7 +736,8 @@ module.exports = {
                                     100;
                             }
                             totalSubAgentMarkup +=
-                                markup * Number(selectedActivities[i]?.infantCount);
+                                markup *
+                                Number(selectedActivities[i]?.infantCount);
                             infantActivityPrice += markup;
                         }
 
@@ -1595,6 +1598,97 @@ module.exports = {
             }
 
             res.status(200).json(order[0]);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getAttractionOrderTickets: async (req, res) => {
+        try {
+            const { orderId, orderItemId } = req.params;
+
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "invalid order id");
+            }
+
+            // const orderDetailss = await B2BAttractionOrder.findOne(
+            //     {
+            //         _id: orderId,
+            //         orderStatus: "paid",
+            //     },
+            //     { activities: { $elemMatch: { _id: orderItemId } } }
+            // ).populate({
+            //     path: "activity",
+            //     populate: {
+            //         path: "attraction",
+            //         populate: { path: "destination" },
+            //         select: "title images logo",
+            //     },
+            //     select: "name description",
+            // });
+
+            const orderDetails = await B2BAttractionOrder.aggregate([
+                {
+                    $match: {
+                        _id: Types.ObjectId(orderId),
+                        orderStatus: "paid",
+                        activities: {
+                            $elemMatch: { _id: Types.ObjectId(orderItemId) },
+                        },
+                    },
+                },
+                { $unwind: "$activities" },
+                {
+                    $lookup: {
+                        from: "attractionactivities",
+                        localField: "activities.activity",
+                        foreignField: "_id",
+                        as: "activities.activity",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "attractions",
+                        localField: "activities.attraction",
+                        foreignField: "_id",
+                        as: "activities.attraction",
+                    },
+                },
+                {
+                    $set: {
+                        "activities.activity": {
+                            $arrayElemAt: ["$activities.activity", 0],
+                        },
+                        "activities.attraction": {
+                            $arrayElemAt: ["$activities.attraction", 0],
+                        },
+                    },
+                },
+                {
+                    $project: {
+                        activities: {
+                            activity: {
+                                name: 1,
+                                description: 1,
+                            },
+                            attraction: {
+                                title: 1,
+                                logo: 1,
+                                images: 1,
+                            },
+                            adultTickets: 1,
+                            childTickets: 1,
+                            infantTickets: 1,
+                        },
+                    },
+                },
+            ]);
+
+            if (!orderDetails || orderDetails?.activities?.length < 1) {
+                return sendErrorResponse(res, 400, "order not found");
+            }
+
+            res.status(200).json(orderDetails[0]);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
