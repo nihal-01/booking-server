@@ -1185,9 +1185,7 @@ module.exports = {
       if (!attraction || attraction?.length < 1) {
         return sendErrorResponse(res, 404, "Attraction not found");
       }
-      
 
-      
       res.status(200).json({
         attraction: attraction[0],
       });
@@ -1302,21 +1300,21 @@ module.exports = {
               {
                 $match: {
                   $expr: {
-                    $and: [
+                    // $and: [
+                    //   {
+                    $eq: [
+                      "$resellerId",
                       {
-                        $eq: [
-                          "$resellerId",
-                          {
-                            $cond: {
-                              if: {
-                                $eq: [req.reseller.role, "sub-agent"],
-                              },
-                              then: req.reseller?.referredBy,
-                              else: req.reseller?._id,
-                            },
+                        $cond: {
+                          if: {
+                            $eq: [req.reseller.role, "sub-agent"],
                           },
-                        ],
+                          then: req.reseller?.referredBy,
+                          else: req.reseller?._id,
+                        },
                       },
+                      //   ],
+                      // },
                     ],
                   },
                 },
@@ -2003,6 +2001,7 @@ module.exports = {
         {
           $project: {
             title: 1,
+            specialMarkup: 1,
             destination: 1,
             category: {
               categoryName: 1,
@@ -2049,7 +2048,6 @@ module.exports = {
           },
         },
       ]);
-
 
       res.status(200).json({
         attractions: attractions[0],
@@ -2677,7 +2675,6 @@ module.exports = {
           },
         },
       ]);
-
 
       res.status(200).json({
         attractions: attractions[0],

@@ -32,7 +32,6 @@ module.exports = {
         country,
       } = req.body;
 
-
       const { _, error } = visaApplicationSchema.validate(req.body);
       if (error) {
         return sendErrorResponse(
@@ -66,7 +65,6 @@ module.exports = {
       if (noOfTravellers !== travellers.length) {
         return sendErrorResponse(res, 400, "PassengerDetails Not Added ");
       }
-
 
       const visaTypeList = await VisaType.aggregate([
         {
@@ -323,7 +321,6 @@ module.exports = {
         },
       ]);
 
-
       let profit =
         (visaTypeList[0].totalspecialPrice - visaTypeList[0].purchaseCost) *
         noOfTravellers;
@@ -366,10 +363,8 @@ module.exports = {
 
       await newVisaApplication.save();
 
-
       res.status(200).json(newVisaApplication);
     } catch (err) {
-
       console.log(err, "error");
       sendErrorResponse(res, 500, err);
     }
@@ -380,10 +375,9 @@ module.exports = {
       const { orderId } = req.params;
       const { otp } = req.body;
 
-      // if (!isValidObjectId(orderId)) {
-      //   return sendErrorResponse(res, 400, "invalid order id");
-      // }
-
+      if (!isValidObjectId(orderId)) {
+        return sendErrorResponse(res, 400, "invalid order id");
+      }
 
       const VisaApplicationOrder = await VisaApplication.findOne({
         _id: orderId,
@@ -441,7 +435,6 @@ module.exports = {
         order: orderId,
       });
 
-
       wallet.balance -= totalAmount;
       await wallet.save();
 
@@ -456,8 +449,6 @@ module.exports = {
         message: "Amount Paided successfully ",
         VisaApplicationOrder,
       });
-
-      
     } catch (err) {
       console.log(err);
       sendErrorResponse(res, 500, err);
@@ -567,8 +558,6 @@ module.exports = {
                 return reject(error);
               }
 
-              
-
               visaApplication.travellers[i].documents = document._id;
               visaApplication.travellers[i].isStatus = "submitted";
               resolve();
@@ -581,7 +570,7 @@ module.exports = {
 
       // visaApplication.isDocumentUplaoded = true;
       // visaApplication.status = "submitted";
-      await sendApplicationEmail(req.reseller.email,visaApplication);
+      await sendApplicationEmail(req.reseller.email, visaApplication);
       await sendAdminVisaApplicationEmail(visaApplication);
 
       await visaApplication.save();
@@ -732,8 +721,6 @@ module.exports = {
               return reject(error);
             }
 
-      
-
             let upload = await VisaApplication.updateOne(
               {
                 _id: orderId,
@@ -755,7 +742,6 @@ module.exports = {
                 },
               }
             );
-
 
             resolve();
           });

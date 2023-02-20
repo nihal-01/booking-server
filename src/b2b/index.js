@@ -1,20 +1,20 @@
 const router = require("express").Router();
 
 const {
-    b2bResellersAuthRouter,
-    b2bAttractionOrdersRouter,
-    b2bResellersRouter,
-    b2bClientAttractionRouter,
-    b2bClientAttractionMarkupRouter,
-    b2bSubAgentAttractionMarkupRouter,
-    b2bWalletDepositRouter,
-    b2bTransactionRouter,
-    b2bClientVisaMarkupRouter,
-    b2bSubAgentVisaMarkupRouter,
-    b2bVisaRouter,
-    b2bVisaApplicationListRouter,
-    b2bVisaListRouter,
-    b2bAttractionTicketsRouter,
+  b2bResellersAuthRouter,
+  b2bAttractionOrdersRouter,
+  b2bResellersRouter,
+  b2bClientAttractionRouter,
+  b2bClientAttractionMarkupRouter,
+  b2bSubAgentAttractionMarkupRouter,
+  b2bWalletRouter,
+  b2bTransactionRouter,
+  b2bClientVisaMarkupRouter,
+  b2bSubAgentVisaMarkupRouter,
+  b2bVisaRouter,
+  b2bVisaApplicationListRouter,
+  b2bVisaListRouter,
+  b2bAttractionTicketsRouter,
 } = require("./routes");
 
 router.use("/resellers/auth", b2bResellersAuthRouter);
@@ -24,7 +24,7 @@ router.use("/resellers/client/markup", b2bClientAttractionMarkupRouter);
 router.use("/resellers/subagent/markup", b2bSubAgentAttractionMarkupRouter);
 router.use("/resellers/client/markup", b2bClientAttractionMarkupRouter);
 router.use("/resellers/subagent/markup", b2bSubAgentAttractionMarkupRouter);
-router.use("/resellers/wallet", b2bWalletDepositRouter);
+router.use("/resellers/wallet", b2bWalletRouter);
 router.use("/attractions/orders", b2bAttractionOrdersRouter);
 router.use("/attractions/tickets", b2bAttractionTicketsRouter);
 router.use("/transactions", b2bTransactionRouter);

@@ -1258,7 +1258,7 @@ module.exports = {
                 }
             }
 
-            sendAttractionOrderEmail(req.reseller.email, attractionOrder);
+            sendAttractionOrderEmail(req.reseller, attractionOrder);
             sendAttractionOrderAdminEmail(attractionOrder);
 
             res.status(200).json({
