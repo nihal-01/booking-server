@@ -10,6 +10,7 @@ const {
     Country,
     AttractionTicket,
     AttractionOrder,
+    HomeSettings,
 } = require("../../models");
 const {
     B2BClientAttractionMarkup,
@@ -1264,7 +1265,8 @@ module.exports = {
             await wallet.save();
 
             let reseller = req.reseller;
-            sendWalletDeductMail(reseller, attractionOrder);
+            const companyDetails = await HomeSettings.findOne();
+            sendWalletDeductMail(reseller, attractionOrder , companyDetails);
 
             transaction.status = "success";
             await transaction.save();
@@ -1283,7 +1285,7 @@ module.exports = {
                 }
             }
 
-            sendAttractionOrderEmail(req.reseller.email, attractionOrder);
+            sendAttractionOrderEmail(req.reseller, attractionOrder);
             sendAttractionOrderAdminEmail(attractionOrder);
 
             res.status(200).json({

@@ -1185,9 +1185,7 @@ module.exports = {
       if (!attraction || attraction?.length < 1) {
         return sendErrorResponse(res, 404, "Attraction not found");
       }
-      
 
-      
       res.status(200).json({
         attraction: attraction[0],
       });
@@ -1225,7 +1223,6 @@ module.exports = {
           });
         }
       }
-      console.log(search, "search");
 
       if (search && search !== "") {
         filters1.title = { $regex: search, $options: "i" };
@@ -1303,21 +1300,21 @@ module.exports = {
               {
                 $match: {
                   $expr: {
-                    $and: [
+                    // $and: [
+                    //   {
+                    $eq: [
+                      "$resellerId",
                       {
-                        $eq: [
-                          "$resellerId",
-                          {
-                            $cond: {
-                              if: {
-                                $eq: [req.reseller.role, "sub-agent"],
-                              },
-                              then: req.reseller?.referredBy,
-                              else: req.reseller?._id,
-                            },
+                        $cond: {
+                          if: {
+                            $eq: [req.reseller.role, "sub-agent"],
                           },
-                        ],
+                          then: req.reseller?.referredBy,
+                          else: req.reseller?._id,
+                        },
                       },
+                      //   ],
+                      // },
                     ],
                   },
                 },
@@ -2004,6 +2001,7 @@ module.exports = {
         {
           $project: {
             title: 1,
+            specialMarkup: 1,
             destination: 1,
             category: {
               categoryName: 1,
@@ -2051,8 +2049,6 @@ module.exports = {
         },
       ]);
 
-      console.log(attractions[0].data[0].activity, "attractions");
-
       res.status(200).json({
         attractions: attractions[0],
         skip: Number(skip),
@@ -2068,7 +2064,6 @@ module.exports = {
   listAllAttractions: async (req, res) => {
     try {
       const { skip = 0, limit = 10, search } = req.query;
-      console.log(req.reseller._id, "resellerId");
 
       const filters1 = { isDeleted: false, isActive: true };
 
@@ -2680,8 +2675,6 @@ module.exports = {
           },
         },
       ]);
-
-      console.log(attractions[0].data);
 
       res.status(200).json({
         attractions: attractions[0],

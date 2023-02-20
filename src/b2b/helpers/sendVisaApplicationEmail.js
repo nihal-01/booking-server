@@ -56,7 +56,6 @@ const sendApplicationEmail = async (email ,visaApplication) => {
                   `;
                 }).join("")}
               </table>
-              <p style="margin-top: 20px;">Attached to this email, you will find a PDF of your booking/ticket and invoice. Please keep these documents for your records.</p>
               <p>If you have any questions or concerns regarding your order, please do not hesitate to contact us.</p>
               <p style="margin-top: 20px;">Thank you for choosing Travellers Choice . We look forward to serving you.</p>
               <p>Best regards,<br><br>Admin<br>Travellers Choice</p>

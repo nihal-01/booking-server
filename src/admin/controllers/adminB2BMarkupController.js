@@ -71,16 +71,10 @@ module.exports = {
       const attractionMarkup = await B2BSpecialAttractionMarkup.findOne({
         resellerId: resellerId,
       });
-      if (!attractionMarkup) {
-        return sendErrorResponse(res, 400, "No special markup found");
-      }
 
       const visaMarkup = await B2BSpecialVisaMarkup.findOne({
         resellerId: resellerId,
       });
-      if (!visaMarkup) {
-        return sendErrorResponse(res, 400, "No special visa  markup found");
-      }
 
       res
         .status(200)

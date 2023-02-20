@@ -541,7 +541,7 @@ module.exports = {
         console.log(filteredTraveller, "filteredTraveller");
         console.log(visaApplication, "visaApplication");
 
-        sendVisaApplicationApproveEmail(visaApplication, filteredTraveller);
+        sendVisaApplicationApproveEmail(visaApplication,reseller, filteredTraveller);
 
         await visaApplication.save();
 
