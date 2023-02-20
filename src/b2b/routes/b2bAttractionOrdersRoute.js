@@ -7,6 +7,7 @@ const {
     getSingleB2bAllOrdersSheet,
     cancelAttractionOrder,
     getSingleAttractionOrder,
+    getAttractionOrderTickets,
 } = require("../controllers/b2bAttractionOrderController");
 const { b2bAuth } = require("../middlewares");
 
@@ -17,5 +18,10 @@ router.post("/cancel", b2bAuth, cancelAttractionOrder);
 router.get("/all", b2bAuth, getSingleB2bAllOrders);
 router.get("/all/sheet", b2bAuth, getSingleB2bAllOrdersSheet);
 router.get("/single/:orderId", b2bAuth, getSingleAttractionOrder);
+router.get(
+    "/:orderId/:orderItemId/tickets/all",
+    b2bAuth,
+    getAttractionOrderTickets
+);
 
 module.exports = router;

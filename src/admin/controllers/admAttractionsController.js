@@ -610,6 +610,7 @@ module.exports = {
                         },
                         createdAt: 1,
                         markup: 1,
+                        isActive: true,
                     },
                 },
                 {

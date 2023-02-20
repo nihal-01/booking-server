@@ -883,7 +883,11 @@ module.exports = {
 
     getB2bAllOrdersSheet: async (req, res) => {
         try {
-            await generateB2bOrdersSheet({ ...req.query, res });
+            await generateB2bOrdersSheet({
+                ...req.query,
+                res,
+                downloader: "admin",
+            });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
@@ -897,7 +901,12 @@ module.exports = {
                 return sendErrorResponse(res, 400, "invalid reseller id");
             }
 
-            await generateB2bOrdersSheet({ ...req.query, res, resellerId });
+            await generateB2bOrdersSheet({
+                ...req.query,
+                res,
+                resellerId,
+                downloader: "admin",
+            });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
