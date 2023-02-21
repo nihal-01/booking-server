@@ -4,7 +4,8 @@ const b2bBankDetailsValidationSchema = Joi.object({
   amount: Joi.number().required(),
   bankDeatilId: Joi.string().optional(),
   bankName: Joi.string().required(),
-  bankCountry: Joi.string().valid("India", "United Arab Emirates").required(),
+  countryId : Joi.string().required(),
+  // bankCountry: Joi.string().valid("India", "United Arab Emirates").required(),
   accountHolderName: Joi.string().required(),
   accountNumber: Joi.string().required(),
   ifscCode: Joi.when("bankCountry", {

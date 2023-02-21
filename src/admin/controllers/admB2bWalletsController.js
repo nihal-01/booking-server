@@ -171,4 +171,46 @@ module.exports = {
       sendErrorResponse(res, 500, err);
     }
   },
+
+  onApproveWithdrawal: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { reason } = req.body.formData;
+
+      console.log(reason, req.body, "referenceNumber");
+
+      if (!isValidObjectId(id)) {
+        return sendErrorResponse(res, 400, "invalid  id");
+      }
+
+      const b2bWalletWithdraw = await B2BWalletWithdraw.findById(id);
+
+      if (!b2bWalletWithdraw) {
+        return sendErrorResponse(res, 400, "Wallet Withdraw History not found");
+      }
+
+      b2bWalletWithdraw.reason = reason;
+
+      const transation = await B2BTransaction.findOne({
+        order: b2bWalletWithdraw._id,
+      });
+
+      if (!transation) {
+        return sendErrorResponse(res, 400, "Transation not found");
+      }
+
+      b2bWalletWithdraw.status = "cancelled";
+      await b2bWalletWithdraw.save();
+
+      transation.status = "failed";
+      await transation.save();
+
+     
+
+      res.status(200).json({ message: "Withdraw Request Was Not Successful" });
+    } catch (err) {
+      console.log(err, "error");
+      sendErrorResponse(res, 500, err);
+    }
+  },
 };

@@ -1,8 +1,10 @@
 const { sendEmail } = require("../../helpers");
+const commonFooter = require("../../helpers/commonFooter");
 
-const sendAttractionOrderOtp = ( email, subject, otp ) => {
+const sendAttractionOrderOtp = async (email, subject, otp) => {
   try {
-    
+    const footerHtml = await commonFooter();
+
     sendEmail(
       email,
       subject,
@@ -17,13 +19,9 @@ const sendAttractionOrderOtp = ( email, subject, otp ) => {
               <h2 style="background: #00466a;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;">${otp} </h2>
               
 
-                         <p style="font-size:0.9em;">Regards,<br />Your  Travellers Choice </p>
-              <hr style="border:none;border-top:1px solid #eee" />
-              <div style="float:right;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
-                <p>Travellers Choice Inc</p>
-                <p>1600 Avenue Street </p>
-                <p>Dubai</p>
-              </div>
+                         <p style="font-size:0.9em;">Regards</p>
+                         ${footerHtml}
+
             </div>
          `
     );

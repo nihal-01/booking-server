@@ -1,6 +1,6 @@
 const { sendEmail } = require("../../helpers");
 
-const sendVisaApplicationRejectionEmail = (visaApplication ,filteredTraveller , reason ) => {
+const sendVisaApplicationRejectionEmail = (visaApplication , reseller ,filteredTraveller , reason ) => {
 
   try {
     sendEmail(
@@ -11,7 +11,7 @@ const sendVisaApplicationRejectionEmail = (visaApplication ,filteredTraveller , 
          <h1 style="margin: 0;">Visa Application Cancelled</h1>
        </div>
        <div style="background-color: #f7f7f7; padding: 20px;">
-         <p style="font-size: 18px; font-weight: bold;">Dear ${visaApplication.visaType.visa.country.countryName},</p>
+         <p style="font-size: 18px; font-weight: bold;">Dear ${filteredTraveller[0].firstName},</p>
          <p style="margin-top: 20px;">Your Visa is Rejected. Your visa  details are as follows:</p>
          <table style="width: 100%; margin-top: 20px; border-collapse: collapse;">
            <tr style="background-color: #eee;">
@@ -41,8 +41,7 @@ const sendVisaApplicationRejectionEmail = (visaApplication ,filteredTraveller , 
          
 
          <p>If you have any questions or concerns regarding your order, please do not hesitate to contact us.</p>
-         <p style="margin-top: 20px;">Thank you for choosing [Company Name]. We look forward to serving you.</p>
-         <p>Best regards,<br><br>Admin<br>Travellers</p>
+         <p style="margin-top: 20px;">Thank you for choosing ${reseller.companyName} Choice. We look forward to serving you.</p>
        </div>
      </body>
    `
