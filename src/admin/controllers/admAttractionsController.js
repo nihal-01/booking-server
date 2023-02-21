@@ -880,4 +880,23 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+    getAllAttractionAndActivitiesNames: async (req, res) => {
+        try {
+            const attractions = await Attraction.find({ isDeleted: false })
+                .select("title")
+                .sort({ title: 1 })
+                .collation({ locale: "en", caseLevel: true });
+            const activities = await AttractionActivity.find({
+                isDeleted: false,
+            })
+                .select("name attraction")
+                .sort({ name: 1 })
+                .collation({ locale: "en", caseLevel: true });
+
+            res.status(200).json({ attractions, activities });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };

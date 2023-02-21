@@ -32,6 +32,7 @@ const admVisaMarkupRouter = require("./admVisaMarkupRouter");
 const admB2bWalletsRouter = require("./admB2bWalletsRouter");
 const admB2bSpecialMarkupRouter = require("./admB2bSpecialMarkupRouter");
 const admApiMasterRouter = require("./admApiMasterRouter");
+const admAttractionItinerariesRouter = require("./admAttractionItinerariesRouter");
 
 module.exports = {
     admAuthRouter,
@@ -68,4 +69,5 @@ module.exports = {
     admB2bWalletsRouter,
     admB2bSpecialMarkupRouter,
     admApiMasterRouter,
+    admAttractionItinerariesRouter,
 };

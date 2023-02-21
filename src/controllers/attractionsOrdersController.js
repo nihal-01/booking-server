@@ -46,10 +46,6 @@ const ccav = new nodeCCAvenue.Configure({
     working_key: process.env.CCAVENUE_WORKING_KEY,
 });
 
-// TODO
-// 1. VAT Calculation
-// 2. Send password for new emails
-// 3. Verify Mobile Number
 module.exports = {
     createAttractionOrder: async (req, res) => {
         try {
@@ -758,6 +754,28 @@ module.exports = {
                         privateTransfersTotalCost;
                 }
 
+                let vatPercentage = 0;
+                let totalVat = 0;
+                if (activity.isVat) {
+                    vatPercentage = activity.vat || 0;
+                    if (activity.activityType === "transfer") {
+                        totalVat =
+                            ((sharedTransferTotalPrice +
+                                privateTransfersTotalPrice) /
+                                100) *
+                            vatPercentage;
+                    } else {
+                        totalVat =
+                            ((selectedActivities[i].activityTotalPrice || 0) /
+                                100) *
+                            vatPercentage;
+                    }
+                }
+
+                selectedActivities[i].isvat = activity.isVat;
+                selectedActivities[i].vatPercentage = vatPercentage;
+                selectedActivities[i].totalVat = totalVat;
+
                 selectedActivities[i].grandTotal = grandTotal;
                 selectedActivities[i].totalWithoutOffer = totalWithoutOffer;
                 selectedActivities[i].offerAmount = offerAmount;
@@ -844,12 +862,10 @@ module.exports = {
                     );
                 }
 
-                return res
-                    .status(200)
-                    .json({
-                        order: response.result,
-                        orderId: newAttractionOrder?._id,
-                    });
+                return res.status(200).json({
+                    order: response.result,
+                    orderId: newAttractionOrder?._id,
+                });
             } else if (paymentProcessor === "razorpay") {
                 const currency = "INR";
                 const totalAmountINR = await convertCurrency(

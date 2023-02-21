@@ -242,11 +242,23 @@ const b2battractionOrderSchema = new Schema(
                         type: Number,
                         required: true,
                     },
-                    profit: {
+                    isvat: {
+                        type: Boolean,
+                        required: true,
+                    },
+                    vatPercentage: {
+                        type: Number,
+                        required: true,
+                    },
+                    totalVat: {
                         type: Number,
                         required: true,
                     },
                     grandTotal: { type: Number, required: true },
+                    profit: {
+                        type: Number,
+                        required: true,
+                    },
                 },
             ],
         },

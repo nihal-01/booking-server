@@ -155,7 +155,7 @@ module.exports = {
                                 in: {
                                     $cond: [
                                         {
-                                            $eq: ["$activityType", "normal"],
+                                            $eq: ["$$activity.activityType", "normal"],
                                         },
                                         {
                                             $cond: [

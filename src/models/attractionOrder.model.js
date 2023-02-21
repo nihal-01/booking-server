@@ -194,6 +194,18 @@ const attractionOrderSchema = new Schema(
                             );
                         },
                     },
+                    isvat: {
+                        type: Boolean,
+                        required: true,
+                    },
+                    vatPercentage: {
+                        type: Number,
+                        required: true,
+                    },
+                    totalVat: {
+                        type: Number,
+                        required: true,
+                    },
                     totalCost: {
                         type: Number,
                         required: true,
