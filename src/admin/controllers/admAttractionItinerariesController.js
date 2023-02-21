@@ -1,4 +1,4 @@
-const { isValidObjectId, Types } = require("mongoose");
+const { isValidObjectId } = require("mongoose");
 const { sendErrorResponse } = require("../../helpers");
 const {
     AttractionItinerary,
@@ -199,6 +199,32 @@ module.exports = {
                     path: "itineraries.items.activity",
                     select: "name",
                 });
+
+            if (!attractionItinerary) {
+                return sendErrorResponse(
+                    res,
+                    404,
+                    "attraction itinerary not found"
+                );
+            }
+
+            res.status(200).json(attractionItinerary);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getSingleAttractionItineraryNonPopulated: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "invalid itinerary id");
+            }
+
+            const attractionItinerary = await AttractionItinerary.findOne({
+                _id: id,
+            });
 
             if (!attractionItinerary) {
                 return sendErrorResponse(

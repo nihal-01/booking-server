@@ -1,4 +1,4 @@
-const html_to_pdf = require("html-pdf-node");
+// const html_to_pdf = require("html-pdf-node");
 
 const createQuotationPdf = async (visaApplication) => {
   console.log(ticketData);
