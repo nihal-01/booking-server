@@ -4,6 +4,9 @@ const { sendEmail } = require("../../helpers");
 const sendInsufficentBalanceMail = ( reseller , companyDetails) => {
   try {
     
+    const footerHtml = commonFooter();
+
+
     sendEmail(
       reseller.email,
       "Wallet Recharge Mail",
@@ -19,12 +22,8 @@ const sendInsufficentBalanceMail = ( reseller , companyDetails) => {
         <p>If you have any questions or concerns, please feel free to contact us. Our team is always available to assist you.</p>
         <p>Thank you for choosing us. We hope to continue serving you in the future.</p>
         <p>Best regards,</p>
-        <p>Travellers Choice</p>
-        <p style="margin: 20px 0;">Email :- ${companyDetails.email} </p>
-        <p style="margin: 20px 0;">WhatsApp :-${companyDetails.phoneNumber1}</p>
-        <p style="margin: 20px 0;">Customer Care :- ${
-          companyDetails.phoneNumber2
-        } </p>
+                ${footerHtml}
+
     
         <hr style="border:none;border-top:1px solid #eee" />
         <div style="float:left;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">

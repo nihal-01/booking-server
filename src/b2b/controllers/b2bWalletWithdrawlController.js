@@ -6,6 +6,7 @@ const {
   B2BBankDetails,
   B2BTransaction,
   B2BWalletWithdraw,
+  B2BWallet,
 } = require("../models");
 const b2bBankDetailsValidationSchema = require("../validations/b2bBankDetails.schema");
 
@@ -14,7 +15,7 @@ module.exports = {
     try {
       const {
         bankDeatilId,
-        bankCountry,
+        isoCode,
         bankName,
         accountHolderName,
         accountNumber,
@@ -36,16 +37,19 @@ module.exports = {
           );
         }
 
-        console.log(req.body, "body");
-        country = await Country.findOne({ countryName: bankCountry });
+        country = await Country.findOne({ isocode: isoCode });
 
         if (!country) {
           return sendErrorResponse(res, 400, "Country Not Found");
         }
 
+        if (isoCode === "IN" && ifscCode == "") {
+          return sendErrorResponse(res, 400, "IFSC Code is required");
+        }
+
         bankDeatils = new B2BBankDetails({
           bankName,
-          bankCountry,
+          bankCountry: country.isocode,
           countryId: country._id,
           accountHolderName,
           accountNumber,
@@ -53,7 +57,6 @@ module.exports = {
           ibanCode,
         });
         await bankDeatils.save();
-        console.log(bankDeatils, "body2");
       } else {
         if (!isValidObjectId(bankDeatilId)) {
           return sendErrorResponse(res, 400, "Invalid Withdraw Request  Id");
@@ -62,20 +65,27 @@ module.exports = {
         bankDetails = await B2BBankDetails.findById(bankDeatilId);
       }
 
-      const otp = "12345";
-      //   const otp = await sendMobileOtp(countryDetail.phonecode, contactNo);
-      console.log(otp, "otp");
+      let wallet = await B2BWallet.findOne({
+        reseller: req.reseller._id,
+      });
 
-      console.log(bankDeatils, "bankDeatils");
+      if (wallet.balance < amount || amount < 0) {
+        return sendErrorResponse(
+          res,
+          400,
+          "Please Request Valid Amount Or Check Wallet Balance "
+        );
+      }
+
+      const otp = "12345";
 
       const walletWithdraw = new B2BWalletWithdraw({
         resellerId: req.reseller._id,
         bankDetailsId: bankDeatils._id,
         amount,
-        status: "pending",
+        status: "initiated",
         otp,
       });
-      console.log(otp, "otp2");
 
       await walletWithdraw.save();
 
@@ -115,6 +125,10 @@ module.exports = {
         amount: withdrawRequest.amount,
         order: withdrawRequest._id,
       });
+
+      withdrawRequest.status = "pending";
+
+      await withdrawRequest.save();
 
       await transaction.save();
 

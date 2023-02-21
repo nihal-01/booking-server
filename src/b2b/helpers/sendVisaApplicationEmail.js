@@ -1,10 +1,14 @@
 const nodemailer = require("nodemailer");
 const { sendEmail } = require("../../helpers");
+const commonFooter = require("../../helpers/commonFooter");
+
 
 const sendApplicationEmail = async (email ,visaApplication) => {
     
     try {
-      
+           
+         const footerHtml =await  commonFooter();
+ 
           sendEmail(
             email,
              "Order Placed Mail",
@@ -58,8 +62,10 @@ const sendApplicationEmail = async (email ,visaApplication) => {
               </table>
               <p>If you have any questions or concerns regarding your order, please do not hesitate to contact us.</p>
               <p style="margin-top: 20px;">Thank you for choosing Travellers Choice . We look forward to serving you.</p>
-              <p>Best regards,<br><br>Admin<br>Travellers Choice</p>
-            </div>
+              ${footerHtml}
+
+           
+              </div>
           </body>
         
          `

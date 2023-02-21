@@ -19,7 +19,7 @@ const b2bWalletWithdrawRequest = new Schema(
     status: {
       type: String,
       required: true,
-      enum: ["pending", "confirmed", "cancelled"],
+      enum: ["initiated", "pending", "confirmed", "cancelled"],
     },
     otp: {
       type: Number,

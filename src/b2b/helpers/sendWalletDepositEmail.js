@@ -1,7 +1,10 @@
 const { sendEmail } = require("../../helpers");
+const commonFooter = require("../../helpers/commonFooter");
 
 const sendWalletDeposit = (reseller, transaction, companyDetails) => {
   try {
+    const footerHtml = commonFooter();
+
     sendEmail(
       reseller.email,
       "Account Credit Notification",
@@ -15,7 +18,9 @@ const sendWalletDeposit = (reseller, transaction, companyDetails) => {
         <h2 style="text-align: center;">Dear ${reseller.name},</h2>
         <p style="margin: 20px 0;"> We are pleased to inform you that an amount of ${
           transaction?.totalAmount
-        }AED has been credited to your B2B account  on ${new Date()}  ${transaction.paymentMethod} .
+        }AED has been credited to your B2B account  on ${new Date()}  ${
+        transaction.paymentMethod
+      } .
         </p>
         <p style="margin: 20px 0;"> As a valued customer of Travellers Choice, we always strive to provide you with the best experience.
 
@@ -24,19 +29,8 @@ const sendWalletDeposit = (reseller, transaction, companyDetails) => {
         </p>
         <p style="margin: 20px 0;"> Thank you for choosing Travellers Choice  as your Travel Partner partner. We look forward to serving you in the future.
         </p>
-
-        <p style="margin: 20px 0;">Best Regards</p>
-        <p style="margin: 20px 0;">Email :- ${companyDetails.email} </p>
-        <p style="margin: 20px 0;">WhatsApp :-${companyDetails.phoneNumber1}</p>
-        <p style="margin: 20px 0;">Customer Care :- ${
-          companyDetails.phoneNumber2
-        } </p>
-      </body>
-    
-        <hr style="border:none; border-top:1px solid #eee" />
-        <div style="float:left;padding:8px 0;color:#aaa;font-size:0.8em;line-height:1;font-weight:300">
-         <img src=${REACT_APP_SERVER_URL + companyDetails.logo}/> 
-        </div>
+        ${footerHtml}
+        </body>
       </div>
     </div>
          `

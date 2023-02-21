@@ -597,7 +597,6 @@ module.exports = {
         passportNo,
         contactNo,
         email,
-        status,
       } = req.body;
 
       if (!isValidObjectId(orderId)) {
@@ -738,7 +737,7 @@ module.exports = {
                   "travellers.$.passportNo": passportNo,
                   "travellers.$.contactNo": contactNo,
                   "travellers.$.email": email,
-                  "travellers.$.isStatus": status,
+                  "travellers.$.isStatus": "submitted",
                 },
               }
             );

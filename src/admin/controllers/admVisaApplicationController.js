@@ -623,7 +623,7 @@ module.exports = {
           }
         );
 
-        sendVisaApplicationApproveEmail(visaApplication, filteredTraveller);
+        sendVisaApplicationRejectionEmail(visaApplication,  filteredTraveller , reason);
 
         await visaApplication.save();
 
@@ -741,7 +741,7 @@ module.exports = {
         console.log(filteredTraveller, "filteredTraveller");
         console.log(visaApplication, "visaApplication");
 
-        sendVisaApplicationApproveEmail(visaApplication, filteredTraveller);
+        sendVisaApplicationRejectionEmail(visaApplication,reseller, filteredTraveller , reason);
 
         await visaApplication.save();
 

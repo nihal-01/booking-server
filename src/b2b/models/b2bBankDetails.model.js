@@ -8,7 +8,6 @@ const b2bBankDetailsSchema = new Schema(
     },
     bankCountry: {
       type: String,
-      enum: ["India", "United Arab Emirates"],
       required: true,
     },
     countryId: {
@@ -26,17 +25,10 @@ const b2bBankDetailsSchema = new Schema(
     },
     ifscCode: {
       type: String,
-      required: function () {
-        return this.bankCountry === "India";
-      },
     },
     ibanCode: {
       type: String,
-      required: function () {
-        return this.bankCountry === "United Arab Emirates";
-      },
-    }
-    
+    },
   },
   { timestamps: true }
 );
