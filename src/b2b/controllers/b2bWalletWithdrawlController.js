@@ -128,6 +128,19 @@ module.exports = {
         order: withdrawRequest._id,
       });
 
+      let wallet = await B2BWallet.findOne({
+        reseller: req.reseller._id,
+      });
+      if (!wallet) {
+        wallet = new B2BWallet({
+          balance: 0,
+          reseller: req.reseller._id,
+        });
+      }
+
+      wallet.balance -= Number(withdrawRequest.amount);
+      await wallet.save();
+
       withdrawRequest.status = "pending";
 
       await withdrawRequest.save();

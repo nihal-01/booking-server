@@ -419,7 +419,14 @@ module.exports = {
 
   listAll: async (req, res) => {
     try {
-      console.log(req.reseller, "reseller");
+      const { search  } = req.query;
+
+      let query = {};
+
+      if (search && search !== "") {
+        query.country = { $regex: search, $options: "i" };
+      }
+
       const visaType = await VisaType.aggregate([
         {
           $match: {
@@ -541,7 +548,11 @@ module.exports = {
             markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
             markupAddSubAgent: { $arrayElemAt: ["$markupAddSubAgent", 0] },
             specialMarkup: { $arrayElemAt: ["$specialMarkup", 0] },
+            country: { $arrayElemAt: ["$country.countryName", 0] },
           },
+        },
+        {
+          $match: query,
         },
         {
           $addFields: {
@@ -615,6 +626,7 @@ module.exports = {
 
       res.status(200).json(visaType);
     } catch (err) {
+      console.log(err, "erroe");
       sendErrorResponse(res, 500, err);
     }
   },
@@ -631,7 +643,6 @@ module.exports = {
       if (!visaCountry) {
         return sendErrorResponse(res, 400, "No Visa Available");
       }
-
 
       res.status(200).json(visaCountry);
     } catch (err) {

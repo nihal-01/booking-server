@@ -103,8 +103,12 @@ module.exports = {
       };
 
       if (search && search !== "") {
-        filter.name = { $regex: search, $options: "i" };
+        filter.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { companyName: { $regex: search, $options: "i" } },
+        ];
       }
+
       const resellerList = await Reseller.find(filter).select(
         "-jwtToken -password"
       );
@@ -114,7 +118,8 @@ module.exports = {
       }
 
       res.status(200).json(resellerList);
-    } catch (error) {
+    } catch (err) {
+      console.log(err, "error");
       sendErrorResponse(res, 500, err);
     }
   },
@@ -154,7 +159,7 @@ module.exports = {
 
       const otp = await sendMobileOtp(countryDetail.phonecode, phoneNumber);
 
-      sendForgetPasswordOtp(reseller, otp);
+      await sendForgetPasswordOtp(reseller, otp);
 
       reseller.otp = otp;
 

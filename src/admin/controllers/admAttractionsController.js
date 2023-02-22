@@ -185,7 +185,6 @@ module.exports = {
         bookingPriorDays,
       } = req.body;
 
-      console.log(itineraryDescription, "itineraryDescription");
 
 
       const { _, error } = attractionSchema.validate({
