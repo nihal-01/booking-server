@@ -151,7 +151,7 @@ module.exports = {
     try {
       const { email } = req.body;
 
-      const reseller = await Reseller.findOne({ email });
+      const reseller = await Reseller.findOne({ email : email });
 
       if (!reseller) {
         return sendErrorResponse(res, 404, "Account not found");
@@ -203,4 +203,38 @@ module.exports = {
       sendErrorResponse(res, 500, err);
     }
   },
+   
+
+  deleteSubAgent  :async(req,res)=>{
+
+    try{
+      
+      const {resellerId} = req.params
+
+      if (!isValidObjectId(resellerId)) {
+        return sendErrorResponse(res, 400, "invalid reseller id");
+      }
+
+      const subAgent = await Reseller.findById(resellerId)
+      
+      if (!subAgent) {
+        return sendErrorResponse(res, 400, "subAgent not found");
+      }
+
+      if(subAgent.referredBy == req.reseller._id){
+        return sendErrorResponse(res, 400, "subAgent not Found ");
+
+      }
+
+      subAgent.status = "disabled"
+
+      await subAgent.save()
+
+      res.status(200).json({})
+
+    }catch(err){
+
+
+    }
+  }
 };
