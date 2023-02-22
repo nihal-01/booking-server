@@ -13,8 +13,10 @@ const attractionItinerarySchema = Joi.object({
                     attraction: Joi.string().required(),
                     activity: Joi.string().required(),
                     itineraryTitle: Joi.string().required(),
+                    _id: Joi.string().allow("", null),
                 })
                 .min(1),
+            _id: Joi.string().allow("", null),
         })
         .min(1),
 });
