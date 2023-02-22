@@ -62,11 +62,24 @@ module.exports = {
 
   listAllWithdrawRequest: async (req, res) => {
     try {
-      const { skip = 0, limit = 10, search } = req.query;
+      const { skip = 0, limit = 10, search, status } = req.query;
 
-      console.log("call reached");
+      console.log("call reached", search);
+
+      let query = {};
+
+      if (search && search !== "") {
+        query.paymentReferenceNo = { $regex: search, $options: "i" };
+      }
+
+      if (status && status !== "all") {
+        query.status = status;
+      }
 
       const walletRequestDetails = await B2BWalletWithdraw.aggregate([
+        {
+          $match: query,
+        },
         {
           $lookup: {
             from: "resellers",
@@ -75,11 +88,7 @@ module.exports = {
             as: "reseller",
           },
         },
-        // {
-        //   $match: {
-        //     "reseller.name": { $regex: search, $options: "i" },
-        //   },
-        // },
+
         {
           $lookup: {
             from: "b2bbankdetails",
@@ -88,6 +97,7 @@ module.exports = {
             as: "bankDetails",
           },
         },
+
         {
           $set: {
             reseller: {
@@ -98,23 +108,49 @@ module.exports = {
             },
           },
         },
-        // { $skip: Number(skip) },
-        // { $limit: Number(limit) },
+        {
+          $project: {
+            reseller: {
+              jwtToken: 0,
+              password: 0,
+            },
+          },
+        },
+        {
+          $sort: {
+            createdAt: -1,
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+            walletRequestDetails: { $push: "$$ROOT" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            count: 1,
+            data: {
+              $slice: [
+                "$walletRequestDetails",
+                Number(skip * limit),
+                Number(limit),
+              ],
+            },
+          },
+        },
       ]);
 
-      console.log(walletRequestDetails, "walletRequestDetails");
-
-      //   const totalWithdrawRequests = await B2BWalletWithdraw.countDocuments(
-      //     filters
-      //   );
-
       res.status(200).json({
-        walletRequestDetails,
-        // totalWithdrawRequests,
-        // skip: Number(skip),
-        // limit: Number(limit),
+        walletRequestDetails: walletRequestDetails[0]?.data,
+        totalWithdrawRequests: walletRequestDetails[0]?.count,
+        skip: Number(skip),
+        limit: Number(limit),
       });
     } catch (err) {
+      console.log(err, "erorr");
       sendErrorResponse(res, 500, err);
     }
   },
@@ -122,9 +158,9 @@ module.exports = {
   onApproveWithdrawal: async (req, res) => {
     try {
       const { id } = req.params;
-      const { referenceNumber } = req.body.formData;
+      const { paymentReferenceNo } = req.body.formData;
 
-      console.log(referenceNumber, req.body, "referenceNumber");
+      console.log(paymentReferenceNo, req.body, "referenceNumber");
 
       if (!isValidObjectId(id)) {
         return sendErrorResponse(res, 400, "invalid  id");
@@ -136,7 +172,7 @@ module.exports = {
         return sendErrorResponse(res, 400, "Wallet Withdraw History not found");
       }
 
-      b2bWalletWithdraw.referenceNo = referenceNumber;
+      b2bWalletWithdraw.paymentReferenceNo = paymentReferenceNo;
 
       const transation = await B2BTransaction.findOne({
         order: b2bWalletWithdraw._id,
@@ -172,7 +208,7 @@ module.exports = {
     }
   },
 
-  onApproveWithdrawal: async (req, res) => {
+  onRejectWithdrawal: async (req, res) => {
     try {
       const { id } = req.params;
       const { reason } = req.body.formData;
@@ -204,8 +240,6 @@ module.exports = {
 
       transation.status = "failed";
       await transation.save();
-
-     
 
       res.status(200).json({ message: "Withdraw Request Was Not Successful" });
     } catch (err) {

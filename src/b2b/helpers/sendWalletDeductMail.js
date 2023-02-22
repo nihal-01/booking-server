@@ -1,10 +1,10 @@
 const { sendEmail } = require("../../helpers");
 const commonFooter = require("../../helpers/commonFooter");
 
-const sendWalletDeductMail = (reseller, order, comapnyDetails) => {
+const sendWalletDeductMail = async(reseller, order, comapnyDetails) => {
   try {
 
-    const footerHtml = commonFooter();
+    const footerHtml = await  commonFooter();
 
     sendEmail(
       reseller.email,

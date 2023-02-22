@@ -3,12 +3,11 @@ const { sendEmail } = require("../../helpers");
 const sendVisaApplicationApproveEmail = (
   visaApplication,
   reseller,
-  filteredTraveller
+  filteredTraveller,
+  visa
 ) => {
   try {
-    const visaUploadUrl =
-      process.env.SERVER_URL + filteredTraveller[0]?.visaUpload;
-
+    const visaUploadUrl = process.env.SERVER_URL + visa;
     sendEmail(
       visaApplication.email,
       "Visa Application Approved Email",

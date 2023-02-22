@@ -541,7 +541,12 @@ module.exports = {
         console.log(filteredTraveller, "filteredTraveller");
         console.log(visaApplication, "visaApplication");
 
-        sendVisaApplicationApproveEmail(visaApplication,reseller, filteredTraveller);
+        await sendVisaApplicationApproveEmail(
+          visaApplication,
+          reseller,
+          filteredTraveller,
+          visa
+        );
 
         await visaApplication.save();
 
@@ -623,7 +628,11 @@ module.exports = {
           }
         );
 
-        sendVisaApplicationRejectionEmail(visaApplication,  filteredTraveller , reason);
+        sendVisaApplicationRejectionEmail(
+          visaApplication,
+          filteredTraveller,
+          reason
+        );
 
         await visaApplication.save();
 
@@ -741,7 +750,12 @@ module.exports = {
         console.log(filteredTraveller, "filteredTraveller");
         console.log(visaApplication, "visaApplication");
 
-        sendVisaApplicationRejectionEmail(visaApplication,reseller, filteredTraveller , reason);
+        sendVisaApplicationRejectionEmail(
+          visaApplication,
+          reseller,
+          filteredTraveller,
+          reason
+        );
 
         await visaApplication.save();
 

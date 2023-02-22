@@ -4,8 +4,12 @@ const { isValidObjectId, Types } = require("mongoose");
 
 const { sendErrorResponse } = require("../../helpers");
 const { sendSubAgentPassword } = require("../helpers");
+const sendForgetPasswordOtp = require("../helpers/sendForgetPasswordMail");
 const { Reseller } = require("../models");
-const { subAgentRegisterSchema } = require("../validations/b2bReseller.schema");
+const {
+  subAgentRegisterSchema,
+  resellerForgetPasswordSchema,
+} = require("../validations/b2bReseller.schema");
 
 module.exports = {
   registerSubAgent: async (req, res) => {
@@ -134,6 +138,63 @@ module.exports = {
       res.status(200).json({ subAgent });
     } catch (err) {
       console.log(err, "error");
+      sendErrorResponse(res, 500, err);
+    }
+  },
+
+  forgetPassword: async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      const reseller = await Reseller.findOne({ email });
+
+      if (!reseller) {
+        return sendErrorResponse(res, 404, "Account not found");
+      }
+
+      const otp = await sendMobileOtp(countryDetail.phonecode, phoneNumber);
+
+      sendForgetPasswordOtp(reseller, otp);
+
+      reseller.otp = otp;
+
+      await reseller.save();
+
+      res.status(200).json({ message: "otp sended to mail id" });
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
+
+  confirmOtpForgetPassword: async (req, res) => {
+    try {
+      const { email, otp, newPassword, confirmPassword } = req.body;
+
+      const { _, error } = resellerForgetPasswordSchema.validate(req.body);
+      if (error) {
+        return sendErrorResponse(
+          res,
+          400,
+          error.details ? error?.details[0]?.message : error.message
+        );
+      }
+
+      const reseller = await Reseller.findOne({ email });
+
+      if (!reseller) {
+        return sendErrorResponse(res, 404, "Account not found");
+      }
+
+      if (reseller.otp !== Number(otp)) {
+        return sendErrorResponse(res, 404, "OTP Is Wrong");
+      }
+
+      const hashedPassowrd = await hash(newPassword, 8);
+
+      reseller.password = hashedPassowrd;
+
+      await reseller.save();
+    } catch (err) {
       sendErrorResponse(res, 500, err);
     }
   },

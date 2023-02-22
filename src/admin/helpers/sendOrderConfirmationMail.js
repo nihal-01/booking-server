@@ -1,8 +1,12 @@
 const nodemailer = require("nodemailer");
 const { sendEmail } = require("../../helpers");
+const commonFooter = require("../../helpers/commonFooter");
 
 const sendOrderConfirmationEmail = async (email,name, attractionOrder ) => {
   try {
+
+    const footerHtml = await commonFooter();
+
     const totalPersons =
     attractionOrder.activities[0].adultsCount ||
       0 + attractionOrder.activities[0].infantCount ||
@@ -65,11 +69,10 @@ const sendOrderConfirmationEmail = async (email,name, attractionOrder ) => {
                 </tr>
              
               </table>
-              <p style="margin-top: 20px;">Attached to this email, you will find a PDF of your booking/ticket and invoice. Please keep these documents for your records.</p>
               <p>If you have any questions or concerns regarding your order, please do not hesitate to contact us.</p>
-              <p style="margin-top: 20px;">Thank you for choosing [Company Name]. We look forward to serving you.</p>
-              <p>Best regards,<br><br>Admin<br>Travellers</p>
-            </div>
+              <p style="margin-top: 20px;">Thank you for choosing Travellers Choice. We look forward to serving you.</p>
+              ${footerHtml}
+              </div>
           </body>
         
          `

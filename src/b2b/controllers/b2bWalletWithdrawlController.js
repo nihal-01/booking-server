@@ -9,6 +9,7 @@ const {
   B2BWallet,
 } = require("../models");
 const b2bBankDetailsValidationSchema = require("../validations/b2bBankDetails.schema");
+const { generateUniqueString } = require("../../utils");
 
 module.exports = {
   walletWithdrawalInitate: async (req, res) => {
@@ -85,6 +86,8 @@ module.exports = {
         amount,
         status: "initiated",
         otp,
+        referenceNo: generateUniqueString("B2BWR"),
+
       });
 
       await walletWithdraw.save();
@@ -107,7 +110,6 @@ module.exports = {
 
       const withdrawRequest = await B2BWalletWithdraw.findById(id);
 
-      console.log(withdrawRequest, id, "withdrawRequest");
 
       if (!withdrawRequest) {
         return sendErrorResponse(res, 400, "Invalid withdrawRequest Details");

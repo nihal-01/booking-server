@@ -27,6 +27,7 @@ const b2bWalletWithdrawRequest = new Schema(
     },
     referenceNo: {
       type: String,
+      required : true
     },
   },
   { timestamps: true }

@@ -136,6 +136,9 @@ const attractionSchema = new Schema(
       type: String,
       required: true,
     },
+    itineraryDescription: {
+      type: String,
+    },
     sections: {
       type: [
         {

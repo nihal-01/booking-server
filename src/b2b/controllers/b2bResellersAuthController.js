@@ -244,7 +244,7 @@ module.exports = {
 
     updatePassword: async (req, res) => {
         try {
-            const { oldPassword, newPassword } = req.body;
+            const { oldPassword,confirmPassword , newPassword } = req.body;
 
             const { _, error } = resellerPasswordUpdateSchema.validate(
                 req.body

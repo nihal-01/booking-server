@@ -1,9 +1,9 @@
 const { sendEmail } = require("../../helpers");
 const commonFooter = require("../../helpers/commonFooter");
 
-const sendWalletDeposit = (reseller, transaction, companyDetails) => {
+const sendWalletDeposit = async (reseller, transaction, companyDetails) => {
   try {
-    const footerHtml = commonFooter();
+    const footerHtml = await commonFooter();
 
     sendEmail(
       reseller.email,
@@ -18,17 +18,12 @@ const sendWalletDeposit = (reseller, transaction, companyDetails) => {
         <h2 style="text-align: center;">Dear ${reseller.name},</h2>
         <p style="margin: 20px 0;"> We are pleased to inform you that an amount of ${
           transaction?.totalAmount
-        }AED has been credited to your B2B account  on ${new Date()}  ${
-        transaction.paymentMethod
-      } .
+        }AED has been credited to your B2B account  on ${new Date().toLocaleString(
+        "default",
+        { month: "short", day: "numeric", year: "numeric" }
+      )}  ${transaction.paymentMethod} .
         </p>
-        <p style="margin: 20px 0;"> As a valued customer of Travellers Choice, we always strive to provide you with the best experience.
-
-        </p>
-        <p style="margin: 20px 0;"> We request you to kindly check your account balance and verify the transaction. In case of any discrepancy or clarification, please feel free to contact our customer service team.
-        </p>
-        <p style="margin: 20px 0;"> Thank you for choosing Travellers Choice  as your Travel Partner partner. We look forward to serving you in the future.
-        </p>
+        <p>If you have any questions or concerns regarding your order, please do not hesitate to contact us.</p>
         ${footerHtml}
         </body>
       </div>
