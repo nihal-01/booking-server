@@ -84,6 +84,8 @@ const resellerPasswordUpdateSchema = Joi.object({
 });
 
 const resellerForgetPasswordSchema = Joi.object({
+  otp: Joi.number().required(),
+  email: Joi.string().required(),
   newPassword: Joi.string()
     .regex(passwordRegx)
     .error(passswordError)

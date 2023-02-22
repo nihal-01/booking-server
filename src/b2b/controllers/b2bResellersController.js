@@ -157,7 +157,7 @@ module.exports = {
         return sendErrorResponse(res, 404, "Account not found");
       }
 
-      const otp = await sendMobileOtp();
+      const otp = 12345;
 
       await sendForgetPasswordOtp(reseller, otp);
 
@@ -199,6 +199,10 @@ module.exports = {
       reseller.password = hashedPassowrd;
 
       await reseller.save();
+
+      res.status(200).json({ message: "Password Updated Sucessfully" });
+
+      
     } catch (err) {
       sendErrorResponse(res, 500, err);
     }
