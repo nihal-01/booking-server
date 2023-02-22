@@ -2,7 +2,7 @@ const { hash } = require("bcryptjs");
 const crypto = require("crypto");
 const { isValidObjectId, Types } = require("mongoose");
 
-const { sendErrorResponse } = require("../../helpers");
+const { sendErrorResponse, sendMobileOtp } = require("../../helpers");
 const { sendSubAgentPassword } = require("../helpers");
 const sendForgetPasswordOtp = require("../helpers/sendForgetPasswordMail");
 const { Reseller } = require("../models");
@@ -151,13 +151,13 @@ module.exports = {
     try {
       const { email } = req.body;
 
-      const reseller = await Reseller.findOne({ email : email });
+      const reseller = await Reseller.findOne({ email: email });
 
       if (!reseller) {
         return sendErrorResponse(res, 404, "Account not found");
       }
 
-      const otp = await sendMobileOtp(countryDetail.phonecode, phoneNumber);
+      const otp = await sendMobileOtp();
 
       await sendForgetPasswordOtp(reseller, otp);
 
@@ -203,38 +203,30 @@ module.exports = {
       sendErrorResponse(res, 500, err);
     }
   },
-   
 
-  deleteSubAgent  :async(req,res)=>{
-
-    try{
-      
-      const {resellerId} = req.params
+  deleteSubAgent: async (req, res) => {
+    try {
+      const { resellerId } = req.params;
 
       if (!isValidObjectId(resellerId)) {
         return sendErrorResponse(res, 400, "invalid reseller id");
       }
 
-      const subAgent = await Reseller.findById(resellerId)
-      
+      const subAgent = await Reseller.findById(resellerId);
+
       if (!subAgent) {
         return sendErrorResponse(res, 400, "subAgent not found");
       }
 
-      if(subAgent.referredBy == req.reseller._id){
+      if (subAgent.referredBy == req.reseller._id) {
         return sendErrorResponse(res, 400, "subAgent not Found ");
-
       }
 
-      subAgent.status = "disabled"
+      subAgent.status = "disabled";
 
-      await subAgent.save()
+      await subAgent.save();
 
-      res.status(200).json({})
-
-    }catch(err){
-
-
-    }
-  }
+      res.status(200).json({});
+    } catch (err) {}
+  },
 };
