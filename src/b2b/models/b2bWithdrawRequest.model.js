@@ -25,9 +25,16 @@ const b2bWalletWithdrawRequest = new Schema(
       type: Number,
       required: true,
     },
+    reason: {
+      type: String,
+    },
+
+    paymentReferenceNo: {
+      type: String,
+    },
     referenceNo: {
       type: String,
-      required : true
+      required: true,
     },
   },
   { timestamps: true }

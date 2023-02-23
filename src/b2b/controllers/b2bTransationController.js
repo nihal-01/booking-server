@@ -94,4 +94,20 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+    getSingleSubAgentTransation: async (req, res) => {
+        try {
+             const {resellerId} = req.params
+            const { result, skip, limit } = await getB2bTransactions({
+                ...req.query,
+                resellerId: resellerId,
+                b2bRole: "",
+                agentCode: "",
+            });
+
+            res.status(200).json({ result, skip, limit });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };

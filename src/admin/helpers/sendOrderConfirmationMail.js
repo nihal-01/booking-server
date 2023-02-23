@@ -2,7 +2,7 @@ const nodemailer = require("nodemailer");
 const { sendEmail } = require("../../helpers");
 const commonFooter = require("../../helpers/commonFooter");
 
-const sendOrderConfirmationEmail = async (email,name, attractionOrder ) => {
+const sendOrderConfirmationEmail = async (email,name, attractionOrder,bookingConfirmationNumber ,note) => {
   try {
 
     const footerHtml = await commonFooter();
@@ -54,7 +54,7 @@ const sendOrderConfirmationEmail = async (email,name, attractionOrder ) => {
                  
                 <td style="padding: 10px; border: 1px solid #ddd;">Booking Confirmation Number:</td>
                 <td style="padding: 10px; border: 1px solid #ddd;">${
-                  attractionOrder.activities[0].bookingConfirmationNumber
+                  bookingConfirmationNumber
                 }</td>
               </tr>
               <tr style="background-color:  "" : "#eee">
@@ -67,6 +67,13 @@ const sendOrderConfirmationEmail = async (email,name, attractionOrder ) => {
                     year: "numeric",
                   })}</td>
                 </tr>
+                <tr style="background-color: #eee;">
+                 
+                <td style="padding: 10px; border: 1px solid #ddd;">Booking Confirmation Number:</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">${
+                  note
+                }</td>
+              </tr>
              
               </table>
               <p>If you have any questions or concerns regarding your order, please do not hesitate to contact us.</p>

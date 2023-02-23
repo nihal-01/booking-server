@@ -188,19 +188,6 @@ module.exports = {
       transation.status = "success";
       await transation.save();
 
-      let wallet = await B2BWallet.findOne({
-        reseller: b2bWalletWithdraw.resellerId,
-      });
-      if (!wallet) {
-        wallet = new B2BWallet({
-          balance: 0,
-          reseller: b2bWalletWithdraw.resellerId,
-        });
-      }
-
-      wallet.balance -= Number(b2bWalletWithdraw.amount);
-      await wallet.save();
-
       res.status(200).json({ success: "Withdraw Was Successful" });
     } catch (err) {
       console.log(err, "error");
@@ -234,6 +221,19 @@ module.exports = {
       if (!transation) {
         return sendErrorResponse(res, 400, "Transation not found");
       }
+
+      let wallet = await B2BWallet.findOne({
+        reseller: b2bWalletWithdraw.resellerId,
+      });
+      if (!wallet) {
+        wallet = new B2BWallet({
+          balance: 0,
+          reseller: b2bWalletWithdraw.resellerId,
+        });
+      }
+
+      wallet.balance += Number(b2bWalletWithdraw.amount);
+      await wallet.save();
 
       b2bWalletWithdraw.status = "cancelled";
       await b2bWalletWithdraw.save();

@@ -2,10 +2,10 @@ const { hash } = require("bcryptjs");
 const crypto = require("crypto");
 const { isValidObjectId, Types } = require("mongoose");
 
-const { sendErrorResponse } = require("../../helpers");
+const { sendErrorResponse, sendMobileOtp } = require("../../helpers");
 const { sendSubAgentPassword } = require("../helpers");
 const sendForgetPasswordOtp = require("../helpers/sendForgetPasswordMail");
-const { Reseller } = require("../models");
+const { Reseller, B2BTransaction, B2BWallet } = require("../models");
 const {
   subAgentRegisterSchema,
   resellerForgetPasswordSchema,
@@ -103,8 +103,12 @@ module.exports = {
       };
 
       if (search && search !== "") {
-        filter.name = { $regex: search, $options: "i" };
+        filter.$or = [
+          { name: { $regex: search, $options: "i" } },
+          { companyName: { $regex: search, $options: "i" } },
+        ];
       }
+
       const resellerList = await Reseller.find(filter).select(
         "-jwtToken -password"
       );
@@ -114,7 +118,8 @@ module.exports = {
       }
 
       res.status(200).json(resellerList);
-    } catch (error) {
+    } catch (err) {
+      console.log(err, "error");
       sendErrorResponse(res, 500, err);
     }
   },
@@ -127,15 +132,80 @@ module.exports = {
         return sendErrorResponse(res, 400, "Invalid reseller id");
       }
 
-      const subAgent = await Reseller.findById(id)
+      const reseller = await Reseller.findById(id)
         .populate("country", "countryName flag phonecode")
         .select("-jwtToken -password")
         .lean();
-      if (!subAgent) {
-        return sendErrorResponse(res, 404, "SubAgent not found");
+
+      if (!reseller) {
+        return sendErrorResponse(res, 400, "subAgent not Found ");
       }
 
-      res.status(200).json({ subAgent });
+      const wallet = await B2BWallet.findOne({ reseller: reseller?._id });
+
+      let totalEarnings = [];
+      let pendingEarnings = [];
+      let withdrawTotal = [];
+
+
+      if (wallet) {
+        totalEarnings = await B2BTransaction.aggregate([
+          {
+            $match: {
+              reseller: reseller?._id,
+              status: "success",
+              transactionType: "markup",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$amount" },
+            },
+          },
+        ]);
+
+        pendingEarnings = await B2BTransaction.aggregate([
+          {
+            $match: {
+              reseller: reseller?._id,
+              status: "pending",
+              transactionType: "markup",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$amount" },
+            },
+          },
+        ]);
+
+        withdrawTotal = await B2BTransaction.aggregate([
+          {
+            $match: {
+              reseller: reseller?._id,
+              status: "success",
+              transactionType: "withdraw",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$amount" },
+            },
+          },
+        ]);
+      }
+      res.status(200).json({
+        subAgent: reseller,
+        balance: wallet ? wallet.balance : 0,
+        totalEarnings: totalEarnings[0]?.total || 0,
+        pendingEarnings: pendingEarnings[0]?.total || 0,
+        withdrawTotal: withdrawTotal[0]?.total || 0,
+      });
+
+      // res.status(200).json({ subAgent });
     } catch (err) {
       console.log(err, "error");
       sendErrorResponse(res, 500, err);
@@ -146,15 +216,15 @@ module.exports = {
     try {
       const { email } = req.body;
 
-      const reseller = await Reseller.findOne({ email });
+      const reseller = await Reseller.findOne({ email: email });
 
       if (!reseller) {
         return sendErrorResponse(res, 404, "Account not found");
       }
 
-      const otp = await sendMobileOtp(countryDetail.phonecode, phoneNumber);
+      const otp = 12345;
 
-      sendForgetPasswordOtp(reseller, otp);
+      await sendForgetPasswordOtp(reseller, otp);
 
       reseller.otp = otp;
 
@@ -194,6 +264,38 @@ module.exports = {
       reseller.password = hashedPassowrd;
 
       await reseller.save();
+
+      res.status(200).json({ message: "Password Updated Sucessfully" });
+    } catch (err) {
+      sendErrorResponse(res, 500, err);
+    }
+  },
+
+  deleteSubAgent: async (req, res) => {
+    try {
+      const { resellerId } = req.params;
+
+      if (!isValidObjectId(resellerId)) {
+        return sendErrorResponse(res, 400, "invalid reseller id");
+      }
+
+      const subAgent = await Reseller.findById(resellerId);
+
+      if (!subAgent) {
+        return sendErrorResponse(res, 400, "subAgent not found");
+      }
+
+      if (subAgent.referredBy == req.reseller._id) {
+        return sendErrorResponse(res, 400, "subAgent not Found ");
+      }
+
+      subAgent.status = "disabled";
+
+      await subAgent.save();
+
+      res
+        .status(200)
+        .json({ message: "SubAgent Has Been Disabled Successfully" });
     } catch (err) {
       sendErrorResponse(res, 500, err);
     }

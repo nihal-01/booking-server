@@ -8,6 +8,8 @@ const {
     getAccount,
     updateUser,
     updatePassword,
+    forgetPassword,
+    completeForgetPassword
 } = require("../controllers/usersController");
 const userAuth = require("../middlewares/userAuth");
 
@@ -45,10 +47,11 @@ const upload = multer({
 
 router.post("/signup", doSignup);
 router.post("/login", doLogin);
-
 router.get("/my-account", userAuth, getAccount);
-
 router.patch("/update", userAuth, upload.single("avatar"), updateUser);
 router.patch("/update/password", userAuth, updatePassword);
+router.patch('/forget-password' , forgetPassword)
+router.patch('/complete/forget-password' , completeForgetPassword)
+
 
 module.exports = router;

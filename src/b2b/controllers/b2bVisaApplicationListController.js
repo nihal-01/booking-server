@@ -4,13 +4,13 @@ const { VisaApplication } = require("../../models");
 module.exports = {
   getB2BAllVisaApplication: async (req, res) => {
     try {
-      const { skip = 0, limit = 10, status } = req.query;
+      const { skip = 0, limit = 10, search } = req.query;
 
       let query = { reseller: req.reseller._id, status: "payed" };
 
-      //   if (status && status !== "all") {
-      //     query.status = status;
-      //   }
+      if (search && search !== "") {
+        query.referenceNumber = { $regex: search, $options: "i" };
+      }
 
       const visaApplication = await VisaApplication.find(query)
         .sort({
