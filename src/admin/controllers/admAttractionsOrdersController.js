@@ -4,7 +4,7 @@ const xl = require("excel4node");
 const {
     handleAttractionOrderMarkup,
 } = require("../../b2b/helpers/attractionOrderHelpers");
-const { B2BAttractionOrder, B2BWallet } = require("../../b2b/models");
+const { B2BAttractionOrder, B2BWallet, B2BTransaction } = require("../../b2b/models");
 const { sendErrorResponse } = require("../../helpers");
 const { AttractionOrder, Driver } = require("../../models");
 const {
@@ -655,14 +655,20 @@ module.exports = {
                     {
                         _id: orderId,
                     },
-                    { activities: { $elemMatch: { _id: bookingId } } }
+                    {
+                        activities: { $elemMatch: { _id: bookingId } },
+                        reseller: 1,
+                    }
                 );
             } else {
                 orderDetails = await B2BAttractionOrder.findOne(
                     {
                         _id: orderId,
                     },
-                    { activities: { $elemMatch: { _id: bookingId } } }
+                    {
+                        activities: { $elemMatch: { _id: bookingId } },
+                        reseller: 1,
+                    }
                 );
             }
 
@@ -717,6 +723,7 @@ module.exports = {
                 let wallet = await B2BWallet.findOne({
                     reseller: orderDetails.reseller,
                 });
+
                 if (!wallet) {
                     wallet = new B2BWallet({
                         balance: 0,
@@ -725,7 +732,7 @@ module.exports = {
                     await wallet.save();
                 }
                 const newTransaction = new B2BTransaction({
-                    amount: orderDetails.activities[0].amount,
+                    amount: orderDetails.activities[0].grandTotal,
                     reseller: orderDetails.reseller,
                     transactionType: "refund",
                     paymentProcessor: "wallet",
