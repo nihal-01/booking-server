@@ -145,6 +145,9 @@ module.exports = {
 
       let totalEarnings = [];
       let pendingEarnings = [];
+      let withdrawTotal = [];
+
+
       if (wallet) {
         totalEarnings = await B2BTransaction.aggregate([
           {
@@ -177,14 +180,30 @@ module.exports = {
             },
           },
         ]);
+
+        withdrawTotal = await B2BTransaction.aggregate([
+          {
+            $match: {
+              reseller: reseller?._id,
+              status: "success",
+              transactionType: "withdraw",
+            },
+          },
+          {
+            $group: {
+              _id: null,
+              total: { $sum: "$amount" },
+            },
+          },
+        ]);
       }
       res.status(200).json({
         subAgent: reseller,
         balance: wallet ? wallet.balance : 0,
         totalEarnings: totalEarnings[0]?.total || 0,
         pendingEarnings: pendingEarnings[0]?.total || 0,
+        withdrawTotal: withdrawTotal[0]?.total || 0,
       });
-
 
       // res.status(200).json({ subAgent });
     } catch (err) {
@@ -281,6 +300,4 @@ module.exports = {
       sendErrorResponse(res, 500, err);
     }
   },
-
- 
 };
