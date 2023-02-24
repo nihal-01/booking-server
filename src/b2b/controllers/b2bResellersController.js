@@ -7,297 +7,380 @@ const { sendSubAgentPassword } = require("../helpers");
 const sendForgetPasswordOtp = require("../helpers/sendForgetPasswordMail");
 const { Reseller, B2BTransaction, B2BWallet } = require("../models");
 const {
-  subAgentRegisterSchema,
-  resellerForgetPasswordSchema,
+    subAgentRegisterSchema,
+    resellerForgetPasswordSchema,
 } = require("../validations/b2bReseller.schema");
 
 module.exports = {
-  registerSubAgent: async (req, res) => {
-    try {
-      const {
-        email,
-        companyName,
-        address,
-        telephoneNumber,
-        companyRegistration,
-        trnNumber,
-        website,
-        country,
-        city,
-        zipCode,
-        designation,
-        name,
-        phoneNumber,
-        skypeId,
-        whatsappNumber,
-      } = req.body;
+    registerSubAgent: async (req, res) => {
+        try {
+            const {
+                email,
+                companyName,
+                address,
+                telephoneNumber,
+                companyRegistration,
+                trnNumber,
+                website,
+                country,
+                city,
+                zipCode,
+                designation,
+                name,
+                phoneNumber,
+                skypeId,
+                whatsappNumber,
+            } = req.body;
 
-      const { _, error } = subAgentRegisterSchema.validate(req.body);
-      if (error) {
-        return sendErrorResponse(
-          res,
-          400,
-          error.details ? error?.details[0]?.message : error.message
-        );
-      }
+            const { _, error } = subAgentRegisterSchema.validate(req.body);
+            if (error) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    error.details ? error?.details[0]?.message : error.message
+                );
+            }
 
-      const prevReseller = await Reseller.findOne({ email });
+            const prevReseller = await Reseller.findOne({ email });
 
-      if (prevReseller) {
-        return sendErrorResponse(res, 400, "Email already exists");
-      }
+            if (prevReseller) {
+                return sendErrorResponse(res, 400, "Email already exists");
+            }
 
-      const password = crypto.randomBytes(6).toString("hex");
-      const hashedPassowrd = await hash(password, 8);
+            const password = crypto.randomBytes(6).toString("hex");
+            const hashedPassowrd = await hash(password, 8);
 
-      const newSubAgent = new Reseller({
-        email,
-        companyName,
-        address,
-        website,
-        country,
-        city,
-        zipCode,
-        designation,
-        name,
-        phoneNumber,
-        skypeId,
-        whatsappNumber,
-        telephoneNumber,
-        referredBy: req.reseller._id,
-        trnNumber,
-        companyRegistration,
-        role: "sub-agent",
-        password: hashedPassowrd,
-        status: "ok",
-      });
+            const newSubAgent = new Reseller({
+                email,
+                companyName,
+                address,
+                website,
+                country,
+                city,
+                zipCode,
+                designation,
+                name,
+                phoneNumber,
+                skypeId,
+                whatsappNumber,
+                telephoneNumber,
+                referredBy: req.reseller._id,
+                trnNumber,
+                companyRegistration,
+                role: "sub-agent",
+                password: hashedPassowrd,
+                status: "ok",
+            });
 
-      await newSubAgent.save((error, subAgent) => {
-        if (error) {
-          return res.status(400).json({
-            message: error.message,
-          });
+            await newSubAgent.save((error, subAgent) => {
+                if (error) {
+                    return res.status(400).json({
+                        message: error.message,
+                    });
+                }
+
+                let agentCode = subAgent.agentCode;
+                sendSubAgentPassword(email, password, agentCode);
+
+                return res.status(200).json({
+                    message: "Sub-agent created successfully.",
+                    data: {
+                        agentCode: subAgent.agentCode,
+                    },
+                });
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
         }
+    },
 
-        let agentCode = subAgent.agentCode;
-        sendSubAgentPassword(email, password, agentCode);
+    listResellers: async (req, res) => {
+        try {
+            const { search } = req.query;
 
-        return res.status(200).json({
-          message: "Sub-agent created successfully.",
-          data: {
-            agentCode: subAgent.agentCode,
-          },
-        });
-      });
-    } catch (err) {
-      sendErrorResponse(res, 500, err);
-    }
-  },
+            const filter = {
+                referredBy: req.reseller.id,
+            };
 
-  listResellers: async (req, res) => {
-    try {
-      const { search } = req.query;
+            if (search && search !== "") {
+                filter.$or = [
+                    { name: { $regex: search, $options: "i" } },
+                    { companyName: { $regex: search, $options: "i" } },
+                    { agentCode: { $regex: search, $options: "i" } },
+                ];
+            }
 
-      const filter = {
-        referredBy: req.reseller.id,
-      };
+            const resellerList = await Reseller.find(filter).select(
+                "-jwtToken -password"
+            );
 
-      if (search && search !== "") {
-        filter.$or = [
-          { name: { $regex: search, $options: "i" } },
-          { companyName: { $regex: search, $options: "i" } },
-        ];
-      }
+            if (!resellerList) {
+                sendErrorResponse(res, 500, "No Resellers Found");
+            }
 
-      const resellerList = await Reseller.find(filter).select(
-        "-jwtToken -password"
-      );
+            res.status(200).json(resellerList);
+        } catch (err) {
+            console.log(err, "error");
+            sendErrorResponse(res, 500, err);
+        }
+    },
 
-      if (!resellerList) {
-        sendErrorResponse(res, 500, "No Resellers Found");
-      }
+    getSingleSubAgent: async (req, res) => {
+        try {
+            const { id } = req.params;
 
-      res.status(200).json(resellerList);
-    } catch (err) {
-      console.log(err, "error");
-      sendErrorResponse(res, 500, err);
-    }
-  },
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid reseller id");
+            }
 
-  getSingleSubAgent: async (req, res) => {
-    try {
-      const { id } = req.params;
+            const reseller = await Reseller.findById(id)
+                .populate("country", "countryName flag phonecode")
+                .select("-jwtToken -password")
+                .lean();
 
-      if (!isValidObjectId(id)) {
-        return sendErrorResponse(res, 400, "Invalid reseller id");
-      }
+            if (!reseller) {
+                return sendErrorResponse(res, 400, "subAgent not Found ");
+            }
 
-      const reseller = await Reseller.findById(id)
-        .populate("country", "countryName flag phonecode")
-        .select("-jwtToken -password")
-        .lean();
+            const wallet = await B2BWallet.findOne({ reseller: reseller?._id });
 
-      if (!reseller) {
-        return sendErrorResponse(res, 400, "subAgent not Found ");
-      }
+            let totalEarnings = [];
+            let pendingEarnings = [];
+            let withdrawTotal = [];
 
-      const wallet = await B2BWallet.findOne({ reseller: reseller?._id });
+            if (wallet) {
+                totalEarnings = await B2BTransaction.aggregate([
+                    {
+                        $match: {
+                            reseller: reseller?._id,
+                            status: "success",
+                            transactionType: "markup",
+                        },
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            total: { $sum: "$amount" },
+                        },
+                    },
+                ]);
 
-      let totalEarnings = [];
-      let pendingEarnings = [];
-      let withdrawTotal = [];
+                pendingEarnings = await B2BTransaction.aggregate([
+                    {
+                        $match: {
+                            reseller: reseller?._id,
+                            status: "pending",
+                            transactionType: "markup",
+                        },
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            total: { $sum: "$amount" },
+                        },
+                    },
+                ]);
 
+                withdrawTotal = await B2BTransaction.aggregate([
+                    {
+                        $match: {
+                            reseller: reseller?._id,
+                            status: "success",
+                            transactionType: "withdraw",
+                        },
+                    },
+                    {
+                        $group: {
+                            _id: null,
+                            total: { $sum: "$amount" },
+                        },
+                    },
+                ]);
+            }
+            res.status(200).json({
+                subAgent: reseller,
+                balance: wallet ? wallet.balance : 0,
+                totalEarnings: totalEarnings[0]?.total || 0,
+                pendingEarnings: pendingEarnings[0]?.total || 0,
+                withdrawTotal: withdrawTotal[0]?.total || 0,
+            });
 
-      if (wallet) {
-        totalEarnings = await B2BTransaction.aggregate([
-          {
-            $match: {
-              reseller: reseller?._id,
-              status: "success",
-              transactionType: "markup",
-            },
-          },
-          {
-            $group: {
-              _id: null,
-              total: { $sum: "$amount" },
-            },
-          },
-        ]);
+            // res.status(200).json({ subAgent });
+        } catch (err) {
+            console.log(err, "error");
+            sendErrorResponse(res, 500, err);
+        }
+    },
 
-        pendingEarnings = await B2BTransaction.aggregate([
-          {
-            $match: {
-              reseller: reseller?._id,
-              status: "pending",
-              transactionType: "markup",
-            },
-          },
-          {
-            $group: {
-              _id: null,
-              total: { $sum: "$amount" },
-            },
-          },
-        ]);
+    forgetPassword: async (req, res) => {
+        try {
+            const { email } = req.body;
 
-        withdrawTotal = await B2BTransaction.aggregate([
-          {
-            $match: {
-              reseller: reseller?._id,
-              status: "success",
-              transactionType: "withdraw",
-            },
-          },
-          {
-            $group: {
-              _id: null,
-              total: { $sum: "$amount" },
-            },
-          },
-        ]);
-      }
-      res.status(200).json({
-        subAgent: reseller,
-        balance: wallet ? wallet.balance : 0,
-        totalEarnings: totalEarnings[0]?.total || 0,
-        pendingEarnings: pendingEarnings[0]?.total || 0,
-        withdrawTotal: withdrawTotal[0]?.total || 0,
-      });
+            const reseller = await Reseller.findOne({ email: email });
 
-      // res.status(200).json({ subAgent });
-    } catch (err) {
-      console.log(err, "error");
-      sendErrorResponse(res, 500, err);
-    }
-  },
+            if (!reseller) {
+                return sendErrorResponse(res, 404, "Account not found");
+            }
 
-  forgetPassword: async (req, res) => {
-    try {
-      const { email } = req.body;
+            const otp = 12345;
 
-      const reseller = await Reseller.findOne({ email: email });
+            await sendForgetPasswordOtp(reseller, otp);
 
-      if (!reseller) {
-        return sendErrorResponse(res, 404, "Account not found");
-      }
+            reseller.otp = otp;
 
-      const otp = 12345;
+            await reseller.save();
 
-      await sendForgetPasswordOtp(reseller, otp);
+            res.status(200).json({ message: "otp sended to mail id" });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 
-      reseller.otp = otp;
+    confirmOtpForgetPassword: async (req, res) => {
+        try {
+            const { email, otp, newPassword, confirmPassword } = req.body;
 
-      await reseller.save();
+            const { _, error } = resellerForgetPasswordSchema.validate(
+                req.body
+            );
+            if (error) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    error.details ? error?.details[0]?.message : error.message
+                );
+            }
 
-      res.status(200).json({ message: "otp sended to mail id" });
-    } catch (err) {
-      sendErrorResponse(res, 500, err);
-    }
-  },
+            const reseller = await Reseller.findOne({ email });
 
-  confirmOtpForgetPassword: async (req, res) => {
-    try {
-      const { email, otp, newPassword, confirmPassword } = req.body;
+            if (!reseller) {
+                return sendErrorResponse(res, 404, "Account not found");
+            }
 
-      const { _, error } = resellerForgetPasswordSchema.validate(req.body);
-      if (error) {
-        return sendErrorResponse(
-          res,
-          400,
-          error.details ? error?.details[0]?.message : error.message
-        );
-      }
+            if (reseller.otp !== Number(otp)) {
+                return sendErrorResponse(res, 404, "OTP Is Wrong");
+            }
 
-      const reseller = await Reseller.findOne({ email });
+            const hashedPassowrd = await hash(newPassword, 8);
 
-      if (!reseller) {
-        return sendErrorResponse(res, 404, "Account not found");
-      }
+            reseller.password = hashedPassowrd;
 
-      if (reseller.otp !== Number(otp)) {
-        return sendErrorResponse(res, 404, "OTP Is Wrong");
-      }
+            await reseller.save();
 
-      const hashedPassowrd = await hash(newPassword, 8);
+            res.status(200).json({ message: "Password Updated Sucessfully" });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 
-      reseller.password = hashedPassowrd;
+    deleteSubAgent: async (req, res) => {
+        try {
+            const { resellerId } = req.params;
 
-      await reseller.save();
+            if (!isValidObjectId(resellerId)) {
+                return sendErrorResponse(res, 400, "invalid reseller id");
+            }
 
-      res.status(200).json({ message: "Password Updated Sucessfully" });
-    } catch (err) {
-      sendErrorResponse(res, 500, err);
-    }
-  },
+            const subAgent = await Reseller.findById(resellerId);
 
-  deleteSubAgent: async (req, res) => {
-    try {
-      const { resellerId } = req.params;
+            if (!subAgent) {
+                return sendErrorResponse(res, 400, "subAgent not found");
+            }
 
-      if (!isValidObjectId(resellerId)) {
-        return sendErrorResponse(res, 400, "invalid reseller id");
-      }
+            if (subAgent.referredBy == req.reseller._id) {
+                return sendErrorResponse(res, 400, "subAgent not Found ");
+            }
 
-      const subAgent = await Reseller.findById(resellerId);
+            subAgent.status = "disabled";
 
-      if (!subAgent) {
-        return sendErrorResponse(res, 400, "subAgent not found");
-      }
+            await subAgent.save();
 
-      if (subAgent.referredBy == req.reseller._id) {
-        return sendErrorResponse(res, 400, "subAgent not Found ");
-      }
+            res.status(200).json({
+                message: "SubAgent Has Been Disabled Successfully",
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 
-      subAgent.status = "disabled";
+    updateSubAgent: async (req, res) => {
+        try {
+            const { subAgentId } = req.params;
 
-      await subAgent.save();
+            const {
+                email,
+                companyName,
+                address,
+                telephoneNumber,
+                companyRegistration,
+                trnNumber,
+                website,
+                country,
+                city,
+                zipCode,
+                designation,
+                name,
+                phoneNumber,
+                skypeId,
+                whatsappNumber,
+            } = req.body;
 
-      res
-        .status(200)
-        .json({ message: "SubAgent Has Been Disabled Successfully" });
-    } catch (err) {
-      sendErrorResponse(res, 500, err);
-    }
-  },
+            const { _, error } = subAgentRegisterSchema.validate(req.body);
+            if (error) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    error.details ? error?.details[0]?.message : error.message
+                );
+            }
+
+            if (!isValidObjectId(subAgentId)) {
+                return sendErrorResponse(res, 400, "invalid subAgent id");
+            }
+
+            const subAgent = await Reseller.findById(subAgentId);
+
+            if (!subAgent) {
+                return sendErrorResponse(res, 400, "SubAgent Not Found");
+            }
+
+            if (subAgent.referredBy !== req.reseller._id) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "SubAgent Not Register Under Your Account"
+                );
+            }
+
+            const subAgentDetails = await Reseller.updateOne(
+                { _id: subAgentId },
+                {
+                    $set: {
+                        email,
+                        companyName,
+                        address,
+                        telephoneNumber,
+                        companyRegistration,
+                        trnNumber,
+                        website,
+                        country,
+                        city,
+                        zipCode,
+                        designation,
+                        name,
+                        phoneNumber,
+                        skypeId,
+                        whatsappNumber,
+                    },
+                }
+            );
+
+            res.json({
+                message: "SubAgent Profile Has Been Edited Successfully",
+            });
+            
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };

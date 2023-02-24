@@ -7,6 +7,7 @@ const {
     captureCCAvenueAttractionPayment,
     captureRazorpayAttractionPayment,
     cancelAttractionOrder,
+    refundRequest,
     getSingleUserAllOrders} = require("../controllers/attractionsOrdersController");
 const { userAuthOrNot, userAuth } = require("../middlewares");
 
@@ -18,5 +19,7 @@ router.post("/cancel", userAuth, cancelAttractionOrder);
 router.post("/cancel", userAuth, cancelAttractionOrder);
 router.get("/single/:id",userAuth , getSingleAttractionOrder);
 router.get('/all' ,userAuth, getSingleUserAllOrders  )
+router.post('/:orderId/refund/:orderItemId' ,userAuth, refundRequest  )
+
 
 module.exports = router;

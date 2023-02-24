@@ -4,7 +4,11 @@ const xl = require("excel4node");
 const {
     handleAttractionOrderMarkup,
 } = require("../../b2b/helpers/attractionOrderHelpers");
-const { B2BAttractionOrder, B2BWallet } = require("../../b2b/models");
+const {
+    B2BAttractionOrder,
+    B2BWallet,
+    B2BTransaction,
+} = require("../../b2b/models");
 const { sendErrorResponse } = require("../../helpers");
 const { AttractionOrder, Driver } = require("../../models");
 const {
@@ -623,7 +627,9 @@ module.exports = {
                 await sendOrderConfirmationEmail(
                     orderAttraction.email,
                     orderAttraction.name,
-                    orderAttraction
+                    orderAttraction,
+                    bookingConfirmationNumber,
+                    note
                 );
             } else {
                 let orderAttraction = await B2BAttractionOrder.findOne(
@@ -639,6 +645,7 @@ module.exports = {
                     note
                 );
             }
+
             res.status(200).json({
                 message: "Booking confirmed successfully",
                 bookingConfirmationNumber,
@@ -666,14 +673,19 @@ module.exports = {
                     {
                         _id: orderId,
                     },
-                    { activities: { $elemMatch: { _id: bookingId } } }
+                    {
+                        activities: { $elemMatch: { _id: bookingId } },
+                    }
                 );
             } else {
                 orderDetails = await B2BAttractionOrder.findOne(
                     {
                         _id: orderId,
                     },
-                    { activities: { $elemMatch: { _id: bookingId } } }
+                    {
+                        activities: { $elemMatch: { _id: bookingId } },
+                        reseller: 1,
+                    }
                 );
             }
 
@@ -708,7 +720,7 @@ module.exports = {
                         "activities.$.cancelledBy": "admin",
                         "activities.$.cancellationFee": 0,
                         "activities.$.refundAmount":
-                            orderDetails.activities[0].amount,
+                            orderDetails.activities[0].grandTotal,
                         "activities.$.isRefundAvailable": true,
                     },
                     { runValidators: true }
@@ -736,7 +748,7 @@ module.exports = {
                     await wallet.save();
                 }
                 const newTransaction = new B2BTransaction({
-                    amount: orderDetails.activities[0].amount,
+                    amount: orderDetails.activities[0].grandTotal,
                     reseller: orderDetails.reseller,
                     transactionType: "refund",
                     paymentProcessor: "wallet",
@@ -752,12 +764,41 @@ module.exports = {
                 await newTransaction.save();
             }
 
-            // send email
+            if (orderedBy === "b2c") {
+                orderAttraction = await AttractionOrder.findOne(
+                    { _id: orderId, "activities._id": bookingId },
+                    {
+                        "activities.$": 1,
+                        referenceNumber: 1,
+                        reseller: 1,
+                        email: 1,
+                        name: 1,
+                    }
+                ).populate("activities.attraction");
+
+                await sendOrderCancellationEmail(
+                    orderAttraction.email,
+                    orderAttraction.name,
+                    orderAttraction
+                );
+            } else {
+                let orderAttraction = await B2BAttractionOrder.findOne(
+                    { _id: orderId, "activities._id": bookingId },
+                    { "activities.$": 1, referenceNumber: 1, reseller: 1 }
+                ).populate("reseller activities.attraction");
+
+                await sendOrderCancellationEmail(
+                    orderAttraction.reseller.email,
+                    orderAttraction.reseller.name,
+                    orderAttraction
+                );
+            }
 
             res.status(200).json({
                 message: "Booking cancelled successfully",
             });
         } catch (err) {
+            console.log(err, "eror");
             sendErrorResponse(res, 500, err);
         }
     },

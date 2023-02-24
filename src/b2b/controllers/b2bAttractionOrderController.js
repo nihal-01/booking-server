@@ -1266,7 +1266,7 @@ module.exports = {
 
             let reseller = req.reseller;
             const companyDetails = await HomeSettings.findOne();
-            sendWalletDeductMail(reseller, attractionOrder , companyDetails);
+            sendWalletDeductMail(reseller, attractionOrder, companyDetails);
 
             transaction.status = "success";
             await transaction.save();
@@ -1575,6 +1575,9 @@ module.exports = {
                         totalOffer: 1,
                         country: 1,
                         activities: {
+                            _id: 1,
+                            bookingConfirmationNumber: 1,
+                            note: 1,
                             adultTickets: 1,
                             childrenTickets: 1,
                             infantTickets: 1,
@@ -1632,10 +1635,15 @@ module.exports = {
 
     getAttractionOrderTickets: async (req, res) => {
         try {
-            const { orderId, orderItemId } = req.params;
+            const { orderId, activityId } = req.params;
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "invalid order id");
+            }
+
+
+            if (!isValidObjectId(activityId)) {
+                return sendErrorResponse(res, 400, "invalid activity id");
             }
 
             // const orderDetailss = await B2BAttractionOrder.findOne(
@@ -1660,7 +1668,7 @@ module.exports = {
                         _id: Types.ObjectId(orderId),
                         orderStatus: "paid",
                         activities: {
-                            $elemMatch: { _id: Types.ObjectId(orderItemId) },
+                            $elemMatch: { _id: Types.ObjectId(activityId) },
                         },
                     },
                 },
@@ -1703,9 +1711,21 @@ module.exports = {
                                 logo: 1,
                                 images: 1,
                             },
+                            _id: 1,
+                            bookingConfirmationNumber: 1,
+                            note: 1,
                             adultTickets: 1,
-                            childTickets: 1,
+                            childrenTickets: 1,
                             infantTickets: 1,
+                            status: 1,
+                            amount: 1,
+                            offerAmount: 1,
+                            transferType: 1,
+                            adultsCount: 1,
+                            childrenCount: 1,
+                            infantCount: 1,
+                            date: 1,
+                            bookingType: 1,
                         },
                     },
                 },
