@@ -31,6 +31,8 @@ const RoomType = require("./roomType.model");
 const B2CVisaApplication = require("./b2cVisaApplication.model");
 const ApiMaster = require("./apiMaster.model");
 const AttractionItinerary = require("./attractionItinerary.model");
+const Refund = require('./refund.model')
+const B2CBankDetails = require('./b2cBankDetails.model') 
 
 module.exports = {
     HomeSettings,
@@ -67,4 +69,6 @@ module.exports = {
     B2CVisaApplication,
     ApiMaster,
     AttractionItinerary,
+    Refund,
+    B2CBankDetails
 };

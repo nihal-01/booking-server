@@ -36,6 +36,7 @@ const {
     admB2bSpecialMarkupRouter,
     admApiMasterRouter,
     admAttractionItinerariesRouter,
+    admRefundRouter
 } = require("./routes");
 
 router.use("/auth", admAuthRouter);
@@ -76,5 +77,7 @@ router.use("/visa/markup", admVisaMarkupRouter);
 router.use("/wallets/b2b", admB2bWalletsRouter);
 router.use("/markup/b2b", admB2bSpecialMarkupRouter);
 router.use("/api-master", admApiMasterRouter);
+router.use("/refund", admRefundRouter);
+
 
 module.exports = router;

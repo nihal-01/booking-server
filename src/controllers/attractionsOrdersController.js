@@ -13,6 +13,8 @@ const {
     Country,
     B2CAttractionMarkup,
     B2CTransaction,
+    Refund,
+    B2CBankDetails,
 } = require("../models");
 const {
     attractionOrderSchema,
@@ -1323,6 +1325,7 @@ module.exports = {
             }
 
             // Refund the order amount after substracting fee
+
             await AttractionOrder.findOneAndUpdate(
                 {
                     _id: orderId,
@@ -1341,6 +1344,93 @@ module.exports = {
 
             res.status(200).json({
                 message: "you have successfully cancelled the order",
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    refundRequest: async (req, res) => {
+        try {
+            const { orderId, orderItemId } = req.params;
+
+            const {
+                isoCode,
+                bankName,
+                accountHolderName,
+                accountNumber,
+                ifscCode,
+                ibanCode,
+            } = req.body;
+
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "invalid order id");
+            }
+
+            if (!isValidObjectId(orderItemId)) {
+                return sendErrorResponse(res, 400, "invalid orderItemId id");
+            }
+
+            let country = await Country.findOne({ isocode: isoCode });
+
+            if (!country) {
+                return sendErrorResponse(res, 400, "Country Not Found");
+            }
+
+            if (isoCode === "IN" && ifscCode == "") {
+                return sendErrorResponse(res, 400, "IFSC Code is required");
+            }
+
+            const attractionOrder = await AttractionOrder.findOne({
+                _id: orderId,
+                user: req.user?._id,
+                activities: {
+                    $elemMatch: {
+                        _id: orderItemId,
+                        isRefundAvailable: true,
+                    },
+                },
+            });
+
+            console.log(attractionOrder, "attractionOrders");
+
+            if (!attractionOrder) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "attraction order not found"
+                );
+            }
+
+            let bankDetails = new B2CBankDetails({
+                bankName,
+                bankCountry: country.isocode,
+                countryId: country._id,
+                accountHolderName,
+                accountNumber,
+                ifscCode,
+                ibanCode,
+            });
+
+            await bankDetails.save();
+
+            console.log(bankDetails, "bankDetails");
+
+            const refund = new Refund({
+                category: "attraction",
+                orderId: orderId,
+                activitiesId: orderItemId,
+                userId: req.user._id,
+                amount: attractionOrder.activities[0].refundAmount,
+                bankDetails: bankDetails._id,
+                
+            });
+
+            await refund.save();
+
+            console.log(refund, "refund");
+            res.status(200).json({
+                message: "Refund Request Has Been Send Suceessfully",
             });
         } catch (err) {
             sendErrorResponse(res, 500, err);
