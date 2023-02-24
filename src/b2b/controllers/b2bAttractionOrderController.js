@@ -1266,7 +1266,7 @@ module.exports = {
 
             let reseller = req.reseller;
             const companyDetails = await HomeSettings.findOne();
-            sendWalletDeductMail(reseller, attractionOrder , companyDetails);
+            sendWalletDeductMail(reseller, attractionOrder, companyDetails);
 
             transaction.status = "success";
             await transaction.save();
@@ -1575,6 +1575,9 @@ module.exports = {
                         totalOffer: 1,
                         country: 1,
                         activities: {
+                            _id: 1,
+                            bookingConfirmationNumber: 1,
+                            note: 1,
                             adultTickets: 1,
                             childrenTickets: 1,
                             infantTickets: 1,
@@ -1636,6 +1639,10 @@ module.exports = {
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "invalid order id");
+            }
+
+            if (!isValidObjectId(orderItemId)) {
+                return sendErrorResponse(res, 400, "invalid activity id");
             }
 
             // const orderDetailss = await B2BAttractionOrder.findOne(

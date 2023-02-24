@@ -1418,13 +1418,12 @@ module.exports = {
 
             const refund = new Refund({
                 category: "attraction",
-                orderId: orderId,
-                activitiesId: orderItemId,
+                orderId: attractionOrder._id,
+                actitvityId: attractionOrder.activities[0]._id,
                 userId: req.user._id,
                 amount: attractionOrder.activities[0].refundAmount,
                 bankDetails: bankDetails._id,
-                status : "pending"
-                
+                status: "pending",
             });
 
             await refund.save();

@@ -106,6 +106,8 @@ module.exports = {
         filter.$or = [
           { name: { $regex: search, $options: "i" } },
           { companyName: { $regex: search, $options: "i" } },
+          { agentCode: { $regex: search, $options: "i" } },
+
         ];
       }
 

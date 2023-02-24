@@ -1,7 +1,13 @@
 const router = require("express").Router();
 
-const { listRefundAll } = require("../controllers/admRefundController");
+const {
+    listRefundAll,
+    approveRefundRequest,
+    cancelRefundRequest,
+} = require("../controllers/admRefundController");
 
 router.get("/all", listRefundAll);
+router.patch("/approve/:requestId", approveRefundRequest);
+router.patch("/cancel/:requestId", cancelRefundRequest);
 
 module.exports = router;

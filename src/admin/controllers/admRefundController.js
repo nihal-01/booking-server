@@ -2,7 +2,12 @@ const { sendErrorResponse } = require("../../helpers");
 const {
     paymentServiceSchema,
 } = require("../validations/admPaymentService.schema");
-const { PaymentService, Refund, B2CTransaction } = require("../../models");
+const {
+    PaymentService,
+    Refund,
+    B2CTransaction,
+    AttractionOrder,
+} = require("../../models");
 const { isValidObjectId } = require("mongoose");
 module.exports = {
     listRefundAll: async (req, res) => {
@@ -15,7 +20,7 @@ module.exports = {
                 category,
             } = req.query;
 
-            console.log("hiiii");
+            console.log(category, "hiiii");
 
             const filters = {};
 
@@ -41,17 +46,68 @@ module.exports = {
                 },
                 {
                     $lookup: {
+                        from: "attractionorders",
+                        localField: "orderId",
+                        foreignField: "_id",
+                        as: "order",
+                    },
+                },
+                {
+                    $lookup: {
                         from: "users",
                         localField: "userId",
                         foreignField: "_id",
                         as: "user",
                     },
                 },
+                {
+                    $set: {
+                        user: {
+                            $arrayElemAt: ["$user", 0],
+                        },
+                        bankDetails: {
+                            $arrayElemAt: ["$bankDetails", 0],
+                        },
+                        order: {
+                            $arrayElemAt: ["$order", 0],
+                        },
+                    },
+                },
+                {
+                    $sort: {
+                        createdAt: -1,
+                    },
+                },
+                {
+                    $group: {
+                        _id: null,
+                        count: { $sum: 1 },
+                        RequestDetails: { $push: "$$ROOT" },
+                    },
+                },
+                {
+                    $project: {
+                        _id: 0,
+                        count: 1,
+                        data: {
+                            $slice: [
+                                "$RequestDetails",
+                                Number(skip * limit),
+                                Number(limit),
+                            ],
+                        },
+                    },
+                },
             ]);
 
             console.log(listRefund, "listRefund");
 
-            res.status(200).json({ listRefund });
+            res.status(200).json({
+                listRefund: listRefund[0]?.data,
+                totallistRefund: listRefund[0]?.count,
+                skip: Number(skip),
+                limit: Number(limit),
+            });
             // }
         } catch (err) {
             console.log(err, "error");
@@ -78,6 +134,29 @@ module.exports = {
                 return sendErrorResponse(res, 404, "Refund Already Done");
             }
 
+            const attractionOrder = await AttractionOrder.findOneAndUpdate(
+                {
+                    _id: refendRequest?.orderId,
+                    user: req.user?._id,
+                    "activities._id": refendRequest?.activityId,
+                    "activities.isRefundAvailable": true,
+                },
+                {
+                    $set: {
+                        "activities.$.isRefunded": true,
+                    },
+                },
+                { new: true }
+            );
+
+            if (!attractionOrder) {
+                return sendErrorResponse(
+                    res,
+                    404,
+                    "Attraction Order Not Found"
+                );
+            }
+
             refendRequest.paymentReferenceNo = paymentReferenceNo;
 
             refendRequest.status = "success";
@@ -90,6 +169,7 @@ module.exports = {
                 paymentProcessor: "bank",
                 orderId: refendRequest?._id,
             });
+
             await transaction.save();
             await refendRequest.save();
         } catch (err) {
@@ -97,9 +177,10 @@ module.exports = {
         }
     },
 
-    cancelRefund: async (req, res) => {
+    cancelRefundRequest: async (req, res) => {
         try {
-            const { requestId, reason } = req.params;
+            const { requestId } = req.params;
+            const { reason } = req.body;
 
             if (!isValidObjectId(requestId)) {
                 return sendErrorResponse(res, 400, "Invalid payment refund id");

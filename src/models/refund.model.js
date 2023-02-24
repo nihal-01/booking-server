@@ -9,21 +9,22 @@ const refundSchema = new Schema(
             required: true,
         },
         orderId: {
-            type: String,
-            required: true,
+            type: Schema.Types.ObjectId,
+            ref: "AttractionOrder",
+            required: function () {
+                return this.category === "attraction";
+            },
         },
-        // orderedBy: {
-        //   type: String,
-        //   enum: ["b2c", "b2b", "sub-agent"],
-        //   required: true,
-        // },
+        activityId: {
+            type: String,
+            required: function () {
+                return this.category === "attraction";
+            }
+        },
         userId: {
             type: Schema.Types.ObjectId,
             ref: "User",
             required: true,
-            // required: function () {
-            //   return this.orderedBy === "b2c";
-            // },
         },
 
         amount: {
