@@ -1635,11 +1635,13 @@ module.exports = {
 
     getAttractionOrderTickets: async (req, res) => {
         try {
-            const { orderId, orderItemId } = req.params;
+            const { orderId, activityId } = req.params;
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "invalid order id");
             }
+
+            console.log("hiii");
 
             if (!isValidObjectId(orderItemId)) {
                 return sendErrorResponse(res, 400, "invalid activity id");
@@ -1667,7 +1669,7 @@ module.exports = {
                         _id: Types.ObjectId(orderId),
                         orderStatus: "paid",
                         activities: {
-                            $elemMatch: { _id: Types.ObjectId(orderItemId) },
+                            $elemMatch: { _id: Types.ObjectId(activityId) },
                         },
                     },
                 },
@@ -1710,9 +1712,21 @@ module.exports = {
                                 logo: 1,
                                 images: 1,
                             },
+                            _id: 1,
+                            bookingConfirmationNumber: 1,
+                            note: 1,
                             adultTickets: 1,
-                            childTickets: 1,
+                            childrenTickets: 1,
                             infantTickets: 1,
+                            status: 1,
+                            amount: 1,
+                            offerAmount: 1,
+                            transferType: 1,
+                            adultsCount: 1,
+                            childrenCount: 1,
+                            infantCount: 1,
+                            date: 1,
+                            bookingType: 1,
                         },
                     },
                 },
