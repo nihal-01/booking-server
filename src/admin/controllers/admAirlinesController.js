@@ -1,4 +1,5 @@
 const { isValidObjectId } = require("mongoose");
+const { sendErrorResponse } = require("../../helpers");
 const { Airline } = require("../../models");
 const { airlineSchema } = require("../validations/admAirline.schema");
 
@@ -53,7 +54,7 @@ module.exports = {
             }
 
             const airline = await Airline.findOneAndUpdate(
-                { _id: id, isDeleted: true },
+                { _id: id, isDeleted: false },
                 {
                     ...req.body,
                     image,
@@ -127,8 +128,8 @@ module.exports = {
         try {
             const { id } = req.params;
 
-            if (isValidObjectId(id)) {
-                return sendErrorResponse(res, 400, "invalid order id");
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "invalid airline id");
             }
 
             const airline = await Airline.findOne({

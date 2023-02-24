@@ -1,10 +1,10 @@
 const Joi = require("joi");
 
 const airlineSchema = Joi.object({
-    icaoCode: Joi.string().required(),
+    airlineName: Joi.string().required(),
     airlineCode: Joi.number().required(),
-    iataDesignator: Joi.string().required(),
-    flightName: Joi.string().required(),
+    iataCode: Joi.string().required(),
+    icaoCode: Joi.string().required(),
     api: Joi.string().required(),
     image: Joi.string().allow("", null),
 });

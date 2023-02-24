@@ -55,10 +55,6 @@ app.use("/api/v1/admin", adminRouter);
 // B2B Route
 app.use("/api/v1/b2b", b2bRouter);
 
-app.get("/", async (req, res) => {
-    // await axios.get('/')
-});
-
 app.listen(PORT, () => {
     console.log(`server is up and running on port ${PORT}`);
 });
