@@ -2,32 +2,25 @@ const { Schema, model } = require("mongoose");
 
 const attractionItinerarySchema = new Schema(
     {
-        clientName: {
+        agentName: {
             type: String,
             required: true,
         },
-        clientEmail: {
+        agentEmail: {
             type: String,
             required: true,
         },
-        clientMobileNumber: {
+        agentMobileNumber: {
             type: String,
         },
-        title: {
+        queryDetails: {
             type: String,
             required: true,
         },
-        subTitle: {
+        referenceNo: {
             type: String,
+            required: true,
         },
-        // noOfNights: {
-        //     type: Number,
-        //     required: true,
-        // },
-        // noOfDays: {
-        //     type: Number,
-        //     required: true,
-        // },
         itineraries: {
             type: [
                 {
@@ -47,6 +40,9 @@ const attractionItinerarySchema = new Schema(
                                 itineraryTitle: {
                                     type: String,
                                     required: true,
+                                },
+                                note: {
+                                    type: String,
                                 },
                             },
                         ],

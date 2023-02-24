@@ -115,4 +115,16 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+
+    getAllFlightApis: async (req, res) => {
+        try {
+            const apis = await ApiMaster.find({ type: "flight" })
+                .sort({ apiName: 1 })
+                .collation({ locale: "en", caseLevel: true });
+
+            res.status(200).json(apis);
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };

@@ -48,9 +48,6 @@ module.exports = {
                 }
             }
 
-            // let noOfNights = itineraries.length;
-            // let noOfDays = itineraries.length + 1;
-
             const newAttractionItinerary = new AttractionItinerary({
                 ...req.body,
             });

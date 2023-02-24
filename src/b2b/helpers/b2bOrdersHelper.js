@@ -209,6 +209,7 @@ module.exports = {
                             bookingConfirmationNumber: 1,
                             drivers: 1,
                             _id: 1,
+                            note,
                             privateTransfers: 1,
                         },
                         referenceNumber: 1,

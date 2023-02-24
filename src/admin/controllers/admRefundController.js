@@ -15,6 +15,8 @@ module.exports = {
                 category,
             } = req.query;
 
+            console.log("hiiii");
+
             const filters = {};
 
             if (status && status !== "") {
@@ -25,33 +27,34 @@ module.exports = {
                 filters.category = category;
             }
 
-            if (orderedBy == "b2c") {
-                const listRefund = await Refund.aggregate([
-                    { $match: filters },
+            // if (orderedBy == "b2c") {
+            const listRefund = await Refund.aggregate([
+                { $match: filters },
 
-                    {
-                        $lookup: {
-                            from: "b2cbankdetails",
-                            localField: "bankDetails",
-                            foreignField: "_id",
-                            as: "bankDetails",
-                        },
+                {
+                    $lookup: {
+                        from: "b2cbankdetails",
+                        localField: "bankDetails",
+                        foreignField: "_id",
+                        as: "bankDetails",
                     },
-                    {
-                        $lookup: {
-                            from: "users",
-                            localField: "userId",
-                            foreignField: "_id",
-                            as: "user",
-                        },
+                },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "userId",
+                        foreignField: "_id",
+                        as: "user",
                     },
-                ]);
+                },
+            ]);
 
-                console.log(listRefund, "listRefund");
+            console.log(listRefund, "listRefund");
 
-                res.status(200).json(listRefund);
-            }
+            res.status(200).json({ listRefund });
+            // }
         } catch (err) {
+            console.log(err, "error");
             sendErrorResponse(res, 500, err);
         }
     },

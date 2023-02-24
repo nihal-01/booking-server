@@ -1423,6 +1423,7 @@ module.exports = {
                 userId: req.user._id,
                 amount: attractionOrder.activities[0].refundAmount,
                 bankDetails: bankDetails._id,
+                status : "pending"
                 
             });
 
