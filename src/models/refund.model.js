@@ -16,10 +16,10 @@ const refundSchema = new Schema(
             },
         },
         activityId: {
-            type: String,
+            type: Schema.Types.ObjectId,
             required: function () {
                 return this.category === "attraction";
-            }
+            },
         },
         userId: {
             type: Schema.Types.ObjectId,
@@ -42,6 +42,9 @@ const refundSchema = new Schema(
             required: true,
         },
         reason: {
+            type: String,
+        },
+        paymentReferenceNumber: {
             type: String,
         },
     },

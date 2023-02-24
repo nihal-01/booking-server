@@ -12,13 +12,7 @@ const { isValidObjectId } = require("mongoose");
 module.exports = {
     listRefundAll: async (req, res) => {
         try {
-            const {
-                skip = 0,
-                limit = 10,
-                orderedBy = "b2c",
-                status,
-                category,
-            } = req.query;
+            const { skip = 0, limit = 10, status, category } = req.query;
 
             console.log(category, "hiiii");
 
@@ -47,11 +41,63 @@ module.exports = {
                 {
                     $lookup: {
                         from: "attractionorders",
-                        localField: "orderId",
-                        foreignField: "_id",
+                        let: { orderId: "$orderId" },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: { $eq: ["$_id", "$$orderId"] },
+                                },
+                            },
+
+                            {
+                                $addFields: {
+                                    activities: {
+                                        $filter: {
+                                            input: "$activities",
+                                            as: "activity",
+                                            cond: {
+                                                $eq: [
+                                                    "$$activity.activityId",
+                                                    "$activityId",
+                                                ],
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                            {
+                                $lookup: {
+                                    from: "attractions",
+                                    localField: "activities.attraction",
+                                    foreignField: "_id",
+                                    as: "activities.attraction",
+                                },
+                            },
+                            {
+                                $set: {
+                                    "activities.attraction": {
+                                        $arrayElemAt: [
+                                            "$activities.attraction",
+                                            0,
+                                        ],
+                                    },
+                                },
+                            },
+                            {
+                                $project: {
+                                    referenceNumber: 1,
+                                    activities: {
+                                        attraction: {
+                                            title: 1,
+                                        },
+                                    },
+                                },
+                            },
+                        ],
                         as: "order",
                     },
                 },
+
                 {
                     $lookup: {
                         from: "users",
@@ -134,19 +180,25 @@ module.exports = {
                 return sendErrorResponse(res, 404, "Refund Already Done");
             }
 
+            console.log(
+                refendRequest?.orderId,
+                refendRequest?.activityId,
+                "jjj"
+            );
             const attractionOrder = await AttractionOrder.findOneAndUpdate(
                 {
                     _id: refendRequest?.orderId,
-                    user: req.user?._id,
-                    "activities._id": refendRequest?.activityId,
-                    "activities.isRefundAvailable": true,
-                },
-                {
-                    $set: {
-                        "activities.$.isRefunded": true,
+                    activities: {
+                        $elemMatch: {
+                            _id: refendRequest?.activityId,
+                            isRefundAvailable: true,
+                        },
                     },
                 },
-                { new: true }
+                {
+                    "activities.$.isRefunded": true,
+                },
+                { runValidators: true }
             );
 
             if (!attractionOrder) {
@@ -156,6 +208,8 @@ module.exports = {
                     "Attraction Order Not Found"
                 );
             }
+
+            console.log(attractionOrder, "attraction");
 
             refendRequest.paymentReferenceNo = paymentReferenceNo;
 
@@ -172,6 +226,10 @@ module.exports = {
 
             await transaction.save();
             await refendRequest.save();
+
+            res.status(200).json({
+                messgae: "Refund Status Updated Sucessfully",
+            });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

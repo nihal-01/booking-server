@@ -1641,9 +1641,8 @@ module.exports = {
                 return sendErrorResponse(res, 400, "invalid order id");
             }
 
-            console.log("hiii");
 
-            if (!isValidObjectId(orderItemId)) {
+            if (!isValidObjectId(activityId)) {
                 return sendErrorResponse(res, 400, "invalid activity id");
             }
 
