@@ -1,4 +1,4 @@
-const { sendErrorResponse } = require("../helpers");
+const { sendErrorResponse } = require("../../helpers");
 
 module.exports = {
     getFlightAvaialability: async (req, res) => {
