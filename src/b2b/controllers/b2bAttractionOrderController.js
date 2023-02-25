@@ -9,7 +9,6 @@ const {
     AttractionActivity,
     Country,
     AttractionTicket,
-    AttractionOrder,
     HomeSettings,
 } = require("../../models");
 const {
@@ -1640,7 +1639,6 @@ module.exports = {
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "invalid order id");
             }
-
 
             if (!isValidObjectId(activityId)) {
                 return sendErrorResponse(res, 400, "invalid activity id");
