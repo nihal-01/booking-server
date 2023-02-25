@@ -1,15 +1,15 @@
 const router = require("express").Router();
 
 const {
-  walletDeposit,
-  capturePaypalWalletDeposit,
-  captureCCAvenueWalletPayment,
-  captureRazorpayAttractionPayment,
+    walletDeposit,
+    capturePaypalWalletDeposit,
+    captureCCAvenueWalletPayment,
+    captureRazorpayAttractionPayment,
 } = require("../controllers/b2bWalletDepositController");
 
 const {
-  walletWithdrawalInitate,
-  walletWithdrawalComplete,
+    walletWithdrawalInitate,
+    walletWithdrawalComplete,
 } = require("../controllers/b2bWalletWithdrawlController");
 const { b2bAuth } = require("../middlewares");
 

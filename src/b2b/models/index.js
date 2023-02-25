@@ -12,16 +12,16 @@ const B2BBankDetails = require("./b2bBankDetails.model");
 const B2BWalletWithdraw = require("./b2bWithdrawRequest.model");
 
 module.exports = {
-  Reseller,
-  B2BClientVisaMarkup,
-  B2BSubAgentVisaMarkup,
-  B2BClientAttractionMarkup,
-  B2BSubAgentAttractionMarkup,
-  B2BTransaction,
-  B2BWallet,
-  B2BAttractionOrder,
-  B2BSpecialAttractionMarkup,
-  B2BSpecialVisaMarkup,
-  B2BBankDetails,
-  B2BWalletWithdraw,
+    Reseller,
+    B2BClientVisaMarkup,
+    B2BSubAgentVisaMarkup,
+    B2BClientAttractionMarkup,
+    B2BSubAgentAttractionMarkup,
+    B2BTransaction,
+    B2BWallet,
+    B2BAttractionOrder,
+    B2BSpecialAttractionMarkup,
+    B2BSpecialVisaMarkup,
+    B2BBankDetails,
+    B2BWalletWithdraw,
 };

@@ -2,8 +2,12 @@ const router = require("express").Router();
 const path = require("path");
 const multer = require("multer");
 
-const { listAllVisaApplication ,cancelVisaApplicationStatus, approveVisaApplicationStatus,listSingleVisaApplication} = require('../controllers/admVisaApplicationController')
-
+const {
+    listAllVisaApplication,
+    cancelVisaApplicationStatus,
+    approveVisaApplicationStatus,
+    listSingleVisaApplication,
+} = require("../controllers/admVisaApplicationController");
 
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -27,7 +31,7 @@ const upload = multer({
         fileSize: 20000000,
     },
     fileFilter: (req, file, cb) => {
-        const allowed = [".pdf",];
+        const allowed = [".pdf"];
         const ext = path.extname(file.originalname);
         if (!allowed.includes(ext)) {
             return cb(new Error("Please upload pdf"));
@@ -37,16 +41,13 @@ const upload = multer({
     storage: storage,
 });
 
-
-
-
-router.get('/all' , listAllVisaApplication )
-router.get('/:orderedBy/:id/single/:travellerId' , listSingleVisaApplication )
-router.patch("/:id/approve/:travellerId" , upload.single('pdfFile'),   approveVisaApplicationStatus)
-router.patch("/:id/reject/:travellerId" , cancelVisaApplicationStatus)
-
-
-
-
+router.get("/all", listAllVisaApplication);
+router.get("/:orderedBy/:id/single/:travellerId", listSingleVisaApplication);
+router.patch(
+    "/:id/approve/:travellerId",
+    upload.single("pdfFile"),
+    approveVisaApplicationStatus
+);
+router.patch("/:id/reject/:travellerId", cancelVisaApplicationStatus);
 
 module.exports = router;

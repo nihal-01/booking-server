@@ -1,12 +1,12 @@
 const router = require("express").Router();
 
 const {
-  registerSubAgent,
-  getSingleSubAgent,
-  forgetPassword,
-  confirmOtpForgetPassword,
-  listResellers,
-  subAgentAmountDetails,
+    registerSubAgent,
+    getSingleSubAgent,
+    forgetPassword,
+    confirmOtpForgetPassword,
+    listResellers,
+    subAgentAmountDetails,
 } = require("../controllers/b2bResellersController");
 const { b2bResellerAuth } = require("../middlewares");
 
