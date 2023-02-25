@@ -1,865 +1,1066 @@
 const { isValidObjectId, Types } = require("mongoose");
 const { sendErrorResponse, sendMobileOtp } = require("../../helpers");
 const {
-  VisaType,
-  VisaApplication,
-  Visa,
-  Country,
-  VisaDocument,
+    VisaType,
+    VisaApplication,
+    Visa,
+    Country,
+    VisaDocument,
 } = require("../../models");
 
 module.exports = {
-  getSingleVisa: async (req, res) => {
-    try {
-      const { id } = req.params;
+    getSingleVisa: async (req, res) => {
+        try {
+            const { id } = req.params;
 
-      if (!isValidObjectId(id)) {
-        return sendErrorResponse(res, 400, "Invalid VisaType id");
-      }
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid VisaType id");
+            }
 
-      if (req.reseller.role == "reseller") {
-        const visaType = await VisaType.aggregate([
-          {
-            $match: {
-              _id: Types.ObjectId(id),
-              isDeleted: false,
-            },
-          },
-          {
-            $lookup: {
-              from: "visas",
-              localField: "visa",
-              foreignField: "_id",
-              as: "visa",
-            },
-          },
-          {
-            $lookup: {
-              from: "b2bclientvisamarkups",
-              let: {
-                visaType: "$_id",
-              },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: ["$resellerId", req.reseller._id] },
-                        { $eq: ["$visaType", "$$visaType"] },
-                      ],
+            if (req.reseller.role == "reseller") {
+                const visaType = await VisaType.aggregate([
+                    {
+                        $match: {
+                            _id: Types.ObjectId(id),
+                            isDeleted: false,
+                        },
                     },
-                  },
-                },
-              ],
-              as: "markupClient",
-            },
-          },
-
-          {
-            $set: {
-              markupClient: { $arrayElemAt: ["$markupClient", 0] },
-            },
-          },
-          {
-            $addFields: {
-              totalPrice: {
-                $cond: [
-                  {
-                    $eq: ["$markupClient.markupType", "percentage"],
-                  },
-
-                  {
-                    $sum: [
-                      "$visaPrice",
-                      {
-                        $divide: [
-                          {
-                            $multiply: ["$markupClient.markup", "$visaPrice"],
-                          },
-                          100,
-                        ],
-                      },
-                    ],
-                  },
-
-                  {
-                    $sum: ["$visaPrice", "$markupClient.markup"],
-                  },
-                ],
-              },
-            },
-          },
-        ]);
-
-        console.log(visaType, "visaType");
-
-        res.status(200).json(visaType);
-      } else {
-        console.log(req.reseller, "reseller");
-        const visaType = await VisaType.aggregate([
-          {
-            $match: {
-              _id: Types.ObjectId(id),
-              isDeleted: false,
-            },
-          },
-          {
-            $lookup: {
-              from: "visas",
-              localField: "visa",
-              foreignField: "_id",
-              as: "visa",
-            },
-          },
-          {
-            $lookup: {
-              from: "b2bclientvisamarkups",
-              let: {
-                visaType: "$_id",
-              },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: ["$resellerId", req.reseller._id] },
-                        { $eq: ["$visaType", "$$visaType"] },
-                      ],
+                    {
+                        $lookup: {
+                            from: "visas",
+                            localField: "visa",
+                            foreignField: "_id",
+                            as: "visa",
+                        },
                     },
-                  },
-                },
-              ],
-              as: "markupClient",
-            },
-          },
-          {
-            $lookup: {
-              from: "b2bsubagentvisamarkups",
-              let: {
-                visaType: "$_id",
-              },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: ["$resellerId", req.reseller?.referredBy] },
-                        { $eq: ["$visaType", "$$visaType"] },
-                      ],
-                    },
-                  },
-                },
-              ],
-              as: "markupSubAgent",
-            },
-          },
-
-          {
-            $set: {
-              markupClient: { $arrayElemAt: ["$markupClient", 0] },
-              markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
-            },
-          },
-          {
-            $addFields: {
-              totalPriceSubAgent: {
-                $cond: [
-                  {
-                    $eq: ["$markupSubAgent.markupType", "percentage"],
-                  },
-
-                  {
-                    $sum: [
-                      "$visaPrice",
-                      {
-                        $divide: [
-                          {
-                            $multiply: ["$markupSubAgent.markup", "$visaPrice"],
-                          },
-                          100,
-                        ],
-                      },
-                    ],
-                  },
-
-                  {
-                    $sum: ["$visaPrice", "$markupSubAgent.markup"],
-                  },
-                ],
-              },
-            },
-          },
-          {
-            $addFields: {
-              totalPrice: {
-                $cond: [
-                  {
-                    $eq: ["$markupClient.markupType", "percentage"],
-                  },
-
-                  {
-                    $sum: [
-                      "$totalPriceSubAgent",
-                      {
-                        $divide: [
-                          {
-                            $multiply: [
-                              "$markupClient.markup",
-                              "$totalPriceSubAgent",
+                    {
+                        $lookup: {
+                            from: "b2bclientvisamarkups",
+                            let: {
+                                visaType: "$_id",
+                            },
+                            pipeline: [
+                                {
+                                    $match: {
+                                        $expr: {
+                                            $and: [
+                                                {
+                                                    $eq: [
+                                                        "$resellerId",
+                                                        req.reseller._id,
+                                                    ],
+                                                },
+                                                {
+                                                    $eq: [
+                                                        "$visaType",
+                                                        "$$visaType",
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                    },
+                                },
                             ],
-                          },
-                          100,
-                        ],
-                      },
-                    ],
-                  },
-
-                  {
-                    $sum: ["$totalPriceSubAgent", "$markupClient.markup"],
-                  },
-                ],
-              },
-            },
-          },
-        ]);
-
-        console.log(visaType, "visaType");
-
-        res.status(200).json(visaType[0]);
-      }
-    } catch (err) {
-      sendErrorResponse(res, 500, err);
-    }
-  },
-
-  getAllVisa: async (req, res) => {
-    try {
-      // if (req.reseller.role == "reseller") {
-      //   const visaType = await VisaType.aggregate([
-      //     {
-      //       $match: {
-      //         isDeleted: false,
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "visas",
-      //         localField: "visa",
-      //         foreignField: "_id",
-      //         as: "visa",
-      //       },
-      //     },
-      //     {
-      //       $lookup: {
-      //         from: "b2bclientvisamarkups",
-      //         let: {
-      //           visaType: "$_id",
-      //         },
-      //         pipeline: [
-      //           {
-      //             $match: {
-      //               $expr: {
-      //                 $and: [
-      //                   { $eq: ["$resellerId", req.reseller._id] },
-      //                   { $eq: ["$visaType", "$$visaType"] },
-      //                 ],
-      //               },
-      //             },
-      //           },
-      //         ],
-      //         as: "markupClient",
-      //       },
-      //     },
-
-      //     {
-      //       $set: {
-      //         markupClient: { $arrayElemAt: ["$markupClient", 0] },
-      //       },
-      //     },
-      //     {
-      //       $addFields: {
-      //         totalPrice: {
-      //           $cond: [
-      //             {
-      //               $eq: ["$markupClient.markupType", "percentage"],
-      //             },
-
-      //             {
-      //               $sum: [
-      //                 "$visaPrice",
-      //                 {
-      //                   $divide: [
-      //                     {
-      //                       $multiply: ["$markupClient.markup", "$visaPrice"],
-      //                     },
-      //                     100,
-      //                   ],
-      //                 },
-      //               ],
-      //             },
-
-      //             {
-      //               $sum: ["$visaPrice", "$markupClient.markup"],
-      //             },
-      //           ],
-      //         },
-      //       },
-      //     },
-      //   ]);
-
-      //   console.log(visaType, "visaType");
-
-      //   res.status(200).json(visaType);
-      // }else{
-
-      console.log(req.reseller, "reseller");
-      const visaType = await VisaType.aggregate([
-        {
-          $match: {
-            isDeleted: false,
-          },
-        },
-        {
-          $lookup: {
-            from: "visas",
-            localField: "visa",
-            foreignField: "_id",
-            as: "visa",
-          },
-        },
-        {
-          $lookup: {
-            from: "b2bclientvisamarkups",
-            let: {
-              visaType: "$_id",
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$resellerId", req.reseller._id] },
-                      { $eq: ["$visaType", "$$visaType"] },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "markupClient",
-          },
-        },
-        {
-          $lookup: {
-            from: "b2bsubagentvisamarkups",
-            let: {
-              visaType: "$_id",
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$resellerId", req.reseller?.referredBy] },
-                      { $eq: ["$visaType", "$$visaType"] },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "markupSubAgent",
-          },
-        },
-
-        {
-          $set: {
-            markupClient: { $arrayElemAt: ["$markupClient", 0] },
-            markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
-          },
-        },
-        {
-          $addFields: {
-            totalPriceSubAgent: {
-              $cond: [
-                {
-                  $eq: ["$markupSubAgent.markupType", "percentage"],
-                },
-
-                {
-                  $sum: [
-                    "$visaPrice",
-                    {
-                      $divide: [
-                        {
-                          $multiply: ["$markupSubAgent.markup", "$visaPrice"],
+                            as: "markupClient",
                         },
-                        100,
-                      ],
                     },
-                  ],
-                },
 
-                {
-                  $sum: ["$visaPrice", "$markupSubAgent.markup"],
-                },
-              ],
-            },
-          },
-        },
-      ]);
-
-      console.log(visaType, "visaType");
-
-      res.status(200).json(visaType);
-
-      // }
-    } catch (err) {
-      sendErrorResponse(res, 500, err);
-    }
-  },
-
-  listAll: async (req, res) => {
-    try {
-      const { search  } = req.query;
-
-      let query = {};
-
-      if (search && search !== "") {
-        query.country = { $regex: search, $options: "i" };
-      }
-
-      const visaType = await VisaType.aggregate([
-        {
-          $match: {
-            isDeleted: false,
-          },
-        },
-        {
-          $lookup: {
-            from: "visas",
-            localField: "visa",
-            foreignField: "_id",
-            as: "visa",
-          },
-        },
-        {
-          $lookup: {
-            from: "b2bspecialvisamarkups",
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      {
-                        $eq: [
-                          "$resellerId",
-                          {
-                            $cond: {
-                              if: { $eq: [req.reseller.role, "sub-agent"] },
-                              then: req.reseller?.referredBy,
-                              else: req.reseller?._id,
+                    {
+                        $set: {
+                            markupClient: {
+                                $arrayElemAt: ["$markupClient", 0],
                             },
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "specialMarkup",
-          },
-        },
-        {
-          $lookup: {
-            from: "b2bclientvisamarkups",
-            let: {
-              visaType: "$_id",
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$resellerId", req.reseller._id] },
-                      { $eq: ["$visaType", "$$visaType"] },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "markupClient",
-          },
-        },
-        {
-          $lookup: {
-            from: "b2bsubagentvisamarkups",
-            let: {
-              visaType: "$_id",
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$resellerId", req.reseller._id] },
-                      { $eq: ["$visaType", "$$visaType"] },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "markupSubAgent",
-          },
-        },
-        {
-          $lookup: {
-            from: "b2bsubagentvisamarkups",
-            let: {
-              visaType: "$_id",
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$resellerId", req.reseller.referredBy] },
-                      { $eq: ["$visaType", "$$visaType"] },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "markupAddSubAgent",
-          },
-        },
-        {
-          $lookup: {
-            from: "countries",
-            localField: "visa.country",
-            foreignField: "_id",
-            as: "country",
-          },
-        },
-
-        {
-          $set: {
-            visa: { $arrayElemAt: ["$country.countryName", 0] },
-            markupClient: { $arrayElemAt: ["$markupClient", 0] },
-            markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
-            markupAddSubAgent: { $arrayElemAt: ["$markupAddSubAgent", 0] },
-            specialMarkup: { $arrayElemAt: ["$specialMarkup", 0] },
-            country: { $arrayElemAt: ["$country.countryName", 0] },
-          },
-        },
-        {
-          $match: query,
-        },
-        {
-          $addFields: {
-            totalspecilPrice: {
-              $cond: [
-                {
-                  $eq: ["$specialMarkup.markupType", "percentage"],
-                },
-
-                {
-                  $sum: [
-                    "$visaPrice",
-                    {
-                      $divide: [
-                        {
-                          $multiply: ["$specialMarkup.markup", "$visaPrice"],
                         },
-                        100,
-                      ],
                     },
-                  ],
-                },
-
-                {
-                  $sum: ["$visaPrice", "$specialMarkup.markup"],
-                },
-              ],
-            },
-          },
-        },
-        {
-          $addFields: {
-            totalVisaPrice: {
-              $cond: [
-                {
-                  $eq: ["$markupAddSubAgent.markupType", "percentage"],
-                },
-
-                {
-                  $sum: [
-                    "$totalspecialPrice",
                     {
-                      $divide: [
-                        {
-                          $multiply: [
-                            "$markupAddSubAgent.markup",
-                            "$totalspecialPrice",
-                          ],
-                        },
-                        100,
-                      ],
-                    },
-                  ],
-                },
+                        $addFields: {
+                            totalPrice: {
+                                $cond: [
+                                    {
+                                        $eq: [
+                                            "$markupClient.markupType",
+                                            "percentage",
+                                        ],
+                                    },
 
-                {
-                  $sum: ["$totalspecialPrice", "$markupAddSubAgent.markup"],
-                },
-              ],
-            },
-          },
-        },
-      ]);
+                                    {
+                                        $sum: [
+                                            "$visaPrice",
+                                            {
+                                                $divide: [
+                                                    {
+                                                        $multiply: [
+                                                            "$markupClient.markup",
+                                                            "$visaPrice",
+                                                        ],
+                                                    },
+                                                    100,
+                                                ],
+                                            },
+                                        ],
+                                    },
 
-      if (!visaType) {
-        return sendErrorResponse(res, 400, "No visaType Available");
-      }
-      // const countryDetails = await Country.findById(country);
-
-      console.log(visaType, "visaType");
-
-      res.status(200).json(visaType);
-    } catch (err) {
-      console.log(err, "erroe");
-      sendErrorResponse(res, 500, err);
-    }
-  },
-
-  listAllCountry: async (req, res) => {
-    try {
-      const visaCountry = await Visa.find({ isDeleted: false })
-        .select("country")
-        .populate({
-          path: "country",
-          select: "countryName",
-        });
-
-      if (!visaCountry) {
-        return sendErrorResponse(res, 400, "No Visa Available");
-      }
-
-      res.status(200).json(visaCountry);
-    } catch (err) {
-      console.log(err, "error");
-      sendErrorResponse(res, 500, err);
-    }
-  },
-
-  listVisaType: async (req, res) => {
-    try {
-      const { id } = req.params;
-
-      if (!isValidObjectId(id)) {
-        return sendErrorResponse(res, 400, "Invalid VisaType id");
-      }
-
-      let visa = await Visa.findOne({ _id: id, isDeleted: false }).populate(
-        "country"
-      );
-
-      if (!visa) {
-        return sendErrorResponse(res, 400, "No Visa ");
-      }
-
-      const visaType = await VisaType.aggregate([
-        {
-          $match: {
-            visa: Types.ObjectId(id),
-            isDeleted: false,
-          },
-        },
-        {
-          $lookup: {
-            from: "b2bspecialvisamarkups",
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      {
-                        $eq: [
-                          "$resellerId",
-                          {
-                            $cond: {
-                              if: { $eq: [req.reseller.role, "sub-agent"] },
-                              then: req.reseller?.referredBy,
-                              else: req.reseller?._id,
+                                    {
+                                        $sum: [
+                                            "$visaPrice",
+                                            "$markupClient.markup",
+                                        ],
+                                    },
+                                ],
                             },
-                          },
+                        },
+                    },
+                ]);
+
+                console.log(visaType, "visaType");
+
+                res.status(200).json(visaType);
+            } else {
+                console.log(req.reseller, "reseller");
+                const visaType = await VisaType.aggregate([
+                    {
+                        $match: {
+                            _id: Types.ObjectId(id),
+                            isDeleted: false,
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: "visas",
+                            localField: "visa",
+                            foreignField: "_id",
+                            as: "visa",
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: "b2bclientvisamarkups",
+                            let: {
+                                visaType: "$_id",
+                            },
+                            pipeline: [
+                                {
+                                    $match: {
+                                        $expr: {
+                                            $and: [
+                                                {
+                                                    $eq: [
+                                                        "$resellerId",
+                                                        req.reseller._id,
+                                                    ],
+                                                },
+                                                {
+                                                    $eq: [
+                                                        "$visaType",
+                                                        "$$visaType",
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                    },
+                                },
+                            ],
+                            as: "markupClient",
+                        },
+                    },
+                    {
+                        $lookup: {
+                            from: "b2bsubagentvisamarkups",
+                            let: {
+                                visaType: "$_id",
+                            },
+                            pipeline: [
+                                {
+                                    $match: {
+                                        $expr: {
+                                            $and: [
+                                                {
+                                                    $eq: [
+                                                        "$resellerId",
+                                                        req.reseller
+                                                            ?.referredBy,
+                                                    ],
+                                                },
+                                                {
+                                                    $eq: [
+                                                        "$visaType",
+                                                        "$$visaType",
+                                                    ],
+                                                },
+                                            ],
+                                        },
+                                    },
+                                },
+                            ],
+                            as: "markupSubAgent",
+                        },
+                    },
+
+                    {
+                        $set: {
+                            markupClient: {
+                                $arrayElemAt: ["$markupClient", 0],
+                            },
+                            markupSubAgent: {
+                                $arrayElemAt: ["$markupSubAgent", 0],
+                            },
+                        },
+                    },
+                    {
+                        $addFields: {
+                            totalPriceSubAgent: {
+                                $cond: [
+                                    {
+                                        $eq: [
+                                            "$markupSubAgent.markupType",
+                                            "percentage",
+                                        ],
+                                    },
+
+                                    {
+                                        $sum: [
+                                            "$visaPrice",
+                                            {
+                                                $divide: [
+                                                    {
+                                                        $multiply: [
+                                                            "$markupSubAgent.markup",
+                                                            "$visaPrice",
+                                                        ],
+                                                    },
+                                                    100,
+                                                ],
+                                            },
+                                        ],
+                                    },
+
+                                    {
+                                        $sum: [
+                                            "$visaPrice",
+                                            "$markupSubAgent.markup",
+                                        ],
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                    {
+                        $addFields: {
+                            totalPrice: {
+                                $cond: [
+                                    {
+                                        $eq: [
+                                            "$markupClient.markupType",
+                                            "percentage",
+                                        ],
+                                    },
+
+                                    {
+                                        $sum: [
+                                            "$totalPriceSubAgent",
+                                            {
+                                                $divide: [
+                                                    {
+                                                        $multiply: [
+                                                            "$markupClient.markup",
+                                                            "$totalPriceSubAgent",
+                                                        ],
+                                                    },
+                                                    100,
+                                                ],
+                                            },
+                                        ],
+                                    },
+
+                                    {
+                                        $sum: [
+                                            "$totalPriceSubAgent",
+                                            "$markupClient.markup",
+                                        ],
+                                    },
+                                ],
+                            },
+                        },
+                    },
+                ]);
+
+                console.log(visaType, "visaType");
+
+                res.status(200).json(visaType[0]);
+            }
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getAllVisa: async (req, res) => {
+        try {
+            // if (req.reseller.role == "reseller") {
+            //   const visaType = await VisaType.aggregate([
+            //     {
+            //       $match: {
+            //         isDeleted: false,
+            //       },
+            //     },
+            //     {
+            //       $lookup: {
+            //         from: "visas",
+            //         localField: "visa",
+            //         foreignField: "_id",
+            //         as: "visa",
+            //       },
+            //     },
+            //     {
+            //       $lookup: {
+            //         from: "b2bclientvisamarkups",
+            //         let: {
+            //           visaType: "$_id",
+            //         },
+            //         pipeline: [
+            //           {
+            //             $match: {
+            //               $expr: {
+            //                 $and: [
+            //                   { $eq: ["$resellerId", req.reseller._id] },
+            //                   { $eq: ["$visaType", "$$visaType"] },
+            //                 ],
+            //               },
+            //             },
+            //           },
+            //         ],
+            //         as: "markupClient",
+            //       },
+            //     },
+
+            //     {
+            //       $set: {
+            //         markupClient: { $arrayElemAt: ["$markupClient", 0] },
+            //       },
+            //     },
+            //     {
+            //       $addFields: {
+            //         totalPrice: {
+            //           $cond: [
+            //             {
+            //               $eq: ["$markupClient.markupType", "percentage"],
+            //             },
+
+            //             {
+            //               $sum: [
+            //                 "$visaPrice",
+            //                 {
+            //                   $divide: [
+            //                     {
+            //                       $multiply: ["$markupClient.markup", "$visaPrice"],
+            //                     },
+            //                     100,
+            //                   ],
+            //                 },
+            //               ],
+            //             },
+
+            //             {
+            //               $sum: ["$visaPrice", "$markupClient.markup"],
+            //             },
+            //           ],
+            //         },
+            //       },
+            //     },
+            //   ]);
+
+            //   console.log(visaType, "visaType");
+
+            //   res.status(200).json(visaType);
+            // }else{
+
+            console.log(req.reseller, "reseller");
+            const visaType = await VisaType.aggregate([
+                {
+                    $match: {
+                        isDeleted: false,
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "visas",
+                        localField: "visa",
+                        foreignField: "_id",
+                        as: "visa",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "b2bclientvisamarkups",
+                        let: {
+                            visaType: "$_id",
+                        },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    "$resellerId",
+                                                    req.reseller._id,
+                                                ],
+                                            },
+                                            {
+                                                $eq: [
+                                                    "$visaType",
+                                                    "$$visaType",
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
                         ],
-                      },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "specialMarkup",
-          },
-        },
-
-        {
-          $lookup: {
-            from: "b2bclientvisamarkups",
-            let: {
-              visaType: "$_id",
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$resellerId", req.reseller._id] },
-                      { $eq: ["$visaType", "$$visaType"] },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "markupClient",
-          },
-        },
-        {
-          $lookup: {
-            from: "b2bsubagentvisamarkups",
-            let: {
-              visaType: "$_id",
-            },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ["$resellerId", req.reseller?.referredBy] },
-                      { $eq: ["$visaType", "$$visaType"] },
-                    ],
-                  },
-                },
-              },
-            ],
-            as: "markupSubAgent",
-          },
-        },
-
-        {
-          $set: {
-            markupClient: { $arrayElemAt: ["$markupClient", 0] },
-            markupSubAgent: { $arrayElemAt: ["$markupSubAgent", 0] },
-            specialMarkup: { $arrayElemAt: ["$specialMarkup", 0] },
-          },
-        },
-        {
-          $addFields: {
-            totalspecialPrice: {
-              $cond: [
-                {
-                  $eq: ["$specialMarkup.markupType", "percentage"],
-                },
-
-                {
-                  $sum: [
-                    "$visaPrice",
-                    {
-                      $divide: [
-                        {
-                          $multiply: ["$specialMarkup.markup", "$visaPrice"],
-                        },
-                        100,
-                      ],
+                        as: "markupClient",
                     },
-                  ],
                 },
-
                 {
-                  $sum: ["$visaPrice", "$specialMarkup.markup"],
-                },
-              ],
-            },
-          },
-        },
-        {
-          $addFields: {
-            totalPriceSubAgent: {
-              $cond: [
-                {
-                  $eq: ["$markupSubAgent.markupType", "percentage"],
-                },
-
-                {
-                  $sum: [
-                    "$totalspecialPrice",
-                    {
-                      $divide: [
-                        {
-                          $multiply: [
-                            "$markupSubAgent.markup",
-                            "$totalspecialPrice",
-                          ],
+                    $lookup: {
+                        from: "b2bsubagentvisamarkups",
+                        let: {
+                            visaType: "$_id",
                         },
-                        100,
-                      ],
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    "$resellerId",
+                                                    req.reseller?.referredBy,
+                                                ],
+                                            },
+                                            {
+                                                $eq: [
+                                                    "$visaType",
+                                                    "$$visaType",
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                        as: "markupSubAgent",
                     },
-                  ],
                 },
 
                 {
-                  $sum: ["$totalspecialPrice", "$markupSubAgent.markup"],
-                },
-              ],
-            },
-          },
-        },
-        {
-          $addFields: {
-            totalPrice: {
-              $cond: [
-                {
-                  $eq: ["$markupClient.markupType", "percentage"],
-                },
-
-                {
-                  $sum: [
-                    "$totalPriceSubAgent",
-                    {
-                      $divide: [
-                        {
-                          $multiply: [
-                            "$markupClient.markup",
-                            "$totalPriceSubAgent",
-                          ],
+                    $set: {
+                        markupClient: { $arrayElemAt: ["$markupClient", 0] },
+                        markupSubAgent: {
+                            $arrayElemAt: ["$markupSubAgent", 0],
                         },
-                        100,
-                      ],
                     },
-                  ],
+                },
+                {
+                    $addFields: {
+                        totalPriceSubAgent: {
+                            $cond: [
+                                {
+                                    $eq: [
+                                        "$markupSubAgent.markupType",
+                                        "percentage",
+                                    ],
+                                },
+
+                                {
+                                    $sum: [
+                                        "$visaPrice",
+                                        {
+                                            $divide: [
+                                                {
+                                                    $multiply: [
+                                                        "$markupSubAgent.markup",
+                                                        "$visaPrice",
+                                                    ],
+                                                },
+                                                100,
+                                            ],
+                                        },
+                                    ],
+                                },
+
+                                {
+                                    $sum: [
+                                        "$visaPrice",
+                                        "$markupSubAgent.markup",
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
+            ]);
+
+            console.log(visaType, "visaType");
+
+            res.status(200).json(visaType);
+
+            // }
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    listAll: async (req, res) => {
+        try {
+            const { search } = req.query;
+
+            let query = {};
+
+            if (search && search !== "") {
+                query.country = { $regex: search, $options: "i" };
+            }
+
+            const visaType = await VisaType.aggregate([
+                {
+                    $match: {
+                        isDeleted: false,
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "visas",
+                        localField: "visa",
+                        foreignField: "_id",
+                        as: "visa",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "b2bspecialvisamarkups",
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    "$resellerId",
+                                                    {
+                                                        $cond: {
+                                                            if: {
+                                                                $eq: [
+                                                                    req.reseller
+                                                                        .role,
+                                                                    "sub-agent",
+                                                                ],
+                                                            },
+                                                            then: req.reseller
+                                                                ?.referredBy,
+                                                            else: req.reseller
+                                                                ?._id,
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                        as: "specialMarkup",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "b2bclientvisamarkups",
+                        let: {
+                            visaType: "$_id",
+                        },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    "$resellerId",
+                                                    req.reseller._id,
+                                                ],
+                                            },
+                                            {
+                                                $eq: [
+                                                    "$visaType",
+                                                    "$$visaType",
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                        as: "markupClient",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "b2bsubagentvisamarkups",
+                        let: {
+                            visaType: "$_id",
+                        },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    "$resellerId",
+                                                    req.reseller._id,
+                                                ],
+                                            },
+                                            {
+                                                $eq: [
+                                                    "$visaType",
+                                                    "$$visaType",
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                        as: "markupSubAgent",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "b2bsubagentvisamarkups",
+                        let: {
+                            visaType: "$_id",
+                        },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    "$resellerId",
+                                                    req.reseller.referredBy,
+                                                ],
+                                            },
+                                            {
+                                                $eq: [
+                                                    "$visaType",
+                                                    "$$visaType",
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                        as: "markupAddSubAgent",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "countries",
+                        localField: "visa.country",
+                        foreignField: "_id",
+                        as: "country",
+                    },
                 },
 
                 {
-                  $sum: ["$totalPriceSubAgent", "$markupClient.markup"],
+                    $set: {
+                        visa: { $arrayElemAt: ["$country.countryName", 0] },
+                        markupClient: { $arrayElemAt: ["$markupClient", 0] },
+                        markupSubAgent: {
+                            $arrayElemAt: ["$markupSubAgent", 0],
+                        },
+                        markupAddSubAgent: {
+                            $arrayElemAt: ["$markupAddSubAgent", 0],
+                        },
+                        specialMarkup: { $arrayElemAt: ["$specialMarkup", 0] },
+                        country: { $arrayElemAt: ["$country.countryName", 0] },
+                    },
                 },
-              ],
-            },
-          },
-        },
-      ]);
+                {
+                    $match: query,
+                },
+                {
+                    $addFields: {
+                        totalspecilPrice: {
+                            $cond: [
+                                {
+                                    $eq: [
+                                        "$specialMarkup.markupType",
+                                        "percentage",
+                                    ],
+                                },
 
-      if (!visaType) {
-        return sendErrorResponse(res, 400, "No visaType ");
-      }
+                                {
+                                    $sum: [
+                                        "$visaPrice",
+                                        {
+                                            $divide: [
+                                                {
+                                                    $multiply: [
+                                                        "$specialMarkup.markup",
+                                                        "$visaPrice",
+                                                    ],
+                                                },
+                                                100,
+                                            ],
+                                        },
+                                    ],
+                                },
 
-      console.log(visaType, visa, "visaType");
+                                {
+                                    $sum: [
+                                        "$visaPrice",
+                                        "$specialMarkup.markup",
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
+                {
+                    $addFields: {
+                        totalVisaPrice: {
+                            $cond: [
+                                {
+                                    $eq: [
+                                        "$markupAddSubAgent.markupType",
+                                        "percentage",
+                                    ],
+                                },
 
-      res.status(200).json({
-        visa,
-        visaType,
-      });
-    } catch (err) {
-      sendErrorResponse(res, 500, err);
-    }
-  },
+                                {
+                                    $sum: [
+                                        "$totalspecialPrice",
+                                        {
+                                            $divide: [
+                                                {
+                                                    $multiply: [
+                                                        "$markupAddSubAgent.markup",
+                                                        "$totalspecialPrice",
+                                                    ],
+                                                },
+                                                100,
+                                            ],
+                                        },
+                                    ],
+                                },
+
+                                {
+                                    $sum: [
+                                        "$totalspecialPrice",
+                                        "$markupAddSubAgent.markup",
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
+            ]);
+
+            if (!visaType) {
+                return sendErrorResponse(res, 400, "No visaType Available");
+            }
+            // const countryDetails = await Country.findById(country);
+
+            console.log(visaType, "visaType");
+
+            res.status(200).json(visaType);
+        } catch (err) {
+            console.log(err, "erroe");
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    listAllCountry: async (req, res) => {
+        try {
+            const visaCountry = await Visa.find({ isDeleted: false })
+                .select("country")
+                .populate({
+                    path: "country",
+                    select: "countryName",
+                });
+
+            if (!visaCountry) {
+                return sendErrorResponse(res, 400, "No Visa Available");
+            }
+
+            res.status(200).json(visaCountry);
+        } catch (err) {
+            console.log(err, "error");
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    listVisaType: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid VisaType id");
+            }
+
+            let visa = await Visa.findOne({
+                _id: id,
+                isDeleted: false,
+            }).populate("country");
+
+            if (!visa) {
+                return sendErrorResponse(res, 400, "No Visa ");
+            }
+
+            const visaType = await VisaType.aggregate([
+                {
+                    $match: {
+                        visa: Types.ObjectId(id),
+                        isDeleted: false,
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "b2bspecialvisamarkups",
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    "$resellerId",
+                                                    {
+                                                        $cond: {
+                                                            if: {
+                                                                $eq: [
+                                                                    req.reseller
+                                                                        .role,
+                                                                    "sub-agent",
+                                                                ],
+                                                            },
+                                                            then: req.reseller
+                                                                ?.referredBy,
+                                                            else: req.reseller
+                                                                ?._id,
+                                                        },
+                                                    },
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                        as: "specialMarkup",
+                    },
+                },
+
+                {
+                    $lookup: {
+                        from: "b2bclientvisamarkups",
+                        let: {
+                            visaType: "$_id",
+                        },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    "$resellerId",
+                                                    req.reseller._id,
+                                                ],
+                                            },
+                                            {
+                                                $eq: [
+                                                    "$visaType",
+                                                    "$$visaType",
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                        as: "markupClient",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "b2bsubagentvisamarkups",
+                        let: {
+                            visaType: "$_id",
+                        },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    "$resellerId",
+                                                    req.reseller?.referredBy,
+                                                ],
+                                            },
+                                            {
+                                                $eq: [
+                                                    "$visaType",
+                                                    "$$visaType",
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        ],
+                        as: "markupSubAgent",
+                    },
+                },
+
+                {
+                    $set: {
+                        markupClient: { $arrayElemAt: ["$markupClient", 0] },
+                        markupSubAgent: {
+                            $arrayElemAt: ["$markupSubAgent", 0],
+                        },
+                        specialMarkup: { $arrayElemAt: ["$specialMarkup", 0] },
+                    },
+                },
+                {
+                    $addFields: {
+                        totalspecialPrice: {
+                            $cond: [
+                                {
+                                    $eq: [
+                                        "$specialMarkup.markupType",
+                                        "percentage",
+                                    ],
+                                },
+
+                                {
+                                    $sum: [
+                                        "$visaPrice",
+                                        {
+                                            $divide: [
+                                                {
+                                                    $multiply: [
+                                                        "$specialMarkup.markup",
+                                                        "$visaPrice",
+                                                    ],
+                                                },
+                                                100,
+                                            ],
+                                        },
+                                    ],
+                                },
+
+                                {
+                                    $sum: [
+                                        "$visaPrice",
+                                        "$specialMarkup.markup",
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
+                {
+                    $addFields: {
+                        totalPriceSubAgent: {
+                            $cond: [
+                                {
+                                    $eq: [
+                                        "$markupSubAgent.markupType",
+                                        "percentage",
+                                    ],
+                                },
+
+                                {
+                                    $sum: [
+                                        "$totalspecialPrice",
+                                        {
+                                            $divide: [
+                                                {
+                                                    $multiply: [
+                                                        "$markupSubAgent.markup",
+                                                        "$totalspecialPrice",
+                                                    ],
+                                                },
+                                                100,
+                                            ],
+                                        },
+                                    ],
+                                },
+
+                                {
+                                    $sum: [
+                                        "$totalspecialPrice",
+                                        "$markupSubAgent.markup",
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
+                {
+                    $addFields: {
+                        totalPrice: {
+                            $cond: [
+                                {
+                                    $eq: [
+                                        "$markupClient.markupType",
+                                        "percentage",
+                                    ],
+                                },
+
+                                {
+                                    $sum: [
+                                        "$totalPriceSubAgent",
+                                        {
+                                            $divide: [
+                                                {
+                                                    $multiply: [
+                                                        "$markupClient.markup",
+                                                        "$totalPriceSubAgent",
+                                                    ],
+                                                },
+                                                100,
+                                            ],
+                                        },
+                                    ],
+                                },
+
+                                {
+                                    $sum: [
+                                        "$totalPriceSubAgent",
+                                        "$markupClient.markup",
+                                    ],
+                                },
+                            ],
+                        },
+                    },
+                },
+            ]);
+
+            if (!visaType) {
+                return sendErrorResponse(res, 400, "No visaType ");
+            }
+
+            console.log(visaType, visa, "visaType");
+
+            res.status(200).json({
+                visa,
+                visaType,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
 };

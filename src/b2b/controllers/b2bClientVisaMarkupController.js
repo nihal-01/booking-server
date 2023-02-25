@@ -4,17 +4,12 @@ const { VisaType } = require("../../models");
 const { B2BClientVisaMarkup } = require("../models");
 const { b2bVisaMarkupSchema } = require("../validations/b2bVisaMarkup.schema");
 
-
-
 module.exports = {
     upsertB2bClientVisaMarkup: async (req, res) => {
         try {
             const { markupType, markup, visaType } = req.body;
 
-
-            const { _, error } = b2bVisaMarkupSchema.validate(
-                req.body
-            );
+            const { _, error } = b2bVisaMarkupSchema.validate(req.body);
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0]?.message);
             }
@@ -45,7 +40,6 @@ module.exports = {
                     { upsert: true, new: true, runValidators: true }
                 );
 
-
             // let tempObj = Object(b2bClientVisaMarkups);
             // tempObj.attraction = {
             //     _id: attractionDetail?._id,
@@ -58,7 +52,7 @@ module.exports = {
         }
     },
 
-    deleteB2bClientVisaMarkup : async(req,res)=>{
+    deleteB2bClientVisaMarkup: async (req, res) => {
         try {
             const { id } = req.params;
 
@@ -70,11 +64,7 @@ module.exports = {
                 await B2BClientVisaMarkup.findByIdAndDelete(id);
 
             if (!b2bClientVisaMarkups) {
-                return sendErrorResponse(
-                    res,
-                    404,
-                    "B2B Visa markup not found"
-                );
+                return sendErrorResponse(res, 404, "B2B Visa markup not found");
             }
 
             res.status(200).json({
@@ -83,8 +73,5 @@ module.exports = {
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
-
-    }
-
-   
+    },
 };
