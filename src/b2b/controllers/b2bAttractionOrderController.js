@@ -1492,6 +1492,8 @@ module.exports = {
                 return sendErrorResponse(res, 400, "invalid order id");
             }
 
+            console.log(orderId , "orderId")
+
             const order = await B2BAttractionOrder.aggregate([
                 {
                     $match: {
@@ -1612,6 +1614,7 @@ module.exports = {
                     },
                 },
             ]);
+            console.log(order)
 
             if (!order || order?.length < 1) {
                 return sendErrorResponse(res, 404, "order not found");
