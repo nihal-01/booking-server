@@ -1496,7 +1496,7 @@ module.exports = {
                 {
                     $match: {
                         _id: Types.ObjectId(orderId),
-                        reseller: req.reseller?._id,
+                        reseller: Types.ObjectId(req.reseller?._id),
                         orderStatus: "paid",
                     },
                 },
