@@ -275,13 +275,13 @@ module.exports = {
 
     deleteSubAgent: async (req, res) => {
         try {
-            const { resellerId } = req.params;
+            const { subAgentId } = req.params;
 
-            if (!isValidObjectId(resellerId)) {
+            if (!isValidObjectId(subAgentId)) {
                 return sendErrorResponse(res, 400, "invalid reseller id");
             }
 
-            const subAgent = await Reseller.findById(resellerId);
+            const subAgent = await Reseller.findById(subAgentId);
 
             if (!subAgent) {
                 return sendErrorResponse(res, 400, "subAgent not found");
