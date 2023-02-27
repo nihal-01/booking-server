@@ -1078,23 +1078,17 @@ module.exports = {
                 });
                 let totalPurchaseCost = attractionOrder.activities[i].totalCost;
                 if (attractionOrder.activities[i].bookingType === "ticket") {
-                    let adultTickets = [];
-                    let childTickets = [];
-                    let infantTickets = [];
-
-                    for (
-                        let j = 0;
-                        j < attractionOrder.activities[i].adultsCount;
-                        j++
-                    ) {
-                        const ticket = await AttractionTicket.findOneAndUpdate(
+                    const adultTickets = await AttractionTicket.find({
+                        activity: attractionOrder.activities[i].activity,
+                        status: "ok",
+                        $and: [
                             {
-                                activity: activity._id,
-                                status: "ok",
                                 $or: [
                                     { ticketFor: "adult" },
                                     { ticketFor: "common" },
                                 ],
+                            },
+                            {
                                 $or: [
                                     {
                                         validity: true,
@@ -1109,131 +1103,128 @@ module.exports = {
                                     { validity: false },
                                 ],
                             },
-                            { status: "used" }
-                        );
-                        if (!ticket) {
+                        ],
+                    })
+                        .limit(attractionOrder.activities[i].adultsCount)
+                        .lean();
+
+                    if (
+                        adultTickets.length <
+                        attractionOrder.activities[i].adultsCount
+                    ) {
+                        return sendErrorResponse(res, 400, "tickets sold out.");
+                    }
+
+                    const childTickets = await AttractionTicket.find({
+                        activity: attractionOrder.activities[i].activity,
+                        status: "ok",
+                        $and: [
+                            {
+                                $or: [
+                                    { ticketFor: "child" },
+                                    { ticketFor: "common" },
+                                ],
+                            },
+                            {
+                                $or: [
+                                    {
+                                        validity: true,
+                                        validTill: {
+                                            $gte: new Date(
+                                                attractionOrder.activities[
+                                                    i
+                                                ].date
+                                            ).toISOString(),
+                                        },
+                                    },
+                                    { validity: false },
+                                ],
+                            },
+                        ],
+                    })
+                        .limit(attractionOrder.activities[i].childrenCount)
+                        .lean();
+
+                    if (
+                        childTickets.length <
+                        attractionOrder.activities[i].childrenCount
+                    ) {
+                        return sendErrorResponse(res, 400, "tickets sold out.");
+                    }
+
+                    let infantTickets = [];
+                    if (
+                        activity.infantPrice > 0 &&
+                        attractionOrder.activities[i].infantCount > 0
+                    ) {
+                        infantTickets = await AttractionTicket.find({
+                            activity: attractionOrder.activities[i].activity,
+                            status: "ok",
+                            $and: [
+                                {
+                                    $or: [
+                                        { ticketFor: "infant" },
+                                        { ticketFor: "common" },
+                                    ],
+                                },
+                                {
+                                    $or: [
+                                        {
+                                            validity: true,
+                                            validTill: {
+                                                $gte: new Date(
+                                                    attractionOrder.activities[
+                                                        i
+                                                    ].date
+                                                ).toISOString(),
+                                            },
+                                        },
+                                        { validity: false },
+                                    ],
+                                },
+                            ],
+                        })
+                            .limit(attractionOrder.activities[i].infantCount)
+                            .lean();
+
+                        if (
+                            infantTickets.length <
+                            attractionOrder.activities[i].infantCount
+                        ) {
                             return sendErrorResponse(
                                 res,
                                 400,
                                 "tickets sold out."
                             );
                         }
-                        adultTickets.push({
-                            ticketId: ticket._id,
-                            ticketNo: ticket?.ticketNo,
-                            lotNo: ticket?.lotNo,
-                            ticketFor: ticket?.ticketFor,
-                            validity: ticket.validity,
-                            validTill: ticket.validTill || undefined,
-                            cost: ticket?.ticketCost,
-                        });
 
-                        totalPurchaseCost += ticket.ticketCost;
-                    }
-
-                    for (
-                        let j = 0;
-                        j < attractionOrder.activities[i].childrenCount;
-                        j++
-                    ) {
-                        const ticket = await AttractionTicket.findOneAndUpdate(
-                            {
-                                activity:
-                                    attractionOrder.activities[i].activity,
-                                status: "ok",
-                                $or: [
-                                    { ticketFor: "child" },
-                                    { ticketFor: "common" },
-                                ],
-                                $or: [
-                                    {
-                                        validity: true,
-                                        validTill: {
-                                            $gte: new Date(
-                                                attractionOrder.activities[
-                                                    i
-                                                ].date
-                                            ).toISOString(),
-                                        },
-                                    },
-                                    { validity: false },
-                                ],
-                            },
-                            { status: "used" }
-                        );
-                        if (!ticket) {
-                            return sendErrorResponse(
-                                res,
-                                404,
-                                "Ooh. sorry, We know you already paid. But tickets sold out. We are trying maximum to provide tickets for you. Otherwise amount will be refunded within 24hrs"
-                            );
-                        }
-                        childTickets.push({
-                            ticketId: ticket._id,
-                            ticketNo: ticket?.ticketNo,
-                            lotNo: ticket?.lotNo,
-                            ticketFor: ticket?.ticketFor,
-                            validity: ticket.validity,
-                            validTill: ticket.validTill || undefined,
-                            cost: ticket?.ticketCost,
-                        });
-
-                        totalPurchaseCost += ticket.ticketCost;
-                    }
-
-                    if (activity.infantPrice > 0) {
-                        for (
-                            let j = 0;
-                            j < attractionOrder.activities[i].childrenCount;
-                            j++
-                        ) {
-                            const ticket =
-                                await AttractionTicket.findOneAndUpdate(
-                                    {
-                                        activity:
-                                            attractionOrder.activities[i]
-                                                .activity,
-                                        status: "ok",
-                                        $or: [
-                                            { ticketFor: "infant" },
-                                            { ticketFor: "common" },
-                                        ],
-                                        $or: [
-                                            {
-                                                validity: true,
-                                                validTill: {
-                                                    $gte: new Date(
-                                                        attractionOrder.activities[
-                                                            i
-                                                        ].date
-                                                    ).toISOString(),
-                                                },
-                                            },
-                                            { validity: false },
-                                        ],
-                                    },
-                                    { status: "used" }
-                                );
-                            if (!ticket) {
-                                return sendErrorResponse(
-                                    res,
-                                    404,
-                                    "Ooh. sorry, We know you already paid. But tickets sold out. We are trying maximum to provide tickets for you. Otherwise amount will be refunded within 24hrs"
-                                );
-                            }
-                            infantTickets.push({
-                                ticketId: ticket._id,
-                                ticketNo: ticket?.ticketNo,
-                                lotNo: ticket?.lotNo,
-                                ticketFor: ticket?.ticketFor,
-                                validity: ticket.validity,
-                                validTill: ticket.validTill || undefined,
-                                cost: ticket?.ticketCost,
-                            });
-
+                        const infantTicketsIds = infantTickets.map((ticket) => {
                             totalPurchaseCost += ticket.ticketCost;
-                        }
+                            return ticket?._id;
+                        });
+
+                        await AttractionTicket.find({
+                            _id: { $all: infantTicketsIds },
+                        }).updateMany({ status: "used" });
                     }
+
+                    const adultTicketsIds = adultTickets.map((ticket) => {
+                        totalPurchaseCost += ticket.ticketCost;
+                        return ticket?._id;
+                    });
+
+                    await AttractionTicket.find({
+                        _id: { $all: adultTicketsIds },
+                    }).updateMany({ status: "used" });
+
+                    const childTicketsIds = childTickets.map((ticket) => {
+                        totalPurchaseCost += ticket.ticketCost;
+                        return ticket?._id;
+                    });
+
+                    await AttractionTicket.find({
+                        _id: { $all: childTicketsIds },
+                    }).updateMany({ status: "used" });
 
                     attractionOrder.activities[i].adultTickets = adultTickets;
                     attractionOrder.activities[i].childTickets = childTickets;
