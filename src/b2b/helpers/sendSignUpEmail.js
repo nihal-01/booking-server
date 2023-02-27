@@ -17,7 +17,6 @@ const sendSignUpEmail = async (email, subject, agentCode) => {
               <p style="font-size:1.1em">Hi,</p>
               <p>Thank you for choosing Travellers Choice. Use the following Agent Code to complete your Sign Up procedures</p>
               <h2 style="background: #00466a;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;">${agentCode}</h2>
-              <p style="font-size:0.9em;">Regards</p>
               ${footerHtml}
 
               </div>

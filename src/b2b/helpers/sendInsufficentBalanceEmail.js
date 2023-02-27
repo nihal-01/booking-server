@@ -18,7 +18,6 @@ const sendInsufficentBalanceMail = (reseller, companyDetails) => {
         <p>We strongly recommend that you add funds to your wallet as soon as possible to avoid any inconvenience. You can easily add funds by using a credit or debit card, or by using other payment methods available on our platform.</p>
         <p>If you have any questions or concerns, please feel free to contact us. Our team is always available to assist you.</p>
         <p>Thank you for choosing us. We hope to continue serving you in the future.</p>
-        <p>Best regards,</p>
                 ${footerHtml}
 
     

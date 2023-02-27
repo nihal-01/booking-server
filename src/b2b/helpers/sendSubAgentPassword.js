@@ -21,7 +21,6 @@ const sendSubAgentPassword = async (email, password, agentCode) => {
               
                   <p style="margin: 0 auto;width: max-content;padding: 0 10px; margin-top:15px"> Password</p>
               <h2 style="background: #00466a;margin: 0 auto;width: max-content;padding: 0 10px; color: #fff;border-radius: 4px;">${password}</h2>   
-                         <p style="font-size:0.9em;">Regards</p>
                          ${footerHtml}
 
               </div>

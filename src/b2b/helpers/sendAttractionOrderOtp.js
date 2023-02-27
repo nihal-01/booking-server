@@ -19,7 +19,6 @@ const sendAttractionOrderOtp = async (email, subject, otp) => {
               <h2 style="background: #00466a;margin: 0 auto;width: max-content;padding: 0 10px;color: #fff;border-radius: 4px;">${otp} </h2>
               
 
-                         <p style="font-size:0.9em;">Regards</p>
                          ${footerHtml}
 
             </div>
