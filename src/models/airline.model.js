@@ -17,7 +17,7 @@ const airlineSchema = new Schema(
             unique: true,
         },
         icaoCode: {
-            type: Number,
+            type: String,
             required: true,
             uppercase: true,
             unique: true,

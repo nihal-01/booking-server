@@ -82,9 +82,17 @@ module.exports = {
 
             let images = [];
             let image = req.files["images"];
-            for (let i = 0; i < image.length; i++) {
-                const img = "/" + image[i]?.path?.replace(/\\/g, "/");
-                images.push(img);
+            if (!image || image?.length < 1) {
+                return sendErrorResponse(
+                    res,
+                    400,
+                    "minimum 1 image is required"
+                );
+            } else {
+                for (let i = 0; i < image?.length; i++) {
+                    const img = "/" + image[i]?.path?.replace(/\\/g, "/");
+                    images.push(img);
+                }
             }
 
             let logos = req.files["logo"];

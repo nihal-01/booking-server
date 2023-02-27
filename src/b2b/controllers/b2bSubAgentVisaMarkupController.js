@@ -4,16 +4,12 @@ const { VisaType } = require("../../models");
 const { B2BSubAgentVisaMarkup } = require("../models");
 const { b2bVisaMarkupSchema } = require("../validations/b2bVisaMarkup.schema");
 
-
-
 module.exports = {
     upsertB2bSubAgentVisaMarkup: async (req, res) => {
         try {
             const { markupType, markup, visaType } = req.body;
 
-            const { _, error } = b2bVisaMarkupSchema.validate(
-                req.body
-            );
+            const { _, error } = b2bVisaMarkupSchema.validate(req.body);
             if (error) {
                 return sendErrorResponse(res, 400, error.details[0]?.message);
             }
@@ -44,7 +40,6 @@ module.exports = {
                     { upsert: true, new: true, runValidators: true }
                 );
 
-
             // let tempObj = Object(b2bClientVisaMarkups);
             // tempObj.attraction = {
             //     _id: attractionDetail?._id,
@@ -56,6 +51,4 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
-
-   
 };

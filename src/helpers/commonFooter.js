@@ -1,9 +1,9 @@
 const { HomeSettings } = require("../models");
 
 module.exports = async () => {
-  const companyDetails = await HomeSettings.findOne();
-  const imageUrl = process.env.SERVER_URL + companyDetails.logo;
-  return `
+    const companyDetails = await HomeSettings.findOne();
+    const imageUrl = process.env.SERVER_URL + companyDetails.logo;
+    return `
     <p style="margin: 20px 0;">Best Regards</p>
    <p style="margin: 20px 0;">Travellers Choice</p>
     <p style="margin: 1px 0;">Email :- ${companyDetails.email} </p>

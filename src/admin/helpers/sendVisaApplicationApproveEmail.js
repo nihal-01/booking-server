@@ -1,17 +1,17 @@
 const { sendEmail } = require("../../helpers");
 
 const sendVisaApplicationApproveEmail = (
-  visaApplication,
-  reseller,
-  filteredTraveller,
-  visa
+    visaApplication,
+    reseller,
+    filteredTraveller,
+    visa
 ) => {
-  try {
-    const visaUploadUrl = process.env.SERVER_URL + visa;
-    sendEmail(
-      visaApplication.email,
-      "Visa Application Approved Email",
-      `<body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5;">
+    try {
+        const visaUploadUrl = process.env.SERVER_URL + visa;
+        sendEmail(
+            visaApplication.email,
+            "Visa Application Approved Email",
+            `<body style="font-family: Arial, sans-serif; font-size: 14px; line-height: 1.5;">
        <div style="background-color: #333; color: #fff; padding: 20px; text-align: center;">
          <h1 style="margin: 0;">Visa Application Confirmation</h1>
        </div>
@@ -46,10 +46,10 @@ const sendVisaApplicationApproveEmail = (
        </div>
      </body>
    `
-    );
-  } catch (err) {
-    console.log(err);
-  }
+        );
+    } catch (err) {
+        console.log(err);
+    }
 };
 
 module.exports = sendVisaApplicationApproveEmail;
