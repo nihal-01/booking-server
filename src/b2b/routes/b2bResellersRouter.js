@@ -17,7 +17,7 @@ router.get("/listAll", b2bResellerAuth, listResellers);
 router.get("/single/:id", b2bResellerAuth, getSingleSubAgent);
 router.patch("/forget/password", forgetPassword);
 router.patch("/forget/password/confirm", confirmOtpForgetPassword);
-router.patch("/delete/:subAgentId", deleteSubAgent);
-router.patch("/update/:subAgentId", updateSubAgent);
+router.patch("/delete/:subAgentId", b2bResellerAuth ,  deleteSubAgent);
+router.patch("/update/:subAgentId", b2bResellerAuth , updateSubAgent);
 
 module.exports = router;
