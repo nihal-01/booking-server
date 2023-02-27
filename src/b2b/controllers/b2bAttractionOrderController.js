@@ -1204,7 +1204,8 @@ module.exports = {
                         });
 
                         await AttractionTicket.find({
-                            _id: { $all: infantTicketsIds },
+                            activity: attractionOrder.activities[i].activity,
+                            _id: infantTicketsIds,
                         }).updateMany({ status: "used" });
                     }
 
@@ -1214,7 +1215,8 @@ module.exports = {
                     });
 
                     await AttractionTicket.find({
-                        _id: { $all: adultTicketsIds },
+                        activity: attractionOrder.activities[i].activity,
+                        _id: adultTicketsIds,
                     }).updateMany({ status: "used" });
 
                     const childTicketsIds = childTickets.map((ticket) => {
@@ -1223,7 +1225,8 @@ module.exports = {
                     });
 
                     await AttractionTicket.find({
-                        _id: { $all: childTicketsIds },
+                        activity: attractionOrder.activities[i].activity,
+                        _id: childTicketsIds,
                     }).updateMany({ status: "used" });
 
                     attractionOrder.activities[i].adultTickets = adultTickets;
@@ -1417,15 +1420,15 @@ module.exports = {
             if (order.activities[0].bookingType === "ticket") {
                 await AttractionTicket.find({
                     activity: order.activities[0].activity,
-                    ticketNo: { $all: order.activities[0].adultTickets },
+                    ticketNo: order.activities[0].adultTickets,
                 }).updateMany({ status: "ok" });
                 await AttractionTicket.find({
                     activity: order.activities[0].activity,
-                    ticketNo: { $all: order.activities[0].childTickets },
+                    ticketNo: order.activities[0].childTickets,
                 }).updateMany({ status: "ok" });
                 await AttractionTicket.find({
                     activity: order.activities[0].activity,
-                    ticketNo: { $all: order.activities[0].infantTickets },
+                    ticketNo: order.activities[0].infantTickets,
                 }).updateMany({ status: "ok" });
             }
 
