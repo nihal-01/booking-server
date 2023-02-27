@@ -1,7 +1,7 @@
 const { sendErrorResponse } = require("../../helpers");
 
 module.exports = {
-    getFlightAvaialability: async (req, res) => {
+    searchFlightAvailability: async (req, res) => {
         try {
             const {
                 from,
@@ -12,7 +12,6 @@ module.exports = {
                 noOfInfants,
             } = req.body;
 
-            
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

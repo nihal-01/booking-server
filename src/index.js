@@ -4,7 +4,6 @@ require("dotenv").config();
 
 require("./config/cache");
 require("./config/dbConfig");
-const { AttractionTicket } = require("./models");
 
 const adminRouter = require("./admin");
 const b2bRouter = require("./b2b");
