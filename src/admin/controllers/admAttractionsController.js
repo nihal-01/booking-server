@@ -8,6 +8,8 @@ const {
     Destination,
     AttractionReview,
 } = require("../../models");
+const { attractionApi } = require("../helpers");
+
 const {
     attractionSchema,
     attractionActivitySchema,
@@ -118,6 +120,10 @@ module.exports = {
                 parsedAvailability = JSON.parse(availability);
             }
 
+            if (isApiConnected) {
+                let apiData = await attractionApi(res, connectedApi);
+            }
+
             const newAttraction = new Attraction({
                 title,
                 logo,
@@ -188,6 +194,7 @@ module.exports = {
                 cancelBeforeTime,
                 cancellationFee,
                 isApiConnected,
+                connectedApi,
                 isCombo,
                 oldImages,
                 bookingPriorDays,
@@ -263,6 +270,19 @@ module.exports = {
                 parsedAvailability = JSON.parse(availability);
             }
 
+            // console.log(connectedApi, "connectedApi");
+
+            let apiData;
+            if (isApiConnected) {
+                apiData = await attractionApi(res, connectedApi);
+            }
+
+            console.log(
+                apiData[0].prices,
+                apiData[0].attributes,
+                "datadataapiData"
+            );
+
             const attraction = await Attraction.findOneAndUpdate(
                 { _id: id, isDeleted: false },
                 {
@@ -293,6 +313,7 @@ module.exports = {
                     cancelBeforeTime,
                     cancellationFee,
                     isApiConnected,
+                    connectedApi,
                     isCombo,
                     bookingPriorDays,
                 },
@@ -305,13 +326,97 @@ module.exports = {
 
             res.status(200).json(attraction);
         } catch (err) {
+            console.log(err, "error");
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    connectApi: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid attraction id!");
+            }
+
+            console.log(id, "call reached");
+
+            const attr = await Attraction.findById(id);
+            if (!attr) {
+                return sendErrorResponse(res, 404, "Attraction not found");
+            }
+
+            let apiData;
+            if (attr.isApiConnected) {
+                apiData = await attractionApi(res, attr.connectedApi);
+            }
+
+            if (!attr.isApiConnected) {
+                return sendErrorResponse(res, 404, "Api not Connected");
+            }
+
+            let activities = [];
+            let newActivities = [];
+
+            for (i = 0; i < apiData.length; i++) {
+                activity = await AttractionActivity.findOne({
+                    attraction: attr._id,
+                    productId: apiData[i].productId,
+                });
+
+
+                if (activity == null) {
+                    activity = new AttractionActivity({
+                        name: apiData[i].name,
+                        attraction: attr._id,
+                        activityType: "normal",
+                        productId: apiData[i].productId,
+                        productCode: apiData[i].productCode,
+                        childPrice: apiData[i].prices[0].totalPrice,
+                        adultPrice: apiData[i].prices[0].totalPrice,
+                        adultAgeLimit: 60,
+                        childAgeLimit: 10,
+                        infantAgeLimit: 3,
+                        isVat: true,
+                        vat: apiData[i].prices[0].vatAmount,
+                        base: "person",
+                        isSharedTransferAvailable: false,
+                        isPrivateTransferAvailable: false,
+                        privateTransfers: [
+                            {
+                                name: "Dubai Park",
+                                maxCapacity: 1,
+                                price: apiData[i].prices[0].totalPrice,
+                                cost: apiData[i].prices[0].totalPrice,
+                            },
+                        ],
+                    });
+
+                    await activity.save();
+                    activities.push(activity);
+                } else {
+                    activity.childPrice = apiData[i].prices[0].totalPrice;
+                    activity.adultPrice = apiData[i].prices[0].totalPrice;
+
+                    await activity.save();
+                    activities.push(activity);
+                }
+
+
+            }
+
+            console.log(activity, "activities");
+
+
+            res.status(200).json({ message: "Updated Successfully"  , activities : activities });
+        } catch (err) {
             sendErrorResponse(res, 500, err);
         }
     },
 
     addAttractionActivity: async (req, res) => {
         try {
-            const {
+            let {
                 attraction,
                 name,
                 description,
@@ -351,6 +456,13 @@ module.exports = {
             const attr = await Attraction.findById(attraction);
             if (!attr) {
                 return sendErrorResponse(res, 404, "Attraction not found");
+            }
+
+            let apiData;
+            if (attr.isApiConnected) {
+                apiData = await attractionApi(res, attr.connectedApi);
+                adultPrice = apiData;
+                childPrice = apiData;
             }
 
             if (attr.bookingType === "ticket" && activityType === "transfer") {

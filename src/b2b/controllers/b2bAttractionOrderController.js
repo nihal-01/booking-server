@@ -32,6 +32,7 @@ const sendAttractionOrderAdminEmail = require("../helpers/sendAttractionOrderAdm
 const sendAttractionOrderOtp = require("../helpers/sendAttractionOrderOtp");
 const sendInsufficentBalanceMail = require("../helpers/sendInsufficentBalanceEmail");
 const sendWalletDeductMail = require("../helpers/sendWalletDeductMail");
+const createDubaiParkOrder = require("../helpers/createDubaiParkOrder");
 
 const dayNames = [
     "sunday",
@@ -1075,8 +1076,25 @@ module.exports = {
             for (let i = 0; i < attractionOrder.activities?.length; i++) {
                 const activity = await AttractionActivity.findOne({
                     _id: attractionOrder.activities[i].activity,
-                });
+                }).populate("attraction");
+
                 let totalPurchaseCost = attractionOrder.activities[i].totalCost;
+
+                console.log(activity, "activitiessss");
+                if (
+                    activity.attraction == "63afca1b5896ed6d0f297449" &&
+                    activity.attraction.isApiConnected
+                ) {
+                    let data = await createDubaiParkOrder(
+                        connectedApi,
+                        attractionOrder,
+                        attractionOrder.activities[i]
+                    );
+
+                    attractionOrder.activities[i].bookingConfirmationNumber =
+                        data.MediaCodeList[0].MediaCode;
+                }
+
                 if (attractionOrder.activities[i].bookingType === "ticket") {
                     const adultTickets = await AttractionTicket.find({
                         activity: attractionOrder.activities[i].activity,
@@ -1492,7 +1510,7 @@ module.exports = {
                 return sendErrorResponse(res, 400, "invalid order id");
             }
 
-            console.log(orderId , "orderId")
+            console.log(orderId, "orderId");
 
             const order = await B2BAttractionOrder.aggregate([
                 {
@@ -1614,7 +1632,7 @@ module.exports = {
                     },
                 },
             ]);
-            console.log(order)
+            console.log(order);
 
             if (!order || order?.length < 1) {
                 return sendErrorResponse(res, 404, "order not found");

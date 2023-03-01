@@ -4,6 +4,7 @@ const path = require("path");
 
 const {
     createNewAttraction,
+    connectApi,
     addAttractionActivity,
     getAllAttractions,
     getInitialData,
@@ -60,6 +61,7 @@ router.post("/create", upload, createNewAttraction);
 router.post("/activities/add", addAttractionActivity);
 
 router.patch("/update/:id", upload, updateAttraction);
+router.post("/connect/api/:id", connectApi);
 router.patch("/activities/update/:activityId", updateActivity);
 router.patch("/update/:id/is-active", updateAttractionIsActiveOrNot);
 

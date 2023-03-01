@@ -120,6 +120,12 @@ const attractionActivitySchema = new Schema(
         note: {
             type: String,
         },
+        productId: {
+            type: String,
+        },
+        productCode: {
+            type: String,
+        },
         isDeleted: {
             type: Boolean,
             required: true,
