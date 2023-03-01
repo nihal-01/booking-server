@@ -136,7 +136,8 @@ module.exports = {
                         });
 
                         await AttractionTicket.find({
-                            _id: { $all: infantTicketsIds },
+                            activity: attractionOrder.activities[i].activity,
+                            _id: infantTicketsIds,
                         }).updateMany({ status: "used" });
                     }
 
@@ -146,7 +147,8 @@ module.exports = {
                     });
 
                     await AttractionTicket.find({
-                        _id: { $all: adultTicketsIds },
+                        activity: attractionOrder.activities[i].activity,
+                        _id: adultTicketsIds,
                     }).updateMany({ status: "used" });
 
                     const childTicketsIds = childTickets.map((ticket) => {
@@ -155,7 +157,8 @@ module.exports = {
                     });
 
                     await AttractionTicket.find({
-                        _id: { $all: childTicketsIds },
+                        activity: attractionOrder.activities[i].activity,
+                        _id: childTicketsIds,
                     }).updateMany({ status: "used" });
 
                     attractionOrder.activities[i].adultTickets = adultTickets;
