@@ -1,5 +1,6 @@
 const { isValidObjectId, Types } = require("mongoose");
 const { sendErrorResponse } = require("../../helpers");
+const { getTimeSlot } = require("../helpers");
 const { Attraction, Destination, AttractionTicket } = require("../../models");
 
 module.exports = {
@@ -3038,6 +3039,24 @@ module.exports = {
         } catch (err) {
             console.log(err, "error");
             sendErrorResponse(res, 400, err);
+        }
+    },
+
+    getTimeSlot: async (req, res) => {
+        try {
+            const { eventTypeId, resourceId, timeSlotDate } = req.body;
+
+            const timeSlots = await getTimeSlot(
+                eventTypeId,
+                resourceId,
+                timeSlotDate
+            );
+
+            res.status(200).json({
+                timeSlots: timeSlots,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
         }
     },
 };

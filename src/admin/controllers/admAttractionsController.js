@@ -8,7 +8,11 @@ const {
     Destination,
     AttractionReview,
 } = require("../../models");
-const { attractionApi } = require("../helpers");
+const {
+    attractionApi,
+    getAgentTickets,
+    getLeastPriceOfDay,
+} = require("../helpers");
 
 const {
     attractionSchema,
@@ -44,6 +48,7 @@ module.exports = {
                 cancelBeforeTime,
                 cancellationFee,
                 isApiConnected,
+                connectedApi,
                 isCombo,
                 bookingPriorDays,
             } = req.body;
@@ -120,9 +125,9 @@ module.exports = {
                 parsedAvailability = JSON.parse(availability);
             }
 
-            if (isApiConnected) {
-                let apiData = await attractionApi(res, connectedApi);
-            }
+            // if (isApiConnected) {
+            //     let apiData = await attractionApi(res, connectedApi);
+            // }
 
             const newAttraction = new Attraction({
                 title,
@@ -152,6 +157,7 @@ module.exports = {
                 cancelBeforeTime,
                 cancellationFee,
                 isApiConnected,
+                connectedApi,
                 isCombo,
                 bookingPriorDays,
                 isActive: true,
@@ -346,69 +352,136 @@ module.exports = {
                 return sendErrorResponse(res, 404, "Attraction not found");
             }
 
-            let apiData;
-            if (attr.isApiConnected) {
-                apiData = await attractionApi(res, attr.connectedApi);
-            }
-
             if (!attr.isApiConnected) {
                 return sendErrorResponse(res, 404, "Api not Connected");
             }
 
-            let activities = [];
-            let newActivities = [];
+            if (id == "63afca1b5896ed6d0f297449") {
+                let activities = [];
 
-            for (i = 0; i < apiData.length; i++) {
-                activity = await AttractionActivity.findOne({
-                    attraction: attr._id,
-                    productId: apiData[i].productId,
-                });
-
-
-                if (activity == null) {
-                    activity = new AttractionActivity({
-                        name: apiData[i].name,
-                        attraction: attr._id,
-                        activityType: "normal",
-                        productId: apiData[i].productId,
-                        productCode: apiData[i].productCode,
-                        childPrice: apiData[i].prices[0].totalPrice,
-                        adultPrice: apiData[i].prices[0].totalPrice,
-                        adultAgeLimit: 60,
-                        childAgeLimit: 10,
-                        infantAgeLimit: 3,
-                        isVat: true,
-                        vat: apiData[i].prices[0].vatAmount,
-                        base: "person",
-                        isSharedTransferAvailable: false,
-                        isPrivateTransferAvailable: false,
-                        privateTransfers: [
-                            {
-                                name: "Dubai Park",
-                                maxCapacity: 1,
-                                price: apiData[i].prices[0].totalPrice,
-                                cost: apiData[i].prices[0].totalPrice,
-                            },
-                        ],
-                    });
-
-                    await activity.save();
-                    activities.push(activity);
-                } else {
-                    activity.childPrice = apiData[i].prices[0].totalPrice;
-                    activity.adultPrice = apiData[i].prices[0].totalPrice;
-
-                    await activity.save();
-                    activities.push(activity);
+                let apiData;
+                if (attr.isApiConnected) {
+                    apiData = await attractionApi(res, attr.connectedApi);
                 }
 
+                for (i = 0; i < apiData.length; i++) {
+                    activity = await AttractionActivity.findOne({
+                        attraction: attr._id,
+                        productId: apiData[i].productId,
+                    });
 
+                    if (activity == null) {
+                        activity = new AttractionActivity({
+                            name: apiData[i].name,
+                            attraction: attr._id,
+                            activityType: "normal",
+                            productId: apiData[i].productId,
+                            productCode: apiData[i].productCode,
+                            childPrice: apiData[i].prices[0].totalPrice,
+                            adultPrice: apiData[i].prices[0].totalPrice,
+                            childCost: apiData[i].prices[0].totalPrice,
+                            adultCost: apiData[i].prices[0].totalPrice,
+                            adultAgeLimit: 60,
+                            childAgeLimit: 10,
+                            infantAgeLimit: 3,
+                            isVat: true,
+                            vat: apiData[i].prices[0].vatAmount,
+                            base: "person",
+                            isSharedTransferAvailable: false,
+                            isPrivateTransferAvailable: false,
+                            privateTransfers: [
+                                {
+                                    name: "Dubai Park",
+                                    maxCapacity: 1,
+                                    price: apiData[i].prices[0].totalPrice,
+                                    cost: apiData[i].prices[0].totalPrice,
+                                },
+                            ],
+                        });
+
+                        await activity.save();
+                        activities.push(activity);
+                    } else {
+                        activity.childCost = apiData[i].prices[0].totalPrice;
+                        activity.adultCost = apiData[i].prices[0].totalPrice;
+
+                        await activity.save();
+                        activities.push(activity);
+                    }
+                }
+
+                console.log(activity, "activities");
+
+                res.status(200).json({
+                    message: "Updated Successfully",
+                    activities: activities,
+                });
+            } else {
+                let activities = [];
+
+                let apiData;
+                if (attr.isApiConnected) {
+                    apiData = await getAgentTickets(res);
+                }
+
+                console.log(apiData, "reached");
+
+                for (i = 0; i < apiData.length; i++) {
+                    activity = await AttractionActivity.findOne({
+                        attraction: attr._id,
+                        ResourceID: apiData[i].ResourceID,
+                        EventtypeId: apiData[i].EventtypeId,
+                    });
+
+                    let apiPriceData = await getLeastPriceOfDay(apiData[i]);
+
+                    if (activity == null) {
+                        activity = new AttractionActivity({
+                            name: apiData[i].AttractionName,
+                            attraction: attr._id,
+                            activityType: "normal",
+                            // productId: apiData[i].productId,
+                            // productCode: apiData[i].productCode,
+                            ResourceID: apiData[i].ResourceID,
+                            EventtypeId: apiData[i].EventtypeId,
+                            childCost: apiPriceData.leastChildPrice,
+                            childCost: apiPriceData.leastAdultPrice,
+                            adultAgeLimit: 60,
+                            childAgeLimit: 10,
+                            infantAgeLimit: 3,
+                            isVat: true,
+                            vat: apiData[i].prices[0].vatAmount,
+                            base: "person",
+                            isSharedTransferAvailable: false,
+                            isPrivateTransferAvailable: false,
+                            privateTransfers: [
+                                {
+                                    name: "Burj Khalifa",
+                                    maxCapacity: 1,
+                                    price: apiPriceData.leastChildPrice,
+                                    cost: apiPriceData.leastChildPrice,
+                                },
+                            ],
+                        });
+
+                        await activity.save();
+                        activities.push(activity);
+                    } else {
+                        activity.childPrice = apiPriceData.leastChildPrice;
+                        activity.adultPrice = apiPriceData.leastAdultPrice;
+
+                        await activity.save();
+                        activities.push(activity);
+                    }
+                }
+
+                console.log(activity, "activities");
+
+                res.status(200).json({
+                    message: "Updated Successfully",
+                    activities: activities,
+                });
             }
-
-            console.log(activity, "activities");
-
-
-            res.status(200).json({ message: "Updated Successfully"  , activities : activities });
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }
@@ -461,8 +534,8 @@ module.exports = {
             let apiData;
             if (attr.isApiConnected) {
                 apiData = await attractionApi(res, attr.connectedApi);
-                adultPrice = apiData;
-                childPrice = apiData;
+                adultCost = apiData;
+                childCost = apiData;
             }
 
             if (attr.bookingType === "ticket" && activityType === "transfer") {
@@ -610,7 +683,7 @@ module.exports = {
             if (activityType === "transfer") {
                 isPriceRequired = false;
                 isCostRequired = false;
-            } else if (attr.bookingType === "ticket") {
+            } else if (attr.bookingType === "ticket" && !attr.isApiConnected) {
                 isCostRequired = false;
             }
 
@@ -723,6 +796,7 @@ module.exports = {
                         title: 1,
                         bookingType: 1,
                         isOffer: 1,
+                        isApiConnected: 1,
                         offerAmountType: 1,
                         offerAmount: 1,
                         destination: 1,
@@ -888,7 +962,7 @@ module.exports = {
             const activity = await AttractionActivity.findOne({
                 isDeleted: false,
                 _id: activityId,
-            }).populate("attraction", "title bookingType");
+            }).populate("attraction", "title bookingType isApiConnected");
 
             if (!activity) {
                 return sendErrorResponse(res, 404, "Activity not found");

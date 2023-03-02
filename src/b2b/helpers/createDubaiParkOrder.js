@@ -1,12 +1,14 @@
 const {
     dubaiParkAuhthentication,
 } = require("../../admin/helpers/dubaiParkAuth");
+const axios = require("axios");
 
 module.exports = {
     createDubaiParkOrder: async (apiId, attractionOrder, activity) => {
         try {
             const token = await dubaiParkAuhthentication(apiId);
 
+            console.log(token, "token");
             const url =
                 "https://am-uat.dubaiparksandresorts.com/wso2/sec/services/dpr/resellerBooking/1.0.0";
 
@@ -18,13 +20,14 @@ module.exports = {
                 Authorization: "Bearer " + token,
             };
 
+            console.log(activity.activity, "activity ", activity.adultsCount);
             const data = {
                 productList: [
                     {
-                        productId: activity.productId,
-                        quantity: Number(
-                            activity.adultCount + activity.childCount
-                        ),
+                        productId: activity.activity.productId,
+                        quantity:
+                            Number(activity.adultsCount) +
+                            Number(activity.childrenCount),
                     },
                 ],
                 resellerBookingId: "TRAVELLERS_CHOICE_13022023",
@@ -42,7 +45,7 @@ module.exports = {
                 paymentMethod: {
                     paymentMethodId: 12,
                     paymentDate: "13/02/2023 10:50:25",
-                    TransactionCode: "93447112529598613",
+                    TransactionCode: attractionOrder.referenceNumber,
                 },
             };
 
@@ -50,7 +53,27 @@ module.exports = {
 
             // let response = await axios.post(url, data, { headers });
 
-            // return response.data.data
-        } catch (err) {}
+            // console.log(response.data, "data recieved");
+
+            // return response.data.data;
+
+            return ( {
+                "PNR": "PXEDVP3J",
+                "MediaCodeList": [
+                    {
+                        "ProductId": "42E90CEA-55AA-94A3-2029-017E67C0790F",
+                        "MediaCode": "1S7DJ8P62X6X3X"
+                    }
+                    ,
+                    {
+                        "ProductId": "42E90CEA-55AA-94A3-2029-017E67C0790F",
+                        "MediaCode": "1S7DJ8P62ASDFERT"
+                    }
+                ]
+            }
+        )
+        } catch (err) {
+            console.log(err.message, "message");
+        }
     },
 };

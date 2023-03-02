@@ -3,9 +3,7 @@ const { ApiMaster } = require("../../models");
 const axios = require("axios");
 
 module.exports = {
-
-
-    dubaiParkAuhthentication: async(apiId) => {
+    dubaiParkAuhthentication: async (apiId) => {
         try {
             const api = await ApiMaster.findById(apiId);
 
@@ -13,7 +11,9 @@ module.exports = {
                 return sendErrorResponse(res, 400, "api not found");
             }
 
-            const header = {
+            console.log(api, "api");
+
+            const headers = {
                 Authorization:
                     "Basic " +
                     Buffer.from(
@@ -27,11 +27,13 @@ module.exports = {
             });
 
             let auth = await axios.post(api.demoUrl, data, {
-                headers: header,
+                headers: headers,
             });
 
-            return auth.data.access_token
 
-        } catch (err) {}
+            return auth.data.access_token;
+        } catch (err) {
+            console.log(err, "errr");
+        }
     },
 };

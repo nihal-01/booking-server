@@ -1,4 +1,13 @@
 const sendCustomEmail = require("./sendCustomEmail");
 const { attractionApi } = require("./attractionApiHelper");
-const dubaiParkAuht = require("./dubaiParkAuth");
-module.exports = { sendCustomEmail, attractionApi, dubaiParkAuht };
+const { dubaiParkAuhthentication } = require("./dubaiParkAuth");
+const { getAgentTickets , getLeastPriceOfDay } = require("./burjKhalifaApiHelper");
+
+
+module.exports = {
+    sendCustomEmail,
+    attractionApi,
+    dubaiParkAuhthentication,
+    getAgentTickets,
+    getLeastPriceOfDay
+};
