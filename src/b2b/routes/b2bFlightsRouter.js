@@ -1,5 +1,7 @@
-// const router = require("express").Router();
+const router = require("express").Router();
 
-// router.get(`/`)
+const { flightAvailability } = require("../controllers/b2bFlightController");
 
-// module.exports = router;
+router.post(`/availability`, flightAvailability);
+
+module.exports = router;

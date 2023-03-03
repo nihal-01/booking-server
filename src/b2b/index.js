@@ -17,6 +17,7 @@ const {
     b2bAttractionTicketsRouter,
     b2bClientFlightMarkupRouter,
     b2bSubAgentFightMarkupRouter,
+    b2bFlightsRouter,
 } = require("./routes");
 
 router.use("/resellers/auth", b2bResellersAuthRouter);
@@ -37,5 +38,5 @@ router.use("/client/flight/markup", b2bClientFlightMarkupRouter);
 router.use("/visa", b2bVisaListRouter);
 router.use("/visa/application", b2bVisaRouter);
 router.use("/visa/application/list", b2bVisaApplicationListRouter);
-
+router.use("/flight", b2bFlightsRouter);
 module.exports = router;

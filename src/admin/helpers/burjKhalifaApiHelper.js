@@ -113,24 +113,42 @@ module.exports = {
 
             console.log(api, "api");
 
-            const xmlData = `
-            <?xml version="1.0" encoding="utf-8"?>
-             <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-                 <soap:Body>
-                  <GetAgentTickets xmlns="http://tickets.atthetop.ae/AgentWebApi">
-                  <agentId>${api.demoAgentId}</agentId>
+            console.log(typeOf(api.demoAgentId));
+
+            // const xmlData = `
+            // <?xml version="1.0" encoding="utf-8"?>
+            //  <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            //      <soap:Body>
+            //       <GetAgentTickets xmlns="http://tickets.atthetop.ae/AgentWebApi">
+            //       <agentId>${api.demoAgentId}</agentId>
+            //       <userName>${api.demoUsername}</userName>
+            //       <password>${api.demoPassword}</password>
+            //       </GetAgentTickets>
+            //     </soap:Body>
+            //   </soap:Envelope>`;
+
+            // const headers = {
+            // "Content-Type": "text/xml; charset=utf-8",
+            // SOAPAction:
+            //     "http://tickets.atthetop.ae/AgentWebApi/GetAgentTickets",
+            // "Content-Type": "application/soap+xml; charset=utf-8",
+            // "Content-Length": "length",
+            // };
+
+            const xmlData = `<?xml version="1.0" encoding="utf-8"?>
+<soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+  <soap12:Body>
+    <GetAgentTickets xmlns="http://tickets.atthetop.ae/AgentWebApi">
+    <agentId>${api.demoAgentId}</agentId>
                   <userName>${api.demoUsername}</userName>
                   <password>${api.demoPassword}</password>
-                  </GetAgentTickets>
-                </soap:Body>
-              </soap:Envelope>`;
+    </GetAgentTickets>
+  </soap12:Body>
+</soap12:Envelope>`;
 
             const headers = {
-                "Content-Type": "text/xml; charset=utf-8",
-                SOAPAction:
-                    "http://tickets.atthetop.ae/AgentWebApi/GetAgentTickets",
-                // "Content-Type": "application/soap+xml; charset=utf-8",
-                // "Content-Length": "length",
+                "Content-Type": "application/soap+xml; charset=utf-8",
+                "Content-Length": xmlData.length,
             };
 
             const response = await axios.post(url, xmlData, { headers });

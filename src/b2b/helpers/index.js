@@ -6,6 +6,7 @@ const {
     getTicketType,
     getTimeSlot,
 } = require("./burjKhalifaApiHelper");
+const { flightAvailabilitySearch} = require('./b2bFlightHelper')
 
 module.exports = {
     sendWalletDeposit,
@@ -13,5 +14,6 @@ module.exports = {
     getTimeSlotWithRate,
     getTimeSlot,
     getTicketType,
-    createDubaiParkOrder
+    createDubaiParkOrder,
+    flightAvailabilitySearch
 };
