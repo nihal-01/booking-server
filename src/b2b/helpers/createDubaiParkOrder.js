@@ -8,7 +8,20 @@ module.exports = {
         try {
             const token = await dubaiParkAuhthentication(apiId);
 
-            console.log(token, "token");
+            const currentDate = new Date();
+            const formattedDate = currentDate.toLocaleDateString("en-GB", {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+            });
+            const formattedTime = currentDate.toLocaleTimeString("en-GB", {
+                hour12: false,
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+            });
+            const formattedDateTime = `${formattedDate} ${formattedTime}`;
+
             const url =
                 "https://am-uat.dubaiparksandresorts.com/wso2/sec/services/dpr/resellerBooking/1.0.0";
 
@@ -44,7 +57,7 @@ module.exports = {
                 },
                 paymentMethod: {
                     paymentMethodId: 12,
-                    paymentDate: "13/02/2023 10:50:25",
+                    paymentDate: formattedDateTime,
                     TransactionCode: attractionOrder.referenceNumber,
                 },
             };
@@ -57,21 +70,19 @@ module.exports = {
 
             // return response.data.data;
 
-            return ( {
-                "PNR": "PXEDVP3J",
-                "MediaCodeList": [
+            return {
+                PNR: "PXEDVP3J",
+                MediaCodeList: [
                     {
-                        "ProductId": "42E90CEA-55AA-94A3-2029-017E67C0790F",
-                        "MediaCode": "1S7DJ8P62X6X3X"
-                    }
-                    ,
+                        ProductId: "42E90CEA-55AA-94A3-2029-017E67C0790F",
+                        MediaCode: "1S7DJ8P62X6X3X",
+                    },
                     {
-                        "ProductId": "42E90CEA-55AA-94A3-2029-017E67C0790F",
-                        "MediaCode": "1S7DJ8P62ASDFERT"
-                    }
-                ]
-            }
-        )
+                        ProductId: "42E90CEA-55AA-94A3-2029-017E67C0790F",
+                        MediaCode: "1S7DJ8P62ASDFERT",
+                    },
+                ],
+            };
         } catch (err) {
             console.log(err.message, "message");
         }

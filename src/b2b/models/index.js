@@ -10,6 +10,8 @@ const B2BSpecialAttractionMarkup = require("./b2bAttractionSpecialMarkup.modal")
 const B2BSpecialVisaMarkup = require("./b2bVisaSpecialMarkup.modal");
 const B2BBankDetails = require("./b2bBankDetails.model");
 const B2BWalletWithdraw = require("./b2bWithdrawRequest.model");
+const B2BClientFlightMarkup = require("./b2bClientFlightMarkup.model");
+const B2BSubAgentFlightMarkup = require("./b2bSubAgentFlightMarkup.model");
 
 module.exports = {
     Reseller,
@@ -24,4 +26,6 @@ module.exports = {
     B2BSpecialVisaMarkup,
     B2BBankDetails,
     B2BWalletWithdraw,
+    B2BSubAgentFlightMarkup,
+    B2BClientFlightMarkup,
 };

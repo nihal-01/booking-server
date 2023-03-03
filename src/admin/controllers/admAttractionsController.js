@@ -12,6 +12,7 @@ const {
     attractionApi,
     getAgentTickets,
     getLeastPriceOfDay,
+    getBalance,
 } = require("../helpers");
 
 const {
@@ -337,6 +338,33 @@ module.exports = {
         }
     },
 
+    showBalance: async (req, res) => {
+        try {
+            const { id } = req.params;
+
+            if (!isValidObjectId(id)) {
+                return sendErrorResponse(res, 400, "Invalid attraction id!");
+            }
+
+            console.log(id, "call reached");
+
+            const attr = await Attraction.findById(id);
+            if (!attr) {
+                return sendErrorResponse(res, 404, "Attraction not found");
+            }
+
+            if (!attr.isApiConnected) {
+                return sendErrorResponse(res, 404, "Api not Connected");
+            }
+
+            if (id == "63afca1b5896ed6d0f297449") {
+                let balanceDetails = await getBalance(res, attr.connectedApi);
+
+                res.status(200).json({ balanceDetails});
+            }
+        } catch (err) {}
+    },
+
     connectApi: async (req, res) => {
         try {
             const { id } = req.params;
@@ -367,6 +395,7 @@ module.exports = {
                 for (i = 0; i < apiData.length; i++) {
                     activity = await AttractionActivity.findOne({
                         attraction: attr._id,
+                        isDeleted: false,
                         productId: apiData[i].productId,
                     });
 
@@ -410,7 +439,9 @@ module.exports = {
                     }
                 }
 
-                console.log(activity, "activities");
+                let balanceDetails = await getBalance(res, attr.connectedApi);
+
+                console.log(balanceDetails, "balanceDetails");
 
                 res.status(200).json({
                     message: "Updated Successfully",
@@ -483,6 +514,7 @@ module.exports = {
                 });
             }
         } catch (err) {
+            console.log(err.message, "err");
             sendErrorResponse(res, 500, err);
         }
     },

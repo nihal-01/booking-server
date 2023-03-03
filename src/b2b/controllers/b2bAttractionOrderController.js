@@ -1099,9 +1099,10 @@ module.exports = {
                 //     let ticketTypes = await getTicketType(timeSlotWithDate);
                 // }
 
-                if (activity.attraction._id == "63afca1b5896ed6d0f297449") {
-                    console.log("reached");
-
+                if (
+                    activity.attraction._id == "63afca1b5896ed6d0f297449" &&
+                    activity.attraction.isApiConnected
+                ) {
                     let data = await createDubaiParkOrder(
                         activity.attraction.connectedApi,
                         attractionOrder,
@@ -1130,15 +1131,15 @@ module.exports = {
 
                         let ticket = await tickets.save();
                         if (ticketFor == "adult") {
-                            adultTicketIds.push(ticket._id);
+                            adultTicketIds.push(ticket);
                         } else {
-                            childTicketIds.push(ticket._id);
+                            childTicketIds.push(ticket);
                         }
                     }
 
-                    attractionOrder.activities[i].status = "confirmed";
                     attractionOrder.activities[i].adultTickets = adultTicketIds;
                     attractionOrder.activities[i].childTickets = childTicketIds;
+                    attractionOrder.activities[i].status = "confirmed";
                 } else {
                     if (
                         attractionOrder.activities[i].bookingType === "ticket"
@@ -1384,8 +1385,6 @@ module.exports = {
                 orderedBy: "",
                 agentCode: "",
             });
-
-            console.log(result, "result");
 
             res.status(200).json({ result, skip, limit });
         } catch (err) {

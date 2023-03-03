@@ -8,7 +8,7 @@ module.exports = {
         try {
             const token = await dubaiParkAuhthentication(apiId);
 
-            console.log(token , "auth");
+            console.log(token, "auth");
 
             const headers = {
                 Source: "TRAVELLERS_CHOICE",
@@ -28,6 +28,34 @@ module.exports = {
         } catch (err) {
             console.log(err.message, "message");
             return sendErrorResponse(res, 400, "api not found");
+        }
+    },
+
+    getBalance: async (res, apiId) => {
+        try {
+            const token = await dubaiParkAuhthentication(apiId);
+
+            console.log(token, "auth 2");
+
+            const headers = {
+                Source: "TRAVELLERS_CHOICE",
+                Channel: "Web Portal",
+                "Web-Client": "postman",
+                Authorization: "Bearer " + token,
+            };
+
+            const response = await axios.get(
+                "https://am-uat.dubaiparksandresorts.com/wso2/sec/services/dpr/checkResellerCredit/1.0.0",
+                {
+                    headers: headers,
+                }
+            );
+
+            console.log(response.data);
+
+            return response.data.data;
+        } catch (err) {
+            console.log(err, "error");
         }
     },
 };
