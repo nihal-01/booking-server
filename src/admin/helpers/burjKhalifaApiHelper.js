@@ -148,7 +148,7 @@ module.exports = {
 
             const headers = {
                 "Content-Type": "application/soap+xml; charset=utf-8",
-                "Content-Length": "length",
+                "Content-Length": xmlData.length,
             };
 
             const response = await axios.post(url, xmlData, { headers });
