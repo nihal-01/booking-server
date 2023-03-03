@@ -23,7 +23,7 @@ const {
 } = require("./routes");
 
 const app = express();
-const PORT = process.env.PORT || 8088;
+const PORT = process.env.PORT || 8189;
 
 app.use(express.json());
 app.use(
