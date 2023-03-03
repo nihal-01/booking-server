@@ -39,7 +39,6 @@ const attractionItinerarySchema = new Schema(
                                 },
                                 itineraryTitle: {
                                     type: String,
-                                    required: true,
                                 },
                                 note: {
                                     type: String,

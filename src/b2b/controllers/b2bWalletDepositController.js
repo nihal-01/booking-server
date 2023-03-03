@@ -1,22 +1,15 @@
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const nodeCCAvenue = require("node-ccavenue");
-const qs = require("querystring");
 
 const { sendErrorResponse } = require("../../helpers");
 const { HomeSettings } = require("../../models");
-const { createOrder, fetchOrder, fetchPayment } = require("../../utils/paypal");
+const { fetchOrder, fetchPayment } = require("../../utils/paypal");
 const { sendWalletDeposit } = require("../helpers");
 const { B2BTransaction, B2BWallet } = require("../models");
 const {
     b2bAttractionOrderCaptureSchema,
 } = require("../validations/b2bAttractionOrder.schema");
-const { convertCurrency } = require("../helpers/currencyHelpers");
-
-const instance = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
-    key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
 
 const ccav = new nodeCCAvenue.Configure({
     merchant_id: process.env.CCAVENUE_MERCHANT_ID,
@@ -29,8 +22,12 @@ module.exports = {
         try {
             const { paymentProcessor, amount } = req.body;
 
-            if (amount < 1) {
-                return sendErrorResponse(res, 500, "select a valid amount");
+            if (Number(amount) < 10) {
+                return sendErrorResponse(
+                    res,
+                    500,
+                    "minimum amount should be 10 or above"
+                );
             }
 
             newTransaction = new B2BTransaction({
@@ -207,29 +204,30 @@ module.exports = {
                 await transaction.save();
 
                 res.writeHead(301, {
-                    Location: `https://mytravellerschoice.com/wallet/deposit/${order_id}/cancelled`,
+                    Location: `${process.env.REACT_APP_URL}/b2b/wallet/deposit/${order_id}/cancelled`,
                 });
                 res.end();
             } else {
                 transaction.status = "success";
                 await transaction.save();
 
+                const ccAvenueFee = (transaction.amount / 100) * 3;
+
                 await B2BWallet.updateOne(
                     {
                         reseller: req.reseller._id,
                     },
                     {
-                        $inc: { balance: Number(transaction.amount) },
+                        $inc: { balance: transaction.amount - ccAvenueFee },
                     },
                     { upsert: true, runValidators: true, new: true }
                 );
 
                 let reseller = req.reseller;
-                const companyDetails = await HomeSettings.findOne();
-                sendWalletDeposit(reseller, transaction, companyDetails);
+                sendWalletDeposit(reseller, transaction);
 
                 res.writeHead(301, {
-                    Location: `https://mytravellerschoice.com/print${order_id}`,
+                    Location: `${process.env.REACT_APP_URL}/b2b/wallet/deposit/${order_id}/success`,
                 });
                 res.end();
             }

@@ -1459,7 +1459,7 @@ module.exports = {
             newTransaction.status = "success";
             await newTransaction.save();
 
-            // canecl the order item's markup transactions
+            // cancel the order item's markup transactions
             // for reseller and sub-agaents
             await B2BTransaction.find({
                 transactionType: "markup",

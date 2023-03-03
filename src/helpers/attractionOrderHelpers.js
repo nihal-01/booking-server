@@ -1,4 +1,4 @@
-const { AttractionTicket } = require("../models");
+const { AttractionTicket, AttractionActivity } = require("../models");
 
 module.exports = {
     completeOrderAfterPayment: async (attractionOrder) => {
