@@ -113,7 +113,7 @@ module.exports = {
 
             console.log(api, "api");
 
-            console.log(typeOf(api.demoAgentId));
+            // console.log(typeOf(api.demoAgentId));
 
             // const xmlData = `
             // <?xml version="1.0" encoding="utf-8"?>
