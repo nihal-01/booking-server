@@ -4,6 +4,7 @@ const { dubaiParkAuhthentication } = require("./dubaiParkAuth");
 const {
     getAgentTickets,
     getLeastPriceOfDay,
+    AuthenticationRequest
 } = require("./burjKhalifaApiHelper");
 
 module.exports = {
@@ -13,4 +14,5 @@ module.exports = {
     getAgentTickets,
     getLeastPriceOfDay,
     getBalance,
+    AuthenticationRequest
 };

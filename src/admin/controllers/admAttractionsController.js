@@ -13,6 +13,7 @@ const {
     getAgentTickets,
     getLeastPriceOfDay,
     getBalance,
+    AuthenticationRequest
 } = require("../helpers");
 
 const {
@@ -451,6 +452,8 @@ module.exports = {
                 let activities = [];
 
                 let apiData;
+
+                let res = await AuthenticationRequest()
                 if (attr.isApiConnected) {
                     apiData = await getAgentTickets(res);
                 }
