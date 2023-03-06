@@ -452,7 +452,7 @@ module.exports = {
                 ],
                 status: "ok",
                 activity: activityId,
-                ticketFor: "adult",
+                ticketFor: "common",
             }).count();
 
             res.status(200).json({
@@ -576,7 +576,7 @@ module.exports = {
                     { validity: false },
                 ],
                 status: "ok",
-                ticketFor: "adult",
+                ticketFor: "common",
             }).count();
 
             const topSellingTickets = await AttractionTicket.aggregate([
