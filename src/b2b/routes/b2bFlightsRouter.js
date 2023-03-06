@@ -1,5 +1,10 @@
-// const router = require("express").Router();
+const router = require("express").Router();
 
-// router.get(`/`)
+const { flightAvailability , getSingleTripDetailsWithBundledFare} = require("../controllers/b2bFlightController");
+const { b2bAuth } = require("../middlewares");
 
-// module.exports = router;
+router.post(`/availability`, b2bAuth, flightAvailability);
+router.post('/details/all' , getSingleTripDetailsWithBundledFare)
+
+
+module.exports = router;

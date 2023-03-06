@@ -3,7 +3,7 @@ const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const nodeCCAvenue = require("node-ccavenue");
 
-const { sendErrorResponse } = require("../helpers");
+const { sendErrorResponse, sendEmail, userOrderSignUpEmail } = require("../helpers");
 const {
     Attraction,
     AttractionActivity,
@@ -820,6 +820,13 @@ module.exports = {
                     });
                     await user.save();
                 }
+
+
+                userOrderSignUpEmail(
+                    email,
+                    "New Account",
+                    `username : ${email} password : ${password}`
+                );
             }
 
             let buyer = req.user || user;
@@ -837,6 +844,8 @@ module.exports = {
                 referenceNumber: generateUniqueString("B2CATO"),
             });
             await newAttractionOrder.save();
+
+
 
             const newTransaction = new B2CTransaction({
                 user: buyer?._id,

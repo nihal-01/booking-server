@@ -5,8 +5,7 @@ const createQuotationPdf = require("./ticketInvoice");
 const getOtpSettings = require("./getOtpSettings");
 const sendMobileOtp = require("./sendMobileOtp");
 const sendVisaApplicationEmail = require('./sendVisaApplicationEmail')
-
-
+const userOrderSignUpEmail = require('./sendOrderSignupEmail')
 
 module.exports = {
   sendErrorResponse,
@@ -16,4 +15,5 @@ module.exports = {
   getOtpSettings,
   sendMobileOtp,
   sendVisaApplicationEmail,
+  userOrderSignUpEmail
 };

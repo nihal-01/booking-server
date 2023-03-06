@@ -12,7 +12,9 @@ const b2bVisaRouter = require("./b2bVisaRouter");
 const b2bVisaApplicationListRouter = require("./b2bVisaApplicationListRouter");
 const b2bVisaListRouter = require("./b2bVisaListRouter");
 const b2bAttractionTicketsRouter = require("./b2bAttractionTicketsRouter");
-
+const b2bClientFlightMarkupRouter = require('./b2bClientFlightMarkupRouter')
+const b2bSubAgentFightMarkupRouter  = require('./b2bSubAgentFlightMarkupRouter')
+const b2bFlightsRouter  = require('./b2bFlightsRouter')
 
 module.exports = {
     b2bResellersAuthRouter,
@@ -29,4 +31,7 @@ module.exports = {
     b2bVisaApplicationListRouter,
     b2bVisaListRouter,
     b2bAttractionTicketsRouter,
+    b2bClientFlightMarkupRouter,
+    b2bSubAgentFightMarkupRouter,
+    b2bFlightsRouter
 };

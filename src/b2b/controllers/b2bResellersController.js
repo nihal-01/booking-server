@@ -100,6 +100,7 @@ module.exports = {
 
             const filter = {
                 referredBy: req.reseller.id,
+                status: "ok",
             };
 
             if (search && search !== "") {
@@ -378,7 +379,6 @@ module.exports = {
             res.json({
                 message: "SubAgent Profile Has Been Edited Successfully",
             });
-            
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

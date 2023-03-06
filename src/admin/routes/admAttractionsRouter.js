@@ -4,6 +4,7 @@ const path = require("path");
 
 const {
     createNewAttraction,
+    connectApi,
     addAttractionActivity,
     getAllAttractions,
     getInitialData,
@@ -18,6 +19,7 @@ const {
     deleteAttractionReview,
     updateAttractionIsActiveOrNot,
     getAllAttractionAndActivitiesNames,
+    showBalance,
 } = require("../controllers/admAttractionsController");
 
 const storage = multer.diskStorage({
@@ -60,6 +62,7 @@ router.post("/create", upload, createNewAttraction);
 router.post("/activities/add", addAttractionActivity);
 
 router.patch("/update/:id", upload, updateAttraction);
+router.post("/connect/api/:id", connectApi);
 router.patch("/activities/update/:activityId", updateActivity);
 router.patch("/update/:id/is-active", updateAttractionIsActiveOrNot);
 
@@ -70,6 +73,7 @@ router.get("/:id/reviews", getSingleAttractionReviews);
 router.get("/activities/names/all", getAllAttractionAndActivitiesNames);
 router.get("/activities/:activityId", getSingleActivity);
 router.get("/single/:id/basic-data", getSingleAttractionBasicData);
+router.get("/balance/:id", showBalance);
 
 router.delete("/delete/:id", deleteAttraction);
 router.delete("/activities/delete/:activityId", deleteActivity);
