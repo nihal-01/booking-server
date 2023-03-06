@@ -120,7 +120,7 @@ module.exports = {
 
             const url = api.demoUrl;
 
-            console.log(api, "api");
+            const agentId = parseInt(api.demoAgentId);
 
             const username = process.env.BURJ_KHALIFA_USERNAME;
             const password = process.env.BURJ_KHALIFA_PASSWORD;
@@ -133,7 +133,7 @@ module.exports = {
             <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
            <GetAgentTickets xmlns="http://tickets.atthetop.ae/AgentWebApi">
-            <agentId>${Number(api.demoAgentId)}</agentId>
+            <agentId>${agentId}</agentId>
             <username>${api.demoUsername}</username>
             <password>${api.demoPassword}</password>
             </GetAgentTickets>
