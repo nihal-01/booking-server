@@ -786,6 +786,11 @@ module.exports = {
                     },
                 },
                 {
+                    $sort: {
+                        availableTickets: 1,
+                    },
+                },
+                {
                     $group: {
                         _id: null,
                         totalActivities: { $sum: 1 },
