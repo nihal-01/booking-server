@@ -1392,8 +1392,6 @@ module.exports = {
                 },
             });
 
-            console.log(attractionOrder, "attractionOrders");
-
             if (!attractionOrder) {
                 return sendErrorResponse(
                     res,
@@ -1414,8 +1412,6 @@ module.exports = {
 
             await bankDetails.save();
 
-            console.log(bankDetails, "bankDetails");
-
             const refund = new Refund({
                 category: "attraction",
                 orderId: attractionOrder._id,
@@ -1428,7 +1424,6 @@ module.exports = {
 
             await refund.save();
 
-            console.log(refund, "refund");
             res.status(200).json({
                 message: "Refund Request Has Been Send Suceessfully",
             });
