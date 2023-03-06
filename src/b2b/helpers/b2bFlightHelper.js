@@ -36,10 +36,10 @@ module.exports = {
 
             let response = await axios.post(baseURL + endpointURL, requestBody);
 
+            console.log(response, "response");
             return response.data;
-            
         } catch (err) {
-            console.log(err, "error");
+            console.log(err.message, "error");
         }
     },
 };

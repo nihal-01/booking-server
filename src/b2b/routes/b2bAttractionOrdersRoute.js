@@ -18,6 +18,6 @@ router.post("/cancel", b2bAuth, cancelAttractionOrder);
 router.get("/all", b2bAuth, getSingleB2bAllOrders);
 router.get("/all/sheet", b2bAuth, getSingleB2bAllOrdersSheet);
 router.get("/single/:orderId", b2bAuth, getSingleAttractionOrder);
-router.get("/:orderId/ticket/:activityId", b2bAuth, getAttractionOrderTickets);
+router.get("/:orderId/ticket/:activityId", getAttractionOrderTickets);
 
 module.exports = router;

@@ -37,6 +37,7 @@ const {
     getTicketType,
     createDubaiParkOrder,
 } = require("../helpers");
+const createMultipleTicketPdf = require("../helpers/multipleTicketHelper");
 
 const dayNames = [
     "sunday",
@@ -1813,13 +1814,21 @@ module.exports = {
                 },
             ]);
 
-            
+            console.log(orderDetails[0].activities);
 
             if (!orderDetails || orderDetails?.activities?.length < 1) {
                 return sendErrorResponse(res, 400, "order not found");
             }
 
-            res.status(200).json(orderDetails[0]);
+            console.log("call reachde");
+            const pdfBuffer = await createMultipleTicketPdf(orderDetails[0].activities);
+            res.set({
+                "Content-Type": "application/pdf",
+                "Content-Disposition": "attachment; filename=tickets.pdf",
+            });
+            res.send(pdfBuffer);
+
+            // res.status(200).json(orderDetails[0]);
         } catch (err) {
             sendErrorResponse(res, 500, err);
         }

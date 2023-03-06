@@ -666,7 +666,7 @@ module.exports = {
                                                                         },
                                                                     },
                                                                 },
-                                                                offerlowPrice: {
+                                                            offerlowPrice: {
                                                                 $subtract: [
                                                                     "$$activity.lowPrice",
                                                                     {
@@ -720,7 +720,7 @@ module.exports = {
                                                                         },
                                                                     },
                                                                 },
-                                                                offerlowPrice: {
+                                                            offerlowPrice: {
                                                                 $subtract: [
                                                                     "$$activity.lowPrice",
                                                                     "$offerAmount",
@@ -751,6 +751,8 @@ module.exports = {
             if (!attraction || attraction?.length < 1) {
                 return sendErrorResponse(res, 404, "Attraction not found");
             }
+
+            console.log(attraction[0], "attraction[0],");
 
             console.log(attraction[0], "attraction[0]");
 
