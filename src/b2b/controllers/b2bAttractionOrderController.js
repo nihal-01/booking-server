@@ -1813,6 +1813,8 @@ module.exports = {
                 },
             ]);
 
+            
+
             if (!orderDetails || orderDetails?.activities?.length < 1) {
                 return sendErrorResponse(res, 400, "order not found");
             }

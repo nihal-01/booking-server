@@ -12,7 +12,7 @@ const b2bClientFlightSchema = new Schema(
             type: Number,
             required: true,
         },
-        airLine: {
+        airline: {
             type: Schema.Types.ObjectId,
             ref: "Airline",
             required: true,

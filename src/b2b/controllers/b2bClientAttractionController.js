@@ -1210,6 +1210,7 @@ module.exports = {
                                                                     },
                                                                 ],
                                                             },
+
                                                             lowPrice: {
                                                                 $sum: [
                                                                     "$$activity.lowPrice",
@@ -1347,6 +1348,314 @@ module.exports = {
                         },
                     },
                 },
+                // {
+                //     $addFields: {
+                //         activities: {
+                //             $map: {
+                //                 input: "$activities",
+                //                 as: "activity",
+                //                 in: {
+                //                     $cond: [
+                //                         {
+                //                             $eq: [
+                //                                 "$$activity.activityType",
+                //                                 "normal",
+                //                             ],
+                //                         },
+                //                         {
+                //                             $cond: [
+                //                                 {
+                //                                     $eq: [
+                //                                         "$offerAmountType",
+                //                                         "percentage",
+                //                                     ],
+                //                                 },
+                //                                 {
+                //                                     $mergeObjects: [
+                //                                         "$$activity",
+                //                                         {
+                //                                             adultlowPrice: {
+                //                                                 $subtract: [
+                //                                                     "$$activity.adultPrice",
+                //                                                     {
+                //                                                         $divide:
+                //                                                             [
+                //                                                                 {
+                //                                                                     $multiply:
+                //                                                                         [
+                //                                                                             "$offerAmount",
+                //                                                                             "$$activity.adultPrice",
+                //                                                                         ],
+                //                                                                 },
+                //                                                                 100,
+                //                                                             ],
+                //                                                     },
+                //                                                 ],
+                //                                             },
+                //                                             childlowPrice: {
+                //                                                 $subtract: [
+                //                                                     "$$activity.childPrice",
+                //                                                     {
+                //                                                         $divide:
+                //                                                             [
+                //                                                                 {
+                //                                                                     $multiply:
+                //                                                                         [
+                //                                                                             "$offerAmount",
+                //                                                                             "$$activity.childPrice",
+                //                                                                         ],
+                //                                                                 },
+                //                                                                 100,
+                //                                                             ],
+                //                                                     },
+                //                                                 ],
+                //                                             },
+                //                                             infantlowPrice: {
+                //                                                 $cond: [
+                //                                                     {
+                //                                                         $or: [
+                //                                                             {
+                //                                                                 $eq: [
+                //                                                                     "$offerAmount",
+                //                                                                     null,
+                //                                                                 ],
+                //                                                             },
+                //                                                             {
+                //                                                                 $eq: [
+                //                                                                     "$$activity.infantPrice",
+                //                                                                     0,
+                //                                                                 ],
+                //                                                             },
+                //                                                         ],
+                //                                                     },
+                //                                                     0,
+                //                                                     {
+                //                                                         $subtract:
+                //                                                             [
+                //                                                                 "$$activity.infantPrice",
+                //                                                                 {
+                //                                                                     $divide:
+                //                                                                         [
+                //                                                                             {
+                //                                                                                 $multiply:
+                //                                                                                     [
+                //                                                                                         "$offerAmount",
+                //                                                                                         "$$activity.infantPrice",
+                //                                                                                     ],
+                //                                                                             },
+                //                                                                             100,
+                //                                                                         ],
+                //                                                                 },
+                //                                                             ],
+                //                                                     },
+                //                                                 ],
+                //                                             },
+                //                                             lowPrice: {
+                //                                                 $subtract: [
+                //                                                     "$$activity.lowPrice",
+                //                                                     {
+                //                                                         $divide:
+                //                                                             [
+                //                                                                 {
+                //                                                                     $multiply:
+                //                                                                         [
+                //                                                                             "$markupClient.markup",
+                //                                                                             "$$activity.lowPrice",
+                //                                                                         ],
+                //                                                                 },
+                //                                                                 100,
+                //                                                             ],
+                //                                                     },
+                //                                                 ],
+                //                                             },
+                //                                         },
+                //                                     ],
+                //                                 },
+                //                                 {
+                //                                     $mergeObjects: [
+                //                                         "$$activity",
+                //                                         {
+                //                                             adultlowPrice: {
+                //                                                 $subtract: [
+                //                                                     "$$activity.adultPrice",
+                //                                                     "$offerAmount",
+                //                                                 ],
+                //                                             },
+                //                                             childlowPrice: {
+                //                                                 $subtract: [
+                //                                                     "$$activity.childPrice",
+                //                                                     "$offerAmount",
+                //                                                 ],
+                //                                             },
+                //                                             infantlowPrice: {
+                //                                                 $cond: [
+                //                                                     {
+                //                                                         $or: [
+                //                                                             {
+                //                                                                 $eq: [
+                //                                                                     "$$activity.infantPrice",
+                //                                                                     null,
+                //                                                                 ],
+                //                                                             },
+                //                                                             {
+                //                                                                 $eq: [
+                //                                                                     "$$activity.infantPrice",
+                //                                                                     0,
+                //                                                                 ],
+                //                                                             },
+                //                                                         ],
+                //                                                     },
+                //                                                     0,
+                //                                                     {
+                //                                                         $subtract:
+                //                                                             [
+                //                                                                 "$$activity.infantPrice",
+                //                                                                 "$offerAmount",
+                //                                                             ],
+                //                                                     },
+                //                                                 ],
+                //                                             },
+
+                //                                             lowPrice: {
+                //                                                 $sum: [
+                //                                                     "$$activity.lowPrice",
+                //                                                     "$offerAmount",                                                                ],
+                //                                             },
+                //                                         },
+                //                                     ],
+                //                                 },
+                //                             ],
+                //                         },
+                //                         {
+                //                             $cond: [
+                //                                 {
+                //                                     $eq: [
+                //                                         "$offerAmountType",
+                //                                         "percentage",
+                //                                     ],
+                //                                 },
+                //                                 {
+                //                                     $mergeObjects: [
+                //                                         "$$activity",
+                //                                         {
+                //                                             sharedTransferlowPrice:
+                //                                                 {
+                //                                                     $subtract: [
+                //                                                         "$$activity.sharedTransferPrice",
+                //                                                         {
+                //                                                             $divide:
+                //                                                                 [
+                //                                                                     {
+                //                                                                         $multiply:
+                //                                                                             [
+                //                                                                                 "$offerAmount",
+                //                                                                                 "$$activity.sharedTransferPrice",
+                //                                                                             ],
+                //                                                                     },
+                //                                                                     100,
+                //                                                                 ],
+                //                                                         },
+                //                                                     ],
+                //                                                 },
+                //                                             privateTransferslow:
+                //                                                 {
+                //                                                     $map: {
+                //                                                         input: "$$activity.privateTransfers",
+                //                                                         as: "transfers",
+                //                                                         in: {
+                //                                                             price: {
+                //                                                                 $subtract:
+                //                                                                     [
+                //                                                                         "$$transfers.price",
+                //                                                                         {
+                //                                                                             $divide:
+                //                                                                                 [
+                //                                                                                     {
+                //                                                                                         $multiply:
+                //                                                                                             [
+                //                                                                                                 "$offerAmount",
+                //                                                                                                 "$$transfers.price",
+                //                                                                                             ],
+                //                                                                                     },
+                //                                                                                     100,
+                //                                                                                 ],
+                //                                                                         },
+                //                                                                     ],
+                //                                                             },
+                //                                                         },
+                //                                                     },
+                //                                                 },
+                //                                             lowPrice: {
+                //                                                 $subtract: [
+                //                                                     "$$activity.lowPrice",
+                //                                                     {
+                //                                                         $divide:
+                //                                                             [
+                //                                                                 {
+                //                                                                     $multiply:
+                //                                                                         [
+                //                                                                             "$offerAmount",
+                //                                                                             "$$activity.lowPrice",
+                //                                                                         ],
+                //                                                                 },
+                //                                                                 100,
+                //                                                             ],
+                //                                                     },
+                //                                                 ],
+                //                                             },
+                //                                         },
+                //                                     ],
+                //                                 },
+                //                                 {
+                //                                     $mergeObjects: [
+                //                                         "$$activity",
+                //                                         {
+                //                                             sharedTransferlowPrice:
+                //                                                 {
+                //                                                     $subtract: [
+                //                                                         "$$activity.sharedTransferPrice",
+                //                                                         "$offerAmount",
+                //                                                     ],
+                //                                                 },
+                //                                             privateTransferslow:
+                //                                                 {
+                //                                                     $map: {
+                //                                                         input: "$$activity.privateTransfers",
+                //                                                         as: "transfers",
+                //                                                         in: {
+                //                                                             $mergeObjects:
+                //                                                                 [
+                //                                                                     "$$transfers",
+                //                                                                     {
+                //                                                                         price: {
+                //                                                                             $subtract:
+                //                                                                                 [
+                //                                                                                     "$$transfers.price",
+                //                                                                                     "$offerAmount",
+                //                                                                                 ],
+                //                                                                         },
+                //                                                                     },
+                //                                                                 ],
+                //                                                         },
+                //                                                     },
+                //                                                 },
+                //                                             lowPrice: {
+                //                                                 $subtract: [
+                //                                                     "$$activity.lowPrice",
+                //                                                     "$offerAmount",
+                //                                                 ],
+                //                                             },
+                //                                         },
+                //                                     ],
+                //                                 },
+                //                             ],
+                //                         },
+                //                     ],
+                //                 },
+                //             },
+                //         },
+                //     },
+                // },
 
                 {
                     $project: {
@@ -2328,6 +2637,8 @@ module.exports = {
                     },
                 },
             ]);
+
+            console.log(attractions[0].data, "data");
 
             res.status(200).json({
                 attractions: attractions[0],

@@ -8,6 +8,7 @@ const {
     sendEmail,
     sendErrorResponse,
     sendVisaApplicationEmail,
+    userOrderSignUpEmail,
 } = require("../helpers");
 const {
     B2BWallet,
@@ -278,7 +279,7 @@ module.exports = {
                         password,
                     });
 
-                    sendEmail(
+                    userOrderSignUpEmail(
                         email,
                         "New Account",
                         `username : ${email} password : ${password}`

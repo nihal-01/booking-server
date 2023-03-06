@@ -13,7 +13,7 @@ const {
     getAgentTickets,
     getLeastPriceOfDay,
     getBalance,
-    AuthenticationRequest
+    AuthenticationRequest,
 } = require("../helpers");
 
 const {
@@ -280,16 +280,18 @@ module.exports = {
 
             // console.log(connectedApi, "connectedApi");
 
-            let apiData;
-            if (isApiConnected) {
-                apiData = await attractionApi(res, connectedApi);
-            }
+            // let apiData;
+            // if (isApiConnected) {
+            //     apiData = await attractionApi(res, connectedApi);
+            // }
 
-            console.log(
-                apiData[0].prices,
-                apiData[0].attributes,
-                "datadataapiData"
-            );
+            // console.log(
+            //     apiData[0].prices,
+            //     apiData[0].attributes,
+            //     "datadataapiData"
+            // );
+
+            console.log(connectedApi, isApiConnected, "api");
 
             const attraction = await Attraction.findOneAndUpdate(
                 { _id: id, isDeleted: false },
@@ -361,7 +363,7 @@ module.exports = {
             if (id == "63afca1b5896ed6d0f297449") {
                 let balanceDetails = await getBalance(res, attr.connectedApi);
 
-                res.status(200).json({ balanceDetails});
+                res.status(200).json({ balanceDetails });
             }
         } catch (err) {}
     },
@@ -453,7 +455,7 @@ module.exports = {
 
                 let apiData;
 
-                let res = await AuthenticationRequest()
+                let res = await AuthenticationRequest();
                 if (attr.isApiConnected) {
                     apiData = await getAgentTickets(res);
                 }
