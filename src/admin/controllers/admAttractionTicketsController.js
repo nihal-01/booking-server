@@ -664,7 +664,8 @@ module.exports = {
 
             const filters = {
                 "attraction.bookingType": "ticket",
-                isDeleted: false,
+                "attraction.isDeleted": false,
+                "attraction.isApiConnected": false,
             };
 
             if (search && search !== "") {
