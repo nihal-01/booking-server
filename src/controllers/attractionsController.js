@@ -530,7 +530,7 @@ module.exports = {
                                                                     },
                                                                 ],
                                                             },
-                                                            lowPrice: {
+                                                            offerlowPrice: {
                                                                 $subtract: [
                                                                     "$$activity.lowPrice",
                                                                     {
@@ -539,7 +539,7 @@ module.exports = {
                                                                                 {
                                                                                     $multiply:
                                                                                         [
-                                                                                            "$markupClient.markup",
+                                                                                            "$offerAmount",
                                                                                             "$$activity.lowPrice",
                                                                                         ],
                                                                                 },
@@ -596,7 +596,7 @@ module.exports = {
                                                                 ],
                                                             },
 
-                                                            lowPrice: {
+                                                            offerlowPrice: {
                                                                 $sum: [
                                                                     "$$activity.lowPrice",
                                                                     "$offerAmount",
@@ -666,7 +666,7 @@ module.exports = {
                                                                         },
                                                                     },
                                                                 },
-                                                            lowPrice: {
+                                                                offerlowPrice: {
                                                                 $subtract: [
                                                                     "$$activity.lowPrice",
                                                                     {
@@ -720,7 +720,7 @@ module.exports = {
                                                                         },
                                                                     },
                                                                 },
-                                                            lowPrice: {
+                                                                offerlowPrice: {
                                                                 $subtract: [
                                                                     "$$activity.lowPrice",
                                                                     "$offerAmount",
