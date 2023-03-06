@@ -147,7 +147,7 @@ module.exports = {
             const { skip = 0, limit = 10 } = req.query;
 
             if (!isValidObjectId) {
-                return sendErrorResponse(res, 400, "Invalid Activity Id");
+                return sendErrorResponse(res, 400, "invalid activity id");
             }
 
             const activity = await AttractionActivity.findOne({
@@ -158,14 +158,14 @@ module.exports = {
                 .select("name attraction");
 
             if (!activity) {
-                return sendErrorResponse(res, 404, "Activity not found");
+                return sendErrorResponse(res, 404, "activity not found");
             }
 
             if (activity.attraction?.bookingType !== "ticket") {
                 return sendErrorResponse(
                     res,
                     400,
-                    "This type `booking` has no tickets"
+                    "this type `booking` has no tickets"
                 );
             }
 
@@ -365,14 +365,454 @@ module.exports = {
                 activity: activityId,
             }).count();
 
+            const totalAdultTickets = await AttractionTicket.find({
+                activity: activityId,
+                ticketFor: "adult",
+            }).count();
+            const adultSoldTickets = await AttractionTicket.find({
+                status: "used",
+                activity: activityId,
+                ticketFor: "adult",
+            }).count();
+            const adultExpiredTickets = await AttractionTicket.find({
+                status: "ok",
+                validTill: { $lte: new Date() },
+                activity: activityId,
+                ticketFor: "adult",
+            }).count();
+            const adultAvailableTickets = await AttractionTicket.find({
+                $or: [
+                    {
+                        validity: true,
+                        validTill: {
+                            $gte: new Date(),
+                        },
+                    },
+                    { validity: false },
+                ],
+                status: "ok",
+                activity: activityId,
+                ticketFor: "adult",
+            }).count();
+
+            const totalChildTickets = await AttractionTicket.find({
+                activity: activityId,
+                ticketFor: "child",
+            }).count();
+            const childSoldTickets = await AttractionTicket.find({
+                status: "used",
+                activity: activityId,
+                ticketFor: "child",
+            }).count();
+            const childExpiredTickets = await AttractionTicket.find({
+                status: "ok",
+                validTill: { $lte: new Date() },
+                activity: activityId,
+                ticketFor: "child",
+            }).count();
+            const childAvailableTickets = await AttractionTicket.find({
+                $or: [
+                    {
+                        validity: true,
+                        validTill: {
+                            $gte: new Date(),
+                        },
+                    },
+                    { validity: false },
+                ],
+                status: "ok",
+                activity: activityId,
+                ticketFor: "child",
+            }).count();
+
+            const totalCommonTickets = await AttractionTicket.find({
+                activity: activityId,
+                ticketFor: "common",
+            }).count();
+            const commonSoldTickets = await AttractionTicket.find({
+                status: "used",
+                activity: activityId,
+                ticketFor: "common",
+            }).count();
+            const commonExpiredTickets = await AttractionTicket.find({
+                status: "ok",
+                validTill: { $lte: new Date() },
+                activity: activityId,
+                ticketFor: "common",
+            }).count();
+            const commonAvailableTickets = await AttractionTicket.find({
+                $or: [
+                    {
+                        validity: true,
+                        validTill: {
+                            $gte: new Date(),
+                        },
+                    },
+                    { validity: false },
+                ],
+                status: "ok",
+                activity: activityId,
+                ticketFor: "adult",
+            }).count();
+
             res.status(200).json({
                 totalTickets,
                 soldTickets,
                 expiredTickets,
                 availableTickets,
+                totalAdultTickets,
+                adultSoldTickets,
+                adultExpiredTickets,
+                adultAvailableTickets,
+                totalChildTickets,
+                childSoldTickets,
+                childExpiredTickets,
+                childAvailableTickets,
+                totalCommonTickets,
+                commonSoldTickets,
+                commonExpiredTickets,
+                commonAvailableTickets,
             });
         } catch (err) {
             sendErrorResponse(res, 400, err);
+        }
+    },
+
+    getAllTicketsStatistics: async (req, res) => {
+        try {
+            const totalTickets = await AttractionTicket.find({}).count();
+            const soldTickets = await AttractionTicket.find({
+                status: "used",
+            }).count();
+            const expiredTickets = await AttractionTicket.find({
+                status: "ok",
+                validTill: { $lte: new Date() },
+            }).count();
+            const availableTickets = await AttractionTicket.find({
+                $or: [
+                    {
+                        validity: true,
+                        validTill: {
+                            $gte: new Date(),
+                        },
+                    },
+                    { validity: false },
+                ],
+                status: "ok",
+            }).count();
+
+            const totalAdultTickets = await AttractionTicket.find({
+                ticketFor: "adult",
+            }).count();
+            const adultSoldTickets = await AttractionTicket.find({
+                status: "used",
+                ticketFor: "adult",
+            }).count();
+            const adultExpiredTickets = await AttractionTicket.find({
+                status: "ok",
+                validTill: { $lte: new Date() },
+                ticketFor: "adult",
+            }).count();
+            const adultAvailableTickets = await AttractionTicket.find({
+                $or: [
+                    {
+                        validity: true,
+                        validTill: {
+                            $gte: new Date(),
+                        },
+                    },
+                    { validity: false },
+                ],
+                status: "ok",
+                ticketFor: "adult",
+            }).count();
+
+            const totalChildTickets = await AttractionTicket.find({
+                ticketFor: "child",
+            }).count();
+            const childSoldTickets = await AttractionTicket.find({
+                status: "used",
+                ticketFor: "child",
+            }).count();
+            const childExpiredTickets = await AttractionTicket.find({
+                status: "ok",
+                validTill: { $lte: new Date() },
+                ticketFor: "child",
+            }).count();
+            const childAvailableTickets = await AttractionTicket.find({
+                $or: [
+                    {
+                        validity: true,
+                        validTill: {
+                            $gte: new Date(),
+                        },
+                    },
+                    { validity: false },
+                ],
+                status: "ok",
+                ticketFor: "child",
+            }).count();
+
+            const totalCommonTickets = await AttractionTicket.find({
+                ticketFor: "common",
+            }).count();
+            const commonSoldTickets = await AttractionTicket.find({
+                status: "used",
+                ticketFor: "common",
+            }).count();
+            const commonExpiredTickets = await AttractionTicket.find({
+                status: "ok",
+                validTill: { $lte: new Date() },
+                ticketFor: "common",
+            }).count();
+            const commonAvailableTickets = await AttractionTicket.find({
+                $or: [
+                    {
+                        validity: true,
+                        validTill: {
+                            $gte: new Date(),
+                        },
+                    },
+                    { validity: false },
+                ],
+                status: "ok",
+                ticketFor: "adult",
+            }).count();
+
+            const topSellingTickets = await AttractionTicket.aggregate([
+                { $match: { status: "used" } },
+                {
+                    $lookup: {
+                        from: "attractionactivities",
+                        localField: "activity",
+                        foreignField: "_id",
+                        as: "activity",
+                    },
+                },
+                {
+                    $set: {
+                        activity: { $arrayElemAt: ["$activity", 0] },
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "attractions",
+                        localField: "activity.attraction",
+                        foreignField: "_id",
+                        as: "attraction",
+                    },
+                },
+                {
+                    $set: {
+                        attraction: { $arrayElemAt: ["$attraction", 0] },
+                    },
+                },
+                {
+                    $group: {
+                        _id: "$attraction._id",
+                        soldTickets: { $sum: 1 },
+                        activity: { $first: "$activity" },
+                        attraction: { $first: "$attraction" },
+                    },
+                },
+                {
+                    $project: {
+                        soldTickets: 1,
+                        activity: {
+                            name: 1,
+                        },
+                        attraction: {
+                            title: 1,
+                            images: 1,
+                            _id: 1,
+                        },
+                    },
+                },
+                {
+                    $sort: { soldTickets: -1 },
+                },
+                { $limit: 10 },
+            ]);
+
+            res.status(200).json({
+                totalTickets,
+                soldTickets,
+                expiredTickets,
+                availableTickets,
+                totalAdultTickets,
+                adultSoldTickets,
+                adultExpiredTickets,
+                adultAvailableTickets,
+                totalChildTickets,
+                childSoldTickets,
+                childExpiredTickets,
+                childAvailableTickets,
+                totalCommonTickets,
+                commonSoldTickets,
+                commonExpiredTickets,
+                commonAvailableTickets,
+                topSellingTickets,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getActivitiesTicketsInfo: async (req, res) => {
+        try {
+            const { skip = 0, limit = 10, search } = req.query;
+
+            const filters = {
+                "attraction.bookingType": "ticket",
+                isDeleted: false,
+            };
+
+            if (search && search !== "") {
+                filters["attraction.title"] = { $regex: search, $options: "i" };
+            }
+
+            const activitiesTicketInfo = await AttractionActivity.aggregate([
+                {
+                    $match: {
+                        isDeleted: false,
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "attractions",
+                        localField: "attraction",
+                        foreignField: "_id",
+                        as: "attraction",
+                    },
+                },
+                {
+                    $set: {
+                        attraction: { $arrayElemAt: ["$attraction", 0] },
+                    },
+                },
+                {
+                    $match: filters,
+                },
+                {
+                    $lookup: {
+                        from: "attractiontickets",
+                        localField: "_id",
+                        foreignField: "activity",
+                        as: "tickets",
+                    },
+                },
+                {
+                    $project: {
+                        totalTickets: { $size: "$tickets" },
+                        availableTickets: {
+                            $size: {
+                                $filter: {
+                                    input: "$tickets",
+                                    as: "ticket",
+                                    cond: {
+                                        $and: [
+                                            {
+                                                $or: [
+                                                    {
+                                                        $and: [
+                                                            {
+                                                                $eq: [
+                                                                    "$$ticket.validity",
+                                                                    true,
+                                                                ],
+                                                            },
+                                                            {
+                                                                $gte: [
+                                                                    "$$ticket.validTill",
+                                                                    new Date().toISOString(),
+                                                                ],
+                                                            },
+                                                        ],
+                                                    },
+                                                    {
+                                                        $eq: [
+                                                            "$$ticket.validity",
+                                                            false,
+                                                        ],
+                                                    },
+                                                ],
+                                            },
+                                            { $eq: ["$$ticket.status", "ok"] },
+                                        ],
+                                    },
+                                },
+                            },
+                        },
+                        soldTickets: {
+                            $size: {
+                                $filter: {
+                                    input: "$tickets",
+                                    as: "ticket",
+                                    cond: {
+                                        $eq: ["$$ticket.status", "used"],
+                                    },
+                                },
+                            },
+                        },
+                        expiredTickets: {
+                            $size: {
+                                $filter: {
+                                    input: "$tickets",
+                                    as: "ticket",
+                                    cond: {
+                                        $and: [
+                                            {
+                                                $eq: [
+                                                    "$$ticket.status",
+                                                    "used",
+                                                ],
+                                            },
+                                            {
+                                                $lte: [
+                                                    "$$ticket.validTill",
+                                                    new Date().toISOString(),
+                                                ],
+                                            },
+                                        ],
+                                    },
+                                },
+                            },
+                        },
+                        attraction: {
+                            title: 1,
+                            _id: 1,
+                        },
+                        name: 1,
+                    },
+                },
+                {
+                    $group: {
+                        _id: null,
+                        totalActivities: { $sum: 1 },
+                        data: { $push: "$$ROOT" },
+                    },
+                },
+                {
+                    $project: {
+                        totalActivities: 1,
+                        data: {
+                            $slice: [
+                                "$data",
+                                Number(limit) * Number(skip),
+                                Number(limit),
+                            ],
+                        },
+                    },
+                },
+            ]);
+
+            res.status(200).json({
+                activitiesTicketInfo: activitiesTicketInfo[0],
+                skip: Number(skip),
+                limit: Number(limit),
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
         }
     },
 };
