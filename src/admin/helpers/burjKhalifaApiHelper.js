@@ -11,7 +11,7 @@ module.exports = {
 
             const username = process.env.BURJ_KHALIFA_USERNAME;
             const password = process.env.BURJ_KHALIFA_PASSWORD;
-            
+
             const credentials = username + ":" + password;
             const authHeader =
                 "Basic " + Buffer.from(credentials).toString("base64");
@@ -133,7 +133,7 @@ module.exports = {
             <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
            <GetAgentTickets xmlns="http://tickets.atthetop.ae/AgentWebApi">
-            <agentId>${api.demoAgentId}</agentId>
+            <agentId>${Number(api.demoAgentId)}</agentId>
             <username>${api.demoUsername}</username>
             <password>${api.demoPassword}</password>
             </GetAgentTickets>
