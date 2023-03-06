@@ -11,11 +11,15 @@ const roomTypeSchema = new Schema(
             type: String,
             required: true,
         },
-        roomOccupancy: {
-            type: String,
-            required: true,
-            uppercase: true,
-            enum: ["DBL", "SGL", "TPL", "CWB", "CNB"],
+        roomOccupancies: {
+            type: [
+                {
+                    type: String,
+                    required: true,
+                    uppercase: true,
+                    enum: ["DBL", "SGL", "TPL", "CWB", "CNB"],
+                },
+            ],
         },
         inclusions: {
             type: [
