@@ -12,7 +12,7 @@ const attractionItinerarySchema = Joi.object({
                 .items({
                     attraction: Joi.string().required(),
                     activity: Joi.string().required(),
-                    itineraryTitle: Joi.string().required(),
+                    itineraryTitle: Joi.string().allow("", null),
                     _id: Joi.string().allow("", null),
                     note: Joi.string().allow("", null),
                 })

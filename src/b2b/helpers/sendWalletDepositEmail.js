@@ -1,7 +1,7 @@
 const { sendEmail } = require("../../helpers");
 const commonFooter = require("../../helpers/commonFooter");
 
-const sendWalletDeposit = async (reseller, transaction, companyDetails) => {
+const sendWalletDeposit = async (reseller, transaction) => {
     try {
         const footerHtml = await commonFooter();
 

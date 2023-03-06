@@ -1448,16 +1448,13 @@ module.exports = {
 
     getSingleUserAllOrders: async (req, res) => {
         try {
-            console.log(req);
             const { result, skip, limit } = await getUserOrder({
                 ...req.query,
                 userId: req.user?._id,
             });
 
-            console.log(result, "result");
             res.status(200).json({ result, skip, limit });
         } catch (err) {
-            console.log(err, "error");
             sendErrorResponse(res, 500, err);
         }
     },
