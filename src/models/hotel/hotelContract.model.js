@@ -12,61 +12,25 @@ const hotelContractSchema = new Schema(
             ref: "RoomType",
             required: true,
         },
-        date: {
-            type: Date,
+        season: {
+            type: Schema.Types.ObjectId,
+            ref: "HotelSeason",
             required: true,
         },
-        contractType: {
-            type: String,
-            required: true,
-            lowercase: true,
-            enum: ["free-sale", "stop-sale", "contracted-rates"],
-        },
+        // contractType: {
+        //     type: String,
+        //     required: true,
+        //     lowercase: true,
+        //     enum: ["free-sale", "stop-sale", "contracted-rates"],
+        // },
         price: {
             type: Number,
-            required: function () {
-                return this.contractType !== "stop-sale"
-            },
+            required: true,
         },
-        // isRoPriceAvailable: {
-        //     type: Boolean,
-        //     required: true,
-        // },
-        // roPrice: {
-        //     type: Number,
-        //     required: function () {
-        //         return (
-        //             this.contractType !== "stop-sale" &&
-        //             this.isRoPriceAvailable === true
-        //         );
-        //     },
-        // },
-        // isBbPriceAvailable: {
-        //     type: Boolean,
-        //     required: true,
-        // },
-        // bbPrice: {
-        //     type: Number,
-        //     required: function () {
-        //         return (
-        //             this.contractType !== "stop-sale" &&
-        //             this.isBbPriceAvailable === true
-        //         );
-        //     },
-        // },
-        // isNewUpdate: {
-        //     type: Boolean,
-        //     required: true,
-        // },
-        // extraAdultPrice: {
-        //     type: Number,
-        //     required: true,
-        //     default: 0,
-        // },
-        // isBreakfastIncludedInExtraAdultPrice: {
-        //     type: Boolean,
-        //     required: true,
-        // },
+        bbPrice: {
+            type: Number,
+            required: true, // add is Bb
+        },
     },
     { timestamps: true }
 );

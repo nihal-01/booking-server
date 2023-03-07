@@ -1160,38 +1160,44 @@ module.exports = {
                     if (
                         attractionOrder.activities[i].bookingType === "ticket"
                     ) {
-                        const adultTickets = await AttractionTicket.find({
-                            activity: attractionOrder.activities[i].activity,
-                            status: "ok",
-                            $and: [
-                                {
-                                    $or: [
-                                        { ticketFor: "adult" },
-                                        { ticketFor: "common" },
-                                    ],
-                                },
-                                {
-                                    $or: [
-                                        {
-                                            validity: true,
-                                            validTill: {
-                                                $gte: new Date(
-                                                    attractionOrder.activities[
-                                                        i
-                                                    ].date
-                                                ).toISOString(),
+                        let adultTickets = [];
+                        if (attractionOrder.activities[i].adultsCount > 0) {
+                            adultTickets = await AttractionTicket.find({
+                                activity:
+                                    attractionOrder.activities[i].activity,
+                                status: "ok",
+                                $and: [
+                                    {
+                                        $or: [
+                                            { ticketFor: "adult" },
+                                            { ticketFor: "common" },
+                                        ],
+                                    },
+                                    {
+                                        $or: [
+                                            {
+                                                validity: true,
+                                                validTill: {
+                                                    $gte: new Date(
+                                                        attractionOrder.activities[
+                                                            i
+                                                        ].date
+                                                    ).toISOString(),
+                                                },
                                             },
-                                        },
-                                        { validity: false },
-                                    ],
-                                },
-                            ],
-                        })
-                            .limit(attractionOrder.activities[i].adultsCount)
-                            .lean();
+                                            { validity: false },
+                                        ],
+                                    },
+                                ],
+                            })
+                                .limit(
+                                    attractionOrder.activities[i].adultsCount
+                                )
+                                .lean();
+                        }
 
                         if (
-                            adultTickets.length <
+                            adultTickets.length !==
                             attractionOrder.activities[i].adultsCount
                         ) {
                             return sendErrorResponse(
@@ -1201,38 +1207,44 @@ module.exports = {
                             );
                         }
 
-                        const childTickets = await AttractionTicket.find({
-                            activity: attractionOrder.activities[i].activity,
-                            status: "ok",
-                            $and: [
-                                {
-                                    $or: [
-                                        { ticketFor: "child" },
-                                        { ticketFor: "common" },
-                                    ],
-                                },
-                                {
-                                    $or: [
-                                        {
-                                            validity: true,
-                                            validTill: {
-                                                $gte: new Date(
-                                                    attractionOrder.activities[
-                                                        i
-                                                    ].date
-                                                ).toISOString(),
+                        let childTickets = [];
+                        if (attractionOrder.activities[i].childrenCount > 0) {
+                            childTickets = await AttractionTicket.find({
+                                activity:
+                                    attractionOrder.activities[i].activity,
+                                status: "ok",
+                                $and: [
+                                    {
+                                        $or: [
+                                            { ticketFor: "child" },
+                                            { ticketFor: "common" },
+                                        ],
+                                    },
+                                    {
+                                        $or: [
+                                            {
+                                                validity: true,
+                                                validTill: {
+                                                    $gte: new Date(
+                                                        attractionOrder.activities[
+                                                            i
+                                                        ].date
+                                                    ).toISOString(),
+                                                },
                                             },
-                                        },
-                                        { validity: false },
-                                    ],
-                                },
-                            ],
-                        })
-                            .limit(attractionOrder.activities[i].childrenCount)
-                            .lean();
+                                            { validity: false },
+                                        ],
+                                    },
+                                ],
+                            })
+                                .limit(
+                                    attractionOrder.activities[i].childrenCount
+                                )
+                                .lean();
+                        }
 
                         if (
-                            childTickets.length <
+                            childTickets.length !==
                             attractionOrder.activities[i].childrenCount
                         ) {
                             return sendErrorResponse(
@@ -1281,7 +1293,7 @@ module.exports = {
                                 .lean();
 
                             if (
-                                infantTickets.length <
+                                infantTickets.length !==
                                 attractionOrder.activities[i].infantCount
                             ) {
                                 return sendErrorResponse(
@@ -1821,7 +1833,7 @@ module.exports = {
                 },
             ]);
 
-            console.log(orderDetails[0].activities , "activites" );
+            console.log(orderDetails[0].activities, "activites");
 
             if (!orderDetails || orderDetails?.activities?.length < 1) {
                 return sendErrorResponse(res, 400, "order not found");
@@ -1873,8 +1885,6 @@ module.exports = {
             if (!isValidObjectId(activityId)) {
                 return sendErrorResponse(res, 400, "invalid activity id");
             }
-
-          
 
             const orderDetails = await B2BAttractionOrder.aggregate([
                 {
