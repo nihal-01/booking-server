@@ -2,11 +2,6 @@ const { Schema, model } = require("mongoose");
 
 const hotelSchema = new Schema(
     {
-        isPublished: {
-            type: Boolean,
-            required: true,
-            default: false,
-        },
         hotelName: {
             type: String,
             required: true,
@@ -116,16 +111,26 @@ const hotelSchema = new Schema(
             type: String,
             required: true,
         },
-        isDeleted: {
-            type: Boolean,
-            required: true,
-            default: false,
-        },
         roomsCount: { type: Number },
         floorsCount: { type: Number },
         carParkingSlots: { type: Number },
         images: {
             type: [{ type: String, required: true }],
+        },
+        isPublished: {
+            type: Boolean,
+            required: true,
+            default: false,
+        },
+        isActive: {
+            type: Boolean,
+            required: true,
+            default: true,
+        },
+        isDeleted: {
+            type: Boolean,
+            required: true,
+            default: false,
         },
     },
     { timestamps: true }
