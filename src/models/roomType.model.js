@@ -29,9 +29,19 @@ const roomTypeSchema = new Schema(
                 },
             ],
         },
-        noOfSleeps: {
-            type: Number,
-            required: true,
+        roomCapacity: {
+            type: [
+                {
+                    adult: {
+                        type: Number,
+                        required: true,
+                    },
+                    child: {
+                        type: Number,
+                        required: true,
+                    },
+                },
+            ],
         },
         isRefundable: {
             type: Boolean,
