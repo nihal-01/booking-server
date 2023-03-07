@@ -1874,21 +1874,7 @@ module.exports = {
                 return sendErrorResponse(res, 400, "invalid activity id");
             }
 
-            // const orderDetailss = await B2BAttractionOrder.findOne(
-            //     {
-            //         _id: orderId,
-            //         orderStatus: "paid",
-            //     },
-            //     { activities: { $elemMatch: { _id: orderItemId } } }
-            // ).populate({
-            //     path: "activity",
-            //     populate: {
-            //         path: "attraction",
-            //         populate: { path: "destination" },
-            //         select: "title images logo",
-            //     },
-            //     select: "name description",
-            // });
+          
 
             const orderDetails = await B2BAttractionOrder.aggregate([
                 {

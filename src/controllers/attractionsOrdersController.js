@@ -1553,14 +1553,12 @@ module.exports = {
                 },
             ]);
 
-            console.log(orderDetails[0], "new activities");
 
             if (!orderDetails || orderDetails?.activities?.length < 1) {
                 return sendErrorResponse(res, 400, "order not found");
             }
 
             if (orderDetails[0].activities.bookingType === "booking") {
-                console.log("call reachde");
                 const pdfBuffer = await createBookingTicketPdf(
                     orderDetails[0].activities
                 );
@@ -1684,7 +1682,7 @@ module.exports = {
             ]);
 
             if (!orderDetails || orderDetails?.activities?.length < 1) {
-                return sendErrorResponse(res, 400, "order not found");
+                return sendErrorResponse(res, 400, "order not found ");
             }
 
             let tickets = [];
@@ -1719,7 +1717,6 @@ module.exports = {
             });
             res.send(pdfBuffer);
 
-            // res.status(200).json(orderDetails[0]);
         } catch (err) {
             console.log(err, "err");
             sendErrorResponse(res, 500, err);

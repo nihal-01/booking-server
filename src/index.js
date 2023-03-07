@@ -1,9 +1,12 @@
 const express = require("express");
 const cors = require("cors");
-require("dotenv").config();
+const path = require("path");
+require("dotenv").config({
+    path: path.join(__dirname, "../" + `.env.${process.env.NODE_ENV}`),
+});
 
-require("./config/cache");
 require("./config/dbConfig");
+require("./config/cache");
 
 const adminRouter = require("./admin");
 const b2bRouter = require("./b2b");
@@ -23,8 +26,7 @@ const {
 } = require("./routes");
 
 const app = express();
-// const PORT = process.env.PORT || 8189;
-const PORT = process.env.PORT || 8089;
+const PORT = process.env.PORT || 8189;
 
 app.use(express.json());
 app.use(
@@ -56,5 +58,6 @@ app.use("/api/v1/admin", adminRouter);
 app.use("/api/v1/b2b", b2bRouter);
 
 app.listen(PORT, () => {
+    console.log(`running ${process.env.NODE_ENV} server....`);
     console.log(`server is up and running on port ${PORT}`);
 });
