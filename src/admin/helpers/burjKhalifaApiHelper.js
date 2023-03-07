@@ -120,14 +120,14 @@ module.exports = {
 
             const url = api.demoUrl;
 
-            const agentId = parseInt(api.demoAgentId);
-
             const username = process.env.BURJ_KHALIFA_USERNAME;
             const password = process.env.BURJ_KHALIFA_PASSWORD;
 
             const credentials = username + ":" + password;
             const authHeader =
                 "Basic " + Buffer.from(credentials).toString("base64");
+
+            const agentId = parseInt(api.demoAgentId);
 
             const xmlData = `            
             <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">

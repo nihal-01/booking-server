@@ -1,9 +1,13 @@
-const { isValidObjectId } = require("mongoose");
+const { isValidObjectId, Types } = require("mongoose");
 const crypto = require("crypto");
 const Razorpay = require("razorpay");
 const nodeCCAvenue = require("node-ccavenue");
 
-const { sendErrorResponse, sendEmail, userOrderSignUpEmail } = require("../helpers");
+const {
+    sendErrorResponse,
+    sendEmail,
+    userOrderSignUpEmail,
+} = require("../helpers");
 const {
     Attraction,
     AttractionActivity,
@@ -27,6 +31,8 @@ const {
 } = require("../helpers/attractionOrderHelpers");
 
 const { getUserOrder } = require("../helpers/userOrderHelper");
+const createSingleTicketPdf = require("../b2b/helpers/singleTicketPdf");
+const createMultipleTicketPdf = require("../b2b/helpers/multipleTicketHelper");
 
 const dayNames = [
     "sunday",
@@ -821,7 +827,6 @@ module.exports = {
                     await user.save();
                 }
 
-
                 userOrderSignUpEmail(
                     email,
                     "New Account",
@@ -844,8 +849,6 @@ module.exports = {
                 referenceNumber: generateUniqueString("B2CATO"),
             });
             await newAttractionOrder.save();
-
-
 
             const newTransaction = new B2CTransaction({
                 user: buyer?._id,
@@ -1455,6 +1458,295 @@ module.exports = {
 
             res.status(200).json({ result, skip, limit });
         } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getAttractionOrderTickets: async (req, res) => {
+        try {
+            const { orderId, activityId } = req.params;
+
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "invalid order id");
+            }
+
+            if (!isValidObjectId(activityId)) {
+                return sendErrorResponse(res, 400, "invalid activity id");
+            }
+
+            // const orderDetailss = await B2BAttractionOrder.findOne(
+            //     {
+            //         _id: orderId,
+            //         orderStatus: "paid",
+            //     },
+            //     { activities: { $elemMatch: { _id: orderItemId } } }
+            // ).populate({
+            //     path: "activity",
+            //     populate: {
+            //         path: "attraction",
+            //         populate: { path: "destination" },
+            //         select: "title images logo",
+            //     },
+            //     select: "name description",
+            // });
+            
+            console.log(orderId, activityId);
+
+            const orderDetails = await AttractionOrder.aggregate([
+                {
+                    $match: {
+                        _id: Types.ObjectId(orderId),
+                        orderStatus: "paid",
+                        activities: {
+                            $elemMatch: { _id: Types.ObjectId(activityId) },
+                        },
+                    },
+                },
+                { $unwind: "$activities" },
+                {
+                    $lookup: {
+                        from: "attractionactivities",
+                        localField: "activities.activity",
+                        foreignField: "_id",
+                        as: "activities.activity",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "attractions",
+                        localField: "activities.attraction",
+                        foreignField: "_id",
+                        as: "activities.attraction",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "destinations",
+                        localField: "activities.attraction.destination",
+                        foreignField: "_id",
+                        as: "activities.destination",
+                    },
+                },
+                {
+                    $set: {
+                        "activities.destination": {
+                            $arrayElemAt: ["$activities.destination", 0],
+                        },
+                        "activities.activity": {
+                            $arrayElemAt: ["$activities.activity", 0],
+                        },
+                        "activities.attraction": {
+                            $arrayElemAt: ["$activities.attraction", 0],
+                        },
+                    },
+                },
+                {
+                    $project: {
+                        activities: {
+                            activity: {
+                                name: 1,
+                                description: 1,
+                            },
+                            attraction: {
+                                title: 1,
+                                logo: 1,
+                                images: 1,
+                            },
+                            _id: 1,
+                            bookingConfirmationNumber: 1,
+                            note: 1,
+                            adultTickets: 1,
+                            childrenTickets: 1,
+                            infantTickets: 1,
+                            status: 1,
+                            amount: 1,
+                            offerAmount: 1,
+                            transferType: 1,
+                            adultsCount: 1,
+                            childrenCount: 1,
+                            infantCount: 1,
+                            date: 1,
+                            bookingType: 1,
+                        },
+                    },
+                },
+            ]);
+
+            console.log(orderDetails[0], "new activities");
+
+            if (!orderDetails || orderDetails?.activities?.length < 1) {
+                return sendErrorResponse(res, 400, "order not found");
+            }
+
+            console.log("call reachde");
+            const pdfBuffer = await createMultipleTicketPdf(
+                orderDetails[0].activities
+            );
+            res.set({
+                "Content-Type": "application/pdf",
+                "Content-Length": pdfBuffer.length,
+                "Content-Disposition": "attachment; filename=tickets.pdf",
+            });
+            res.send(pdfBuffer);
+
+            // res.status(200).json(orderDetails[0]);
+        } catch (err) {
+            console.log(err, "err");
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getAttractionOrderSingleTickets: async (req, res) => {
+        try {
+            const { orderId, activityId } = req.params;
+
+            const { ticketNo } = req.body;
+
+            if (!isValidObjectId(orderId)) {
+                return sendErrorResponse(res, 400, "invalid order id");
+            }
+
+            if (!isValidObjectId(activityId)) {
+                return sendErrorResponse(res, 400, "invalid activity id");
+            }
+
+            // const orderDetailss = await B2BAttractionOrder.findOne(
+            //     {
+            //         _id: orderId,
+            //         orderStatus: "paid",
+            //     },
+            //     { activities: { $elemMatch: { _id: orderItemId } } }
+            // ).populate({
+            //     path: "activity",
+            //     populate: {
+            //         path: "attraction",
+            //         populate: { path: "destination" },
+            //         select: "title images logo",
+            //     },
+            //     select: "name description",
+            // });
+
+
+            const orderDetails = await AttractionOrder.aggregate([
+                {
+                    $match: {
+                        _id: Types.ObjectId(orderId),
+                        orderStatus: "paid",
+                        activities: {
+                            $elemMatch: { _id: Types.ObjectId(activityId) },
+                        },
+                    },
+                },
+                { $unwind: "$activities" },
+                {
+                    $lookup: {
+                        from: "attractionactivities",
+                        localField: "activities.activity",
+                        foreignField: "_id",
+                        as: "activities.activity",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "attractions",
+                        localField: "activities.attraction",
+                        foreignField: "_id",
+                        as: "activities.attraction",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "destinations",
+                        localField: "activities.attraction.destination",
+                        foreignField: "_id",
+                        as: "activities.destination",
+                    },
+                },
+                {
+                    $set: {
+                        "activities.destination": {
+                            $arrayElemAt: ["$activities.destination", 0],
+                        },
+                        "activities.activity": {
+                            $arrayElemAt: ["$activities.activity", 0],
+                        },
+                        "activities.attraction": {
+                            $arrayElemAt: ["$activities.attraction", 0],
+                        },
+                    },
+                },
+
+                {
+                    $project: {
+                        activities: {
+                            activity: {
+                                name: 1,
+                                description: 1,
+                            },
+                            attraction: {
+                                title: 1,
+                                logo: 1,
+                                images: 1,
+                            },
+                            _id: 1,
+                            bookingConfirmationNumber: 1,
+                            note: 1,
+                            adultTickets: 1,
+                            childrenTickets: 1,
+                            infantTickets: 1,
+                            status: 1,
+                            amount: 1,
+                            offerAmount: 1,
+                            transferType: 1,
+                            adultsCount: 1,
+                            childrenCount: 1,
+                            infantCount: 1,
+                            date: 1,
+                            bookingType: 1,
+                        },
+                    },
+                },
+            ]);
+
+            if (!orderDetails || orderDetails?.activities?.length < 1) {
+                return sendErrorResponse(res, 400, "order not found");
+            }
+
+            let tickets = [];
+            if (orderDetails[0].activities?.adultTickets)
+                tickets = [
+                    ...tickets,
+                    ...orderDetails[0].activities?.adultTickets,
+                ];
+            if (orderDetails[0].activities?.childTickets)
+                tickets = [
+                    ...tickets,
+                    ...orderDetails[0].activities?.childTickets,
+                ];
+            if (orderDetails[0].activities?.infantTickets)
+                tickets = [
+                    ...tickets,
+                    ...orderDetails[0].activities?.infantTickets,
+                ];
+
+            const filteredTickets = tickets.filter((ticket) =>
+                ticket.ticketNo.includes(ticketNo)
+            );
+
+            const pdfBuffer = await createSingleTicketPdf(
+                orderDetails[0].activities,
+                filteredTickets[0]
+            );
+            res.set({
+                "Content-Type": "application/pdf",
+                "Content-Length": pdfBuffer.length,
+                "Content-Disposition": "attachment; filename=tickets.pdf",
+            });
+            res.send(pdfBuffer);
+
+            // res.status(200).json(orderDetails[0]);
+        } catch (err) {
+            console.log(err, "err");
             sendErrorResponse(res, 500, err);
         }
     },

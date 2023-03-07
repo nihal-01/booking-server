@@ -38,6 +38,8 @@ const {
     createDubaiParkOrder,
 } = require("../helpers");
 const createMultipleTicketPdf = require("../helpers/multipleTicketHelper");
+const createSingleTicketPdf = require("../helpers/singleTicketPdf");
+const createBookingTicketPdf = require("../helpers/bookingTicketsHelper");
 
 const dayNames = [
     "sunday",
@@ -1721,6 +1723,136 @@ module.exports = {
         try {
             const { orderId, activityId } = req.params;
 
+            console.log(orderId, activityId);
+
+            const orderDetails = await B2BAttractionOrder.aggregate([
+                {
+                    $match: {
+                        _id: Types.ObjectId(orderId),
+                        orderStatus: "paid",
+                        activities: {
+                            $elemMatch: { _id: Types.ObjectId(activityId) },
+                        },
+                    },
+                },
+                { $unwind: "$activities" },
+                {
+                    $lookup: {
+                        from: "attractionactivities",
+                        localField: "activities.activity",
+                        foreignField: "_id",
+                        as: "activities.activity",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "attractions",
+                        localField: "activities.attraction",
+                        foreignField: "_id",
+                        as: "activities.attraction",
+                    },
+                },
+                {
+                    $lookup: {
+                        from: "destinations",
+                        localField: "activities.attraction.destination",
+                        foreignField: "_id",
+                        as: "activities.destination",
+                    },
+                },
+                {
+                    $set: {
+                        "activities.destination": {
+                            $arrayElemAt: ["$activities.destination", 0],
+                        },
+                        "activities.activity": {
+                            $arrayElemAt: ["$activities.activity", 0],
+                        },
+                        "activities.attraction": {
+                            $arrayElemAt: ["$activities.attraction", 0],
+                        },
+                    },
+                },
+                {
+                    $project: {
+                        activities: {
+                            activity: {
+                                name: 1,
+                                description: 1,
+                            },
+                            attraction: {
+                                title: 1,
+                                logo: 1,
+                                images: 1,
+                            },
+                            destination: {
+                                name: 1,
+                            },
+                            _id: 1,
+                            bookingConfirmationNumber: 1,
+                            note: 1,
+                            adultTickets: 1,
+                            childrenTickets: 1,
+                            infantTickets: 1,
+                            status: 1,
+                            amount: 1,
+                            offerAmount: 1,
+                            transferType: 1,
+                            adultsCount: 1,
+                            childrenCount: 1,
+                            infantCount: 1,
+                            date: 1,
+                            bookingType: 1,
+                        },
+                    },
+                },
+            ]);
+
+            console.log(orderDetails[0].activities);
+
+            if (!orderDetails || orderDetails?.activities?.length < 1) {
+                return sendErrorResponse(res, 400, "order not found");
+            }
+
+            if (orderDetails[0].activities.bookingType === "booking") {
+                console.log("call reachde");
+                const pdfBuffer = await createBookingTicketPdf(
+                    orderDetails[0].activities
+                );
+
+                res.set({
+                    "Content-Type": "application/pdf",
+
+                    "Content-Disposition": "attachment; filename=tickets.pdf",
+                });
+                res.send(pdfBuffer);
+            } else {
+                console.log("call reachde");
+                const pdfBuffer = await createMultipleTicketPdf(
+                    orderDetails[0].activities
+                );
+
+                res.set({
+                    "Content-Type": "application/pdf",
+
+                    "Content-Disposition": "attachment; filename=tickets.pdf",
+                });
+                res.send(pdfBuffer);
+            }
+
+            // res.status(200).json(orderDetails[0]);
+        } catch (err) {
+            console.log(err, "err");
+            sendErrorResponse(res, 500, err);
+        }
+    },
+
+    getAttractionOrderSingleTickets: async (req, res) => {
+        try {
+            const { orderId, activityId } = req.params;
+
+            const { ticketNo } = req.body;
+
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "invalid order id");
             }
@@ -1753,6 +1885,14 @@ module.exports = {
                         activities: {
                             $elemMatch: { _id: Types.ObjectId(activityId) },
                         },
+                        activities: {
+                            $elemMatch: {
+                                $or: [
+                                    { "adultTickets.ticketNo": ticketNo },
+                                    { "childrenTickets.ticketNo": ticketNo },
+                                ],
+                            },
+                        },
                     },
                 },
                 { $unwind: "$activities" },
@@ -1782,6 +1922,7 @@ module.exports = {
                         },
                     },
                 },
+
                 {
                     $project: {
                         activities: {
@@ -1814,23 +1955,51 @@ module.exports = {
                 },
             ]);
 
-            console.log(orderDetails[0].activities);
-
             if (!orderDetails || orderDetails?.activities?.length < 1) {
                 return sendErrorResponse(res, 400, "order not found");
             }
 
-            console.log("call reachde");
-            const pdfBuffer = await createMultipleTicketPdf(orderDetails[0].activities);
+            let tickets = [];
+            if (orderDetails[0].activities?.adultTickets)
+                tickets = [
+                    ...tickets,
+                    ...orderDetails[0].activities?.adultTickets,
+                ];
+            if (orderDetails[0].activities?.childTickets)
+                tickets = [
+                    ...tickets,
+                    ...orderDetails[0].activities?.childTickets,
+                ];
+            if (orderDetails[0].activities?.infantTickets)
+                tickets = [
+                    ...tickets,
+                    ...orderDetails[0].activities?.infantTickets,
+                ];
+
+            const filteredTickets = tickets.filter((ticket) =>
+                ticket.ticketNo.includes(ticketNo)
+            );
+
+            const pdfBuffer = await createSingleTicketPdf(
+                orderDetails[0].activities,
+                filteredTickets[0]
+            );
             res.set({
                 "Content-Type": "application/pdf",
+                "Content-Length": pdfBuffer.length,
                 "Content-Disposition": "attachment; filename=tickets.pdf",
             });
             res.send(pdfBuffer);
 
             // res.status(200).json(orderDetails[0]);
         } catch (err) {
+            console.log(err, "err");
             sendErrorResponse(res, 500, err);
         }
+    },
+
+    getAttractionBookingTicket: async (req, res) => {
+        try {
+        } catch (err) {}
     },
 };
