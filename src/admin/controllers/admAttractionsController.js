@@ -278,18 +278,7 @@ module.exports = {
                 parsedAvailability = JSON.parse(availability);
             }
 
-            // console.log(connectedApi, "connectedApi");
-
-            // let apiData;
-            // if (isApiConnected) {
-            //     apiData = await attractionApi(res, connectedApi);
-            // }
-
-            // console.log(
-            //     apiData[0].prices,
-            //     apiData[0].attributes,
-            //     "datadataapiData"
-            // );
+          
 
             const attraction = await Attraction.findOneAndUpdate(
                 { _id: id, isDeleted: false },
@@ -510,7 +499,6 @@ module.exports = {
                     }
                 }
 
-                console.log(activity, "activities");
 
                 res.status(200).json({
                     message: "Updated Successfully",

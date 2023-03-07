@@ -1,7 +1,6 @@
 const html_to_pdf = require("html-pdf-node");
 const bwipjs = require("bwip-js");
 const qrcode = require("qrcode");
-const QRious = require("qrious");
 
 const createBookingTicketPdf = async (activity) => {
     let combinedHtmlDoc = "";
@@ -67,6 +66,21 @@ const createBookingTicketPdf = async (activity) => {
     );
     let styles = `
             <style>
+            .last__section {
+              margin-top: 4px;
+          }
+          
+          .grid {
+              display: grid;
+           
+          }
+          
+          .image-wrapper {
+              position: relative;
+              width: 100%;
+              padding-bottom: 100%;
+              overflow: hidden;
+          }
             </style>`;
     let ticketHtmlDoc = `${styles}
     <div style="min-width: 100vw; min-height: 100vh; background-color: white;">
@@ -78,10 +92,10 @@ const createBookingTicketPdf = async (activity) => {
               process.env.SERVER_URL
           }${activity?.attraction?.logo}" alt="">
         </div>
-        <div style="grid-column: 3 / span 3; height:70px; padding-top:30px; display: flex; justify-content: flex-end;" class="col-span-3 flex justify-end">
-          <img src="data:image/png;base64,${barcodeImage}" />
-
-        </div>
+        <div style="grid-column: 3 / span 3; display: flex; justify-content: flex-end; align-items: center;" class="col-span-3 flex justify-end ">
+               <img style="height : 70px; width :200px;" src="data:image/png;base64,${barcodeImage}" />
+     
+             </div>
       </div>
     </div>
     <div style="background-color: #e3f2fd; border: 2px solid #a3c4dc; border-radius: 20px; margin-top: 20px; display: grid; grid-template-columns: repeat(12, 1fr); align-items: center;">
@@ -101,7 +115,7 @@ const createBookingTicketPdf = async (activity) => {
                        
             <div style="">Destination:</div>
             <div style="text-transform: capitalize;">${
-                activity?.destination.name
+                activity?.destination?.name
             }</div>
           </div>
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap-x: 1px; gap-y: 2px;">
@@ -112,7 +126,7 @@ const createBookingTicketPdf = async (activity) => {
           </div>
         </div>
       </div>
-      <div style="padding: 80px 0; grid-column: 8 / span 5; position: relative;">
+      <div style="padding: 30px 0; grid-column: 8 / span 5; position: relative;">
         <div style="height: 5px; width: 5px; background-color: #fff; border-radius: 50%; position: absolute; top: -15px; left: -20px;"></div>
         <div style="height: 5px; width: 5px; background-color: #fff; border-radius: 50%; position: absolute; bottom: -15px; left: -20px;"></div>
         <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
@@ -130,22 +144,25 @@ const createBookingTicketPdf = async (activity) => {
         </div>
       </div>
     </div>
-    <div class="last__section">
-      <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 200px; border-radius: 2xl; overflow: hidden; margin-top: 4px;">
-        ${activity?.attraction?.images?.map((link) => {
-            return `
-        <div style="height: 300px;">
-          <img src="${process.env.SERVER_URL}${link}" alt="images" className="h-[300px] w-[100%]" /> `;
-        })}
-        </div>
-      </div>
+    <div class="last__section" style="height: 300px; width: 100%;">
+    <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 300px; border-radius: 2xl; overflow: hidden; margin-top: 4px;">
+        ${activity?.attraction?.images
+            ?.map((link) => {
+                return `
+                <div class="image-wrapper" >
+                    <img src="${process.env.SERVER_URL}${link}" alt="images" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; height:300px;" />
+                </div>
+            `;
+            })
+            .join("")}
     </div>
-    <div style="margin-top:4px; font-size: 9px; text-align: center; ">
-    <div
-    
-      id="ticket-description"
-    ></div>
-  </div>  
+</div>
+  
+  <div class="desc__section" style="padding-top: 10px; line-height: 16px; font-size: 12px;">
+    <div id="ticket-description">
+      ${activity.activity.description}
+    </div>
+  </div>
   </main>
 </div>
               

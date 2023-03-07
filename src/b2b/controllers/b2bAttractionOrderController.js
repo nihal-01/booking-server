@@ -1821,7 +1821,7 @@ module.exports = {
                 },
             ]);
 
-            console.log(orderDetails[0].activities);
+            console.log(orderDetails[0].activities , "activites" );
 
             if (!orderDetails || orderDetails?.activities?.length < 1) {
                 return sendErrorResponse(res, 400, "order not found");
@@ -2009,10 +2009,5 @@ module.exports = {
             console.log(err, "err");
             sendErrorResponse(res, 500, err);
         }
-    },
-
-    getAttractionBookingTicket: async (req, res) => {
-        try {
-        } catch (err) {}
     },
 };

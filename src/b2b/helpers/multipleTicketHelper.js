@@ -86,17 +86,28 @@ const createMultipleTicketPdf = async (ticketData) => {
 
         let barcodeImage = await generateBarcodeImage(ticket.ticketNo);
         let qrCodeImage = await generateQRCodeImage(ticket.ticketNo);
-        let script = `<script>
-        var myDiv = document.getElementById("myDiv");
-        myDiv.innerHTML +=
-       ticketData?.activity?.description
-       </script>`;
+
         let styles = `
             <style>
+            .last__section {
+              margin-top: 4px;
+          }
+          
+          .grid {
+              display: grid;
+           
+          }
+          
+          .image-wrapper {
+              position: relative;
+              width: 100%;
+              padding-bottom: 100%;
+              overflow: hidden;
+          }
             </style>`;
         let ticketHtmlDoc = `
         ${styles}
-         ${script}
+       
          <div style="min-width: 100vw; min-height: 100vh; background-color: white; ">
          <main style="width: 700px; margin: 0 auto; ">
            <div style="width: 100%; background-color: primary; padding-top: 50px;" class="primary__section">
@@ -107,9 +118,9 @@ const createMultipleTicketPdf = async (ticketData) => {
                  }${ticketData?.attraction?.logo}" alt="">
                </div>
                <div style="grid-column: 3 / span 3; display: flex; justify-content: flex-end; align-items: center;" class="col-span-3 flex justify-end ">
-                 <img style="height : 70px; width :200px;" src="data:image/png;base64,${barcodeImage}" />
-       
-               </div>
+               <img style="height : 70px; width :200px;" src="data:image/png;base64,${barcodeImage}" />
+     
+             </div>
              </div>
            </div>
            <div style="background-color: #e3f2fd; border: 2px solid #a3c4dc; border-radius: 20px; margin-top: 20px; display: grid; grid-template-columns: repeat(12, 1fr); align-items: center;">
@@ -169,15 +180,17 @@ const createMultipleTicketPdf = async (ticketData) => {
            </div>
            <div class="last__section" style="height: 300px; width: 100%;">
            <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 300px; border-radius: 2xl; overflow: hidden; margin-top: 4px;">
-             ${ticketData?.attraction?.images?.map((link) => {
-                 return `
-                   <div style="height: 300px;">
-                     <img src="${process.env.SERVER_URL}${link}" alt="images" style="height: 300px;" />
-                   </div>
-                 `;
-             })}
+               ${ticketData?.attraction?.images
+                   ?.map((link) => {
+                       return `
+                       <div class="image-wrapper" >
+                           <img src="${process.env.SERVER_URL}${link}" alt="images" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; height:300px;" />
+                       </div>
+                   `;
+                   })
+                   .join("")}
            </div>
-         </div>
+       </div>
          
          <div class="desc__section" style="padding-top: 10px; line-height: 16px; font-size: 12px;">
            <div id="ticket-description">

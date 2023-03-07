@@ -33,6 +33,7 @@ const {
 const { getUserOrder } = require("../helpers/userOrderHelper");
 const createSingleTicketPdf = require("../b2b/helpers/singleTicketPdf");
 const createMultipleTicketPdf = require("../b2b/helpers/multipleTicketHelper");
+const createBookingTicketPdf = require("../b2b/helpers/bookingTicketsHelper");
 
 const dayNames = [
     "sunday",
@@ -1469,22 +1470,6 @@ module.exports = {
                 return sendErrorResponse(res, 400, "invalid activity id");
             }
 
-            // const orderDetailss = await B2BAttractionOrder.findOne(
-            //     {
-            //         _id: orderId,
-            //         orderStatus: "paid",
-            //     },
-            //     { activities: { $elemMatch: { _id: orderItemId } } }
-            // ).populate({
-            //     path: "activity",
-            //     populate: {
-            //         path: "attraction",
-            //         populate: { path: "destination" },
-            //         select: "title images logo",
-            //     },
-            //     select: "name description",
-            // });
-            
             console.log(orderId, activityId);
 
             const orderDetails = await AttractionOrder.aggregate([
@@ -1550,6 +1535,7 @@ module.exports = {
                             _id: 1,
                             bookingConfirmationNumber: 1,
                             note: 1,
+                            destination: 1,
                             adultTickets: 1,
                             childrenTickets: 1,
                             infantTickets: 1,
@@ -1573,16 +1559,30 @@ module.exports = {
                 return sendErrorResponse(res, 400, "order not found");
             }
 
-            console.log("call reachde");
-            const pdfBuffer = await createMultipleTicketPdf(
-                orderDetails[0].activities
-            );
-            res.set({
-                "Content-Type": "application/pdf",
-                "Content-Length": pdfBuffer.length,
-                "Content-Disposition": "attachment; filename=tickets.pdf",
-            });
-            res.send(pdfBuffer);
+            if (orderDetails[0].activities.bookingType === "booking") {
+                console.log("call reachde");
+                const pdfBuffer = await createBookingTicketPdf(
+                    orderDetails[0].activities
+                );
+
+                res.set({
+                    "Content-Type": "application/pdf",
+
+                    "Content-Disposition": "attachment; filename=tickets.pdf",
+                });
+                res.send(pdfBuffer);
+            } else {
+                const pdfBuffer = await createMultipleTicketPdf(
+                    orderDetails[0].activities
+                );
+
+                res.set({
+                    "Content-Type": "application/pdf",
+
+                    "Content-Disposition": "attachment; filename=tickets.pdf",
+                });
+                res.send(pdfBuffer);
+            }
 
             // res.status(200).json(orderDetails[0]);
         } catch (err) {
@@ -1605,23 +1605,6 @@ module.exports = {
                 return sendErrorResponse(res, 400, "invalid activity id");
             }
 
-            // const orderDetailss = await B2BAttractionOrder.findOne(
-            //     {
-            //         _id: orderId,
-            //         orderStatus: "paid",
-            //     },
-            //     { activities: { $elemMatch: { _id: orderItemId } } }
-            // ).populate({
-            //     path: "activity",
-            //     populate: {
-            //         path: "attraction",
-            //         populate: { path: "destination" },
-            //         select: "title images logo",
-            //     },
-            //     select: "name description",
-            // });
-
-
             const orderDetails = await AttractionOrder.aggregate([
                 {
                     $match: {
@@ -1629,6 +1612,14 @@ module.exports = {
                         orderStatus: "paid",
                         activities: {
                             $elemMatch: { _id: Types.ObjectId(activityId) },
+                        },
+                        activities: {
+                            $elemMatch: {
+                                $or: [
+                                    { "adultTickets.ticketNo": ticketNo },
+                                    { "childrenTickets.ticketNo": ticketNo },
+                                ],
+                            },
                         },
                     },
                 },
@@ -1650,18 +1641,7 @@ module.exports = {
                     },
                 },
                 {
-                    $lookup: {
-                        from: "destinations",
-                        localField: "activities.attraction.destination",
-                        foreignField: "_id",
-                        as: "activities.destination",
-                    },
-                },
-                {
                     $set: {
-                        "activities.destination": {
-                            $arrayElemAt: ["$activities.destination", 0],
-                        },
                         "activities.activity": {
                             $arrayElemAt: ["$activities.activity", 0],
                         },
