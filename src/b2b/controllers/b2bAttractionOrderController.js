@@ -1103,7 +1103,7 @@ module.exports = {
                 // }
 
                 if (
-                    activity.attraction._id == "63afca1b5896ed6d0f297449" &&
+                    activity.attraction._id === "63afca1b5896ed6d0f297449" &&
                     activity.attraction.isApiConnected
                 ) {
                     let data = await createDubaiParkOrder(
@@ -1120,19 +1120,32 @@ module.exports = {
                                 ? "adult"
                                 : "child";
 
-                        let tickets = new AttractionTicket({
+                        // let tickets = new AttractionTicket({
+                        //     ticketNo: data.MediaCodeList[j].MediaCode,
+                        //     lotNo: data.PNR,
+                        //     ticketFor: "common",
+                        //     activity: activity._id,
+                        //     status: "used",
+                        //     ticketCost:
+                        //         ticketFor == "adult"
+                        //             ? activity.adultPrice
+                        //             : activity.childPrice,
+                        // });
+
+                        // let ticket = await tickets.save();
+
+                        const ticket = {
                             ticketNo: data.MediaCodeList[j].MediaCode,
                             lotNo: data.PNR,
                             ticketFor: "common",
                             activity: activity._id,
-                            status: "ok",
+                            status: "used",
                             ticketCost:
-                                ticketFor == "adult"
+                                ticketFor === "adult"
                                     ? activity.adultPrice
                                     : activity.childPrice,
-                        });
+                        };
 
-                        let ticket = await tickets.save();
                         if (ticketFor == "adult") {
                             adultTicketIds.push(ticket);
                         } else {

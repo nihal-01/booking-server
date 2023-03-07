@@ -11,11 +11,15 @@ const roomTypeSchema = new Schema(
             type: String,
             required: true,
         },
-        roomOccupancy: {
-            type: String,
-            required: true,
-            uppercase: true,
-            enum: ["DBL", "SGL", "TPL", "CWB", "CNB"],
+        roomOccupancies: {
+            type: [
+                {
+                    type: String,
+                    required: true,
+                    uppercase: true,
+                    enum: ["DBL", "SGL", "TPL", "CWB", "CNB"],
+                },
+            ],
         },
         inclusions: {
             type: [
@@ -25,9 +29,19 @@ const roomTypeSchema = new Schema(
                 },
             ],
         },
-        noOfSleeps: {
-            type: Number,
-            required: true,
+        roomCapacity: {
+            type: [
+                {
+                    adult: {
+                        type: Number,
+                        required: true,
+                    },
+                    child: {
+                        type: Number,
+                        required: true,
+                    },
+                },
+            ],
         },
         isRefundable: {
             type: Boolean,

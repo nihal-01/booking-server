@@ -291,8 +291,6 @@ module.exports = {
             //     "datadataapiData"
             // );
 
-            console.log(connectedApi, isApiConnected, "api");
-
             const attraction = await Attraction.findOneAndUpdate(
                 { _id: id, isDeleted: false },
                 {
@@ -323,7 +321,8 @@ module.exports = {
                     cancelBeforeTime,
                     cancellationFee,
                     isApiConnected,
-                    connectedApi,
+                    connectedApi:
+                        isApiConnected === "true" ? connectedApi : undefined,
                     isCombo,
                     bookingPriorDays,
                 },
@@ -336,7 +335,7 @@ module.exports = {
 
             res.status(200).json(attraction);
         } catch (err) {
-            console.log(err, "error");
+            // console.log(err, "error");
             sendErrorResponse(res, 500, err);
         }
     },
