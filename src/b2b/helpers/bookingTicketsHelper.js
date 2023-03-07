@@ -7,7 +7,6 @@ const createBookingTicketPdf = async (activity) => {
     let options = {
         format: "A4",
         type: "buffer",
-        // generate buffer instead of file
     };
 
     const generateBarcodeImage = (content) => {
@@ -29,25 +28,7 @@ const createBookingTicketPdf = async (activity) => {
             );
         });
     };
-    // const generateQRCodeImage = (content) => {
-    //     const qr = new QRious({
-    //         value: content,
-    //         size: 250, // adjust the size as per your requirement
-    //     });
-    //     return qr.toDataURL();
-    // };
-    // const generateQRCodeImage = (content) => {
-    //     return new Promise((resolve, reject) => {
-    //         qrcode.toDataURL(content, (err, pngBuffer) => {
-    //             if (err) {
-    //                 reject(err);
-    //             } else {
-    //                 resolve(pngBuffer.toString("base64"));
-    //             }
-    //         });
-    //     });
-    // };
-
+   
     const generateQRCodeImage = async (content) => {
         try {
             const qrCodeDataUrl = await qrcode.toDataURL(content);

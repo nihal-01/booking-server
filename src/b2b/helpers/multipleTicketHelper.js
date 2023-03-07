@@ -52,25 +52,7 @@ const createMultipleTicketPdf = async (ticketData) => {
         });
     };
 
-    // const generateQRCodeImage = (content) => {
-    //     const qr = new QRious({
-    //         value: content,
-    //         size: 250, // adjust the size as per your requirement
-    //     });
-    //     return qr.toDataURL();
-    // };
-    // const generateQRCodeImage = (content) => {
-    //     return new Promise((resolve, reject) => {
-    //         qrcode.toDataURL(content, (err, pngBuffer) => {
-    //             if (err) {
-    //                 reject(err);
-    //             } else {
-    //                 resolve(pngBuffer.toString("base64"));
-    //             }
-    //         });
-    //     });
-    // };
-
+ 
     const generateQRCodeImage = async (content) => {
         try {
             const qrCodeDataUrl = await qrcode.toDataURL(content);
