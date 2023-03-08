@@ -117,7 +117,9 @@ module.exports = {
     getAgentTickets: async (res) => {
         try {
             const api = await ApiMaster.findOne({ apiCode: "ATBRJ01" });
+            
 
+            console.log(api)
             const url = api.demoUrl;
 
             const username = process.env.BURJ_KHALIFA_USERNAME;
