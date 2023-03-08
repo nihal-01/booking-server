@@ -385,14 +385,14 @@ module.exports = {
 
             console.log(response.data);
 
-            const agentTicket =
-                json["soap:Envelope"]["soap:Body"][0][
-                    "GetPublishedRatesResponse "
-                ][0]["GetPublishedRatesResult"][0][
-                    "dataAgentServiceEventsCollection"
-                ][0];
+            // const agentTicket =
+            //     json["soap:Envelope"]["soap:Body"][0][
+            //         "GetPublishedRatesResponse "
+            //     ][0]["GetPublishedRatesResult"][0][
+            //         "dataAgentServiceEventsCollection"
+            //     ][0];
 
-            console.log(agentTicket, "agentTicket");
+            // console.log(agentTicket, "agentTicket");
 
             const leastAdultPrice = Math.min(
                 ...json["soap:Envelope"]["soap:Body"][0][
