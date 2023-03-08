@@ -388,7 +388,7 @@ module.exports = {
                     "GetTimeSlotWithRatesResponse"
                 ][0]["GetTimeSlotWithRatesResult"][0][
                     "dataAgentServiceEventsCollection"
-                ][0];
+                ];
 
             console.log(agentTicket, "agentTicket");
 
