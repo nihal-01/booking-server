@@ -133,7 +133,7 @@ module.exports = {
             const xmlData = `            
             <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
-           <GetAgentTickets xmlns="http://stagingatthetop.emaar.ae/NewAgentServices/AgentBooking.asmx">
+           <GetAgentTickets xmlns="http://tickets.atthetop.ae/AgentWebApi">
             <agentId>${agentId}</agentId>
             <username>${api.demoUsername}</username>
             <password>${api.demoPassword}</password>
