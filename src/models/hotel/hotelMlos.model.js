@@ -12,6 +12,11 @@ const hotelMlosSchema = new Schema(
             required: true,
             enum: [Schema.Types.ObjectId, "all"],
         },
+        legend: {
+            type: String,
+            required: true,
+            // enum: ["contracted", "sale"]
+        },
         season: {
             type: Schema.Types.ObjectId,
             ref: "HotelSeason",
