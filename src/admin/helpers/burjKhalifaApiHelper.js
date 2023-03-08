@@ -119,7 +119,7 @@ module.exports = {
             const api = await ApiMaster.findOne({ apiCode: "ATBRJ01" });
             
 
-            console.log(api)
+            console.log(api , "api")
             const url = api.demoUrl;
 
             const username = process.env.BURJ_KHALIFA_USERNAME;
