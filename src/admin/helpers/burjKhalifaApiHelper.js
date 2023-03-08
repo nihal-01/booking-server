@@ -357,20 +357,17 @@ module.exports = {
             const authHeader =
                 "Basic " + Buffer.from(credentials).toString("base64");
 
-            const agentId = parseInt(api.demoAgentId);
-            console.log(agentId, "agentId");
-
             
             const url = api.demoUrl;
             const xmlData = `<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
                 <GetPublishedRates xmlns="http://tickets.atthetop.ae/AgentWebApi">
-                <agentId>${agentId}</agentId>
+                <agentId>${parseInt(api.demoAgentId)}</agentId>
                 <username>${api.demoUsername}</username>
                 <password>${api.demoPassword}</password>
-                    <eventTypeId>${apiData.eventTypeId}</eventTypeId>
-                    <resourceId>${apiData.resourceId}</resourceId>
-                    <timeSlotDate>${new Date()}</timeSlotDate>
+                <eventTypeId>${parseInt(apiData.EventtypeId)}</eventTypeId>
+                <resourceId>${parseInt(apiData.ResourceID)}</resourceId>
+               <timeSlotDate>${new Date()}</timeSlotDate>
                 </GetPublishedRates>
             </Body>
         </Envelope>`;
