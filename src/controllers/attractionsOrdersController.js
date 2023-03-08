@@ -1499,19 +1499,9 @@ module.exports = {
                         as: "activities.attraction",
                     },
                 },
-                {
-                    $lookup: {
-                        from: "destinations",
-                        localField: "activities.attraction.destination",
-                        foreignField: "_id",
-                        as: "activities.destination",
-                    },
-                },
+
                 {
                     $set: {
-                        "activities.destination": {
-                            $arrayElemAt: ["$activities.destination", 0],
-                        },
                         "activities.activity": {
                             $arrayElemAt: ["$activities.activity", 0],
                         },
@@ -1535,7 +1525,6 @@ module.exports = {
                             _id: 1,
                             bookingConfirmationNumber: 1,
                             note: 1,
-                            destination: 1,
                             adultTickets: 1,
                             childrenTickets: 1,
                             infantTickets: 1,
@@ -1553,12 +1542,14 @@ module.exports = {
                 },
             ]);
 
-
-            if (!orderDetails || orderDetails?.activities?.length < 1) {
+            if (
+                orderDetails.length < 1 ||
+                orderDetails?.activities?.length < 1
+            ) {
                 return sendErrorResponse(res, 400, "order not found");
             }
 
-            if (orderDetails[0].activities.bookingType === "booking") {
+            if (orderDetails[0].activities?.bookingType === "booking") {
                 const pdfBuffer = await createBookingTicketPdf(
                     orderDetails[0].activities
                 );
@@ -1681,8 +1672,11 @@ module.exports = {
                 },
             ]);
 
-            if (!orderDetails || orderDetails?.activities?.length < 1) {
-                return sendErrorResponse(res, 400, "order not found ");
+            if (
+                orderDetails.length < 1 ||
+                orderDetails?.activities?.length < 1
+            ) {
+                return sendErrorResponse(res, 400, "order not found");
             }
 
             let tickets = [];
@@ -1716,7 +1710,6 @@ module.exports = {
                 "Content-Disposition": "attachment; filename=tickets.pdf",
             });
             res.send(pdfBuffer);
-
         } catch (err) {
             console.log(err, "err");
             sendErrorResponse(res, 500, err);

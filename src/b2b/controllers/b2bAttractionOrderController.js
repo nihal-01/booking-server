@@ -1821,14 +1821,16 @@ module.exports = {
                 },
             ]);
 
-            console.log(orderDetails[0].activities , "activites" );
+            console.log(orderDetails[0], "orderDetails[0]");
 
-            if (!orderDetails || orderDetails?.activities?.length < 1) {
+            if (
+                orderDetails.length < 1 ||
+                orderDetails?.activities?.length < 1
+            ) {
                 return sendErrorResponse(res, 400, "order not found");
             }
 
             if (orderDetails[0].activities.bookingType === "booking") {
-                console.log("call reachde");
                 const pdfBuffer = await createBookingTicketPdf(
                     orderDetails[0].activities
                 );
@@ -1873,8 +1875,6 @@ module.exports = {
             if (!isValidObjectId(activityId)) {
                 return sendErrorResponse(res, 400, "invalid activity id");
             }
-
-          
 
             const orderDetails = await B2BAttractionOrder.aggregate([
                 {
@@ -1954,7 +1954,10 @@ module.exports = {
                 },
             ]);
 
-            if (!orderDetails || orderDetails?.activities?.length < 1) {
+            if (
+                orderDetails.length < 1 ||
+                orderDetails?.activities?.length < 1
+            ) {
                 return sendErrorResponse(res, 400, "order not found");
             }
 
