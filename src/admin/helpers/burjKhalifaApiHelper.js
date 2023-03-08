@@ -24,7 +24,7 @@ module.exports = {
             const xmlData = `
             <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
-                <Authentication xmlns="http://stagingatthetop.emaar.ae/NewAgentServices/AgentBooking.asmx">
+                <Authentication xmlns="https://tickets.atthetop.ae/agentservices/AgentBooking.asmx">
                 <userName>${api.liveUsername}</userName>
                 <password>${api.livePassword}</password>
                 </Authentication>
