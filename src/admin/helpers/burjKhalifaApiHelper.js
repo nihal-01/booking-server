@@ -385,10 +385,10 @@ module.exports = {
 
             const agentTicket =
                 json["soap:Envelope"]["soap:Body"][0][
-                    "GetPublishedRatesResponse "
+                    "GetPublishedRatesResponse"
                 ][0]["GetPublishedRatesResult"][0][
                     "dataAgentServiceEventsCollection"
-                ];
+                ][0];
 
             console.log(agentTicket, "agentTicket");
 
