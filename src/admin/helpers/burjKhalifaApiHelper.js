@@ -348,7 +348,6 @@ module.exports = {
 
     getLeastPriceOfDay: async (apiData) => {
         try {
-
             const api = await ApiMaster.findOne({ apiCode: "ATBRJ01" });
 
             const username = process.env.BURJ_KHALIFA_USERNAME;
@@ -358,7 +357,6 @@ module.exports = {
             const authHeader =
                 "Basic " + Buffer.from(credentials).toString("base64");
 
-            
             const url = api.demoUrl;
 
             const xmlData = `<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
@@ -385,14 +383,14 @@ module.exports = {
 
             console.log(response.data);
 
-            // const agentTicket =
-            //     json["soap:Envelope"]["soap:Body"][0][
-            //         "GetPublishedRatesResponse "
-            //     ][0]["GetPublishedRatesResult"][0][
-            //         "dataAgentServiceEventsCollection"
-            //     ][0];
+            const agentTicket =
+                json["soap:Envelope"]["soap:Body"][0][
+                    "GetPublishedRatesResponse "
+                ][0]["GetPublishedRatesResult"][0][
+                    "dataAgentServiceEventsCollection"
+                ];
 
-            // console.log(agentTicket, "agentTicket");
+            console.log(agentTicket, "agentTicket");
 
             const leastAdultPrice = Math.min(
                 ...json["soap:Envelope"]["soap:Body"][0][
