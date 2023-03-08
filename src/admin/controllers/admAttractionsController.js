@@ -455,6 +455,8 @@ module.exports = {
 
                     let apiPriceData = await getLeastPriceOfDay(apiData[i]);
 
+                    console.log(apiPriceData , "apiPriceData")
+
                     if (activity == null) {
                         activity = new AttractionActivity({
                             name: apiData[i].AttractionName,
