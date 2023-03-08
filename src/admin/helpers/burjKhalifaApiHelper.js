@@ -158,7 +158,7 @@ module.exports = {
 
             console.log(agentTicket, "agentTicket");
 
-            const objects = agentTicket.map((event) => {
+            const objects = agentTicket.AgentServiceResourceEvents.map((event) => {
                 return {
                     AttractionName: event.AttractionName[0],
                     TicketName: event.TicketName[0],
