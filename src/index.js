@@ -7,7 +7,7 @@ require("dotenv").config({
     path: path.join(__dirname, "../" + `.env.${process.env.NODE_ENV}`),
 });
 // require("dotenv").config({
-//     path: path.join(__dirname, "../" + `.env.production`),
+//     path: path.join(__dirname, "../" + `.env.development`),
 // });
 
 require("./config/dbConfig");

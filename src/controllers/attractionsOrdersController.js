@@ -826,13 +826,13 @@ module.exports = {
                         password,
                     });
                     await user.save();
-                }
 
-                userOrderSignUpEmail(
-                    email,
-                    "New Account",
-                    `username : ${email} password : ${password}`
-                );
+                    userOrderSignUpEmail(
+                        email,
+                        "New Account",
+                        `username : ${email} password : ${password}`
+                    );
+                }
             }
 
             let buyer = req.user || user;
@@ -1476,7 +1476,7 @@ module.exports = {
                 {
                     $match: {
                         _id: Types.ObjectId(orderId),
-                        orderStatus: "paid",
+                        orderStatus: "completed",
                         activities: {
                             $elemMatch: { _id: Types.ObjectId(activityId) },
                         },
@@ -1598,7 +1598,7 @@ module.exports = {
                 {
                     $match: {
                         _id: Types.ObjectId(orderId),
-                        orderStatus: "paid",
+                        orderStatus: "completed",
                         activities: {
                             $elemMatch: { _id: Types.ObjectId(activityId) },
                         },
