@@ -1,7 +1,8 @@
-const html_to_pdf = require("html-pdf-node");
+// const html_to_pdf = require("html-pdf-node");
 const bwipjs = require("bwip-js");
 const qrcode = require("qrcode");
 const QRious = require("qrious");
+const puppeteer = require("puppeteer");
 
 const createSingleTicketPdf = async (activity, ticket) => {
     let combinedHtmlDoc = "";
@@ -11,59 +12,78 @@ const createSingleTicketPdf = async (activity, ticket) => {
         // generate buffer instead of file
     };
 
-    const generateBarcodeImage = (content) => {
-        return new Promise((resolve, reject) => {
-            bwipjs.toBuffer(
-                {
-                    bcid: "code128", // Barcode type
-                    text: content, // Barcode content
-                    scale: 2, // Image scale factor
-                    height: 10, // Barcode height in millimeters
-                },
-                function (err, pngBuffer) {
-                    if (err) {
-                        reject(err);
-                    } else {
-                        resolve(pngBuffer.toString("base64"));
-                    }
-                }
-            );
-        });
-    };
-    // const generateQRCodeImage = (content) => {
-    //     const qr = new QRious({
-    //         value: content,
-    //         size: 250, // adjust the size as per your requirement
-    //     });
-    //     return qr.toDataURL();
-    // };
-    // const generateQRCodeImage = (content) => {
-    //     return new Promise((resolve, reject) => {
-    //         qrcode.toDataURL(content, (err, pngBuffer) => {
-    //             if (err) {
-    //                 reject(err);
-    //             } else {
-    //                 resolve(pngBuffer.toString("base64"));
-    //             }
-    //         });
-    //     });
-    // };
-
-    console.log(activity, ticket, "activity");
-
-    const generateQRCodeImage = async (content) => {
-        try {
-            const qrCodeDataUrl = await qrcode.toDataURL(content);
-            return qrCodeDataUrl;
-        } catch (error) {
-            console.error(error);
-            return null;
+    try {
+        async function generatePdfAsBuffer(htmlContent, options) {
+            // const browser = await puppeteer.launch();
+            let browser = await puppeteer.launch({
+                executablePath: "/usr/bin/chromium-browser",
+                args: [
+                    "--disable-gpu",
+                    "--disable-setuid-sandbox",
+                    "--no-sandbox",
+                    "--no-zygote",
+                ],
+            });
+            const page = await browser.newPage();
+            await page.setContent(htmlContent);
+            const pdfBuffer = await page.pdf(options);
+            await browser.close();
+            return pdfBuffer;
         }
-    };
 
-    let barcodeImage = await generateBarcodeImage(ticket.ticketNo);
-    let qrCodeImage = await generateQRCodeImage(ticket.ticketNo);
-    let styles = `
+        const generateBarcodeImage = (content) => {
+            return new Promise((resolve, reject) => {
+                bwipjs.toBuffer(
+                    {
+                        bcid: "code128", // Barcode type
+                        text: content, // Barcode content
+                        scale: 2, // Image scale factor
+                        height: 10, // Barcode height in millimeters
+                    },
+                    function (err, pngBuffer) {
+                        if (err) {
+                            reject(err);
+                        } else {
+                            resolve(pngBuffer.toString("base64"));
+                        }
+                    }
+                );
+            });
+        };
+        // const generateQRCodeImage = (content) => {
+        //     const qr = new QRious({
+        //         value: content,
+        //         size: 250, // adjust the size as per your requirement
+        //     });
+        //     return qr.toDataURL();
+        // };
+        // const generateQRCodeImage = (content) => {
+        //     return new Promise((resolve, reject) => {
+        //         qrcode.toDataURL(content, (err, pngBuffer) => {
+        //             if (err) {
+        //                 reject(err);
+        //             } else {
+        //                 resolve(pngBuffer.toString("base64"));
+        //             }
+        //         });
+        //     });
+        // };
+
+        console.log(activity, ticket, "activity");
+
+        const generateQRCodeImage = async (content) => {
+            try {
+                const qrCodeDataUrl = await qrcode.toDataURL(content);
+                return qrCodeDataUrl;
+            } catch (error) {
+                console.error(error);
+                return null;
+            }
+        };
+
+        let barcodeImage = await generateBarcodeImage(ticket.ticketNo);
+        let qrCodeImage = await generateQRCodeImage(ticket.ticketNo);
+        let styles = `
             <style>
             .last__section {
               margin-top: 4px;
@@ -83,7 +103,7 @@ const createSingleTicketPdf = async (activity, ticket) => {
           
          
             </style>`;
-    let ticketHtmlDoc = `${styles}
+        let ticketHtmlDoc = `${styles}
     <div style="min-width: 100vw; min-height: 100vh; background-color: white;">
   <main style="width: 700px; margin: 0 auto;">
     <div style="width: 100%; background-color: primary; padding-top: 7px;" class="primary__section">
@@ -127,7 +147,7 @@ const createSingleTicketPdf = async (activity, ticket) => {
                     : "N/A"
             }</div>
             <div style="">Number:</div>
-            <div style="">${ticket?.lotNo}}</div>
+            <div style="">${ticket?.lotNo}</div>
           </div>
         </div>
       </div>
@@ -173,14 +193,14 @@ const createSingleTicketPdf = async (activity, ticket) => {
 </div>
               
         `;
-    combinedHtmlDoc += ticketHtmlDoc;
+        combinedHtmlDoc += ticketHtmlDoc;
 
-    let file = {
-        content: combinedHtmlDoc,
-    };
+        // let file = {
+        //     content: combinedHtmlDoc,
+        // };
+        const pdfBuffer = await generatePdfAsBuffer(combinedHtmlDoc, options);
 
-    try {
-        let pdfBuffer = await html_to_pdf.generatePdf(file, options);
+        // let pdfBuffer = await html_to_pdf.generatePdf(file, options);
         return pdfBuffer;
     } catch (err) {
         throw err;
