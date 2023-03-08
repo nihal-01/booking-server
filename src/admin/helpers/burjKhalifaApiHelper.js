@@ -152,9 +152,9 @@ module.exports = {
             const json = await parseStringPromise(response.data);
 
             const agentTickets =
-                json["soap:Envelope"]["soap:Body"]["GetAgentTicketsResponse"][
-                    "GetAgentTicketsResult"
-                ];
+                json["soap:Envelope"]["soap:Body"][0][
+                    "GetAgentTicketsResponse"
+                ][0];
 
             console.log(agentTickets, "agentTickets");
 
