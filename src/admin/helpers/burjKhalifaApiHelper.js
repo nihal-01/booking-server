@@ -154,7 +154,7 @@ module.exports = {
             const agentTickets =
                 json["soap:Envelope"]["soap:Body"][0][
                     "GetAgentTicketsResponse"
-                ][0];
+                ][0]["ResourceEventCollection"][0];
 
             console.log(agentTickets, "agentTickets");
 
