@@ -358,7 +358,9 @@ module.exports = {
                 "Basic " + Buffer.from(credentials).toString("base64");
 
             const agentId = parseInt(api.demoAgentId);
+            console.log(agentId, "agentId");
 
+            
             const url = api.demoUrl;
             const xmlData = `<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
@@ -415,7 +417,9 @@ module.exports = {
 
             console.log("Least Adult Price:", leastAdultPrice);
 
-            return leastAdultPrice, leastChildPrice;
-        } catch (err) {}
+            // return leastAdultPrice, leastChildPrice;
+        } catch (err) {
+            console.log(err, "error");
+        }
     },
 };
