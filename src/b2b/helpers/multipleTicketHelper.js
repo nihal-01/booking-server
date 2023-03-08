@@ -1,22 +1,32 @@
-const html_to_pdf = require("html-pdf-node");
 const bwipjs = require("bwip-js");
 const qrcode = require("qrcode");
 const QRious = require("qrious");
-const jsdom = require("jsdom");
-const { JSDOM } = jsdom;
+const puppeteer = require("puppeteer");
 
 const createMultipleTicketPdf = async (ticketData) => {
     let combinedHtmlDoc = "";
     let options = {
         format: "A4",
         type: "buffer",
-        // generate buffer instead of file
     };
 
-    const dom = new JSDOM(
-        `<!DOCTYPE html><html><body><div id="myDiv"></div></body></html>`
-    );
-    const document = dom.window.document;
+    async function generatePdfAsBuffer(htmlContent, options) {
+        // const browser = await puppeteer.launch();
+        let browser = await puppeteer.launch({
+            executablePath: "/usr/bin/chromium-browser",
+            args: [
+                "--disable-gpu",
+                "--disable-setuid-sandbox",
+                "--no-sandbox",
+                "--no-zygote",
+            ],
+        });
+        const page = await browser.newPage();
+        await page.setContent(htmlContent);
+        const pdfBuffer = await page.pdf(options);
+        await browser.close();
+        return pdfBuffer;
+    }
 
     console.log(ticketData, "call reached");
     let tickets = [];
@@ -52,7 +62,6 @@ const createMultipleTicketPdf = async (ticketData) => {
         });
     };
 
- 
     const generateQRCodeImage = async (content) => {
         try {
             const qrCodeDataUrl = await qrcode.toDataURL(content);
@@ -62,6 +71,8 @@ const createMultipleTicketPdf = async (ticketData) => {
             return null;
         }
     };
+
+    console.log(tickets);
 
     for (let i = 0; i < tickets.length; i++) {
         let ticket = tickets[i];
@@ -90,9 +101,9 @@ const createMultipleTicketPdf = async (ticketData) => {
         let ticketHtmlDoc = `
         ${styles}
        
-         <div style="min-width: 100vw; min-height: 100vh; background-color: white; ">
-         <main style="width: 700px; margin: 0 auto; ">
-           <div style="width: 100%; background-color: primary; padding-top: 50px;" class="primary__section">
+        <div style="min-width: 100vw; min-height: 100vh; background-color: white;">
+        <main style="width: 700px; margin: 0 auto;">
+          <div style="width: 100%; background-color: primary; padding-top: 7px;" class="primary__section">
              <div style="display: grid; grid-template-columns: repeat(5, 1fr);" class="grid grid-cols-5 pt-7">
                <div style="grid-column: 1 / span 2;" class="col-span-2">
                  <img style="width: 200px; height: 100px;" src="${
@@ -146,18 +157,18 @@ const createMultipleTicketPdf = async (ticketData) => {
              <div style="height: 5px; width: 5px; background-color: #fff; border-radius: 50%; position: absolute; top: -15px; left: -20px;"></div>
              <div style="height: 5px; width: 5px; background-color: #fff; border-radius: 50%; position: absolute; bottom: -15px; left: -20px;"></div>
              <div style="width: 100%; height: 100%; display: flex; justify-content: center; align-items: center;">
-               <div style="width: 100%; height: 100%;s">
-                 <div style="display: flex; justify-content: center;">
-                   <div style="height: 100px; width: 100px;">
-                     <img  style="height: 100px; width: 100px;" src="${qrCodeImage}" />
-                   </div>
-                 </div>
-                 <p style="font-size: 9px; text-align: center; margin-top: 2px;">${
-                     ticket?.ticketNo
-                 }</p>
-                 <p style="font-size: 9px; text-align: center;">Place Image against the scanner</p>
-               </div>
-             </div>
+          <div style="">
+            <div style="display: flex; justify-content: center;">
+              <div style="height: 100px; width: 100px;">
+                <img src="${qrCodeImage}"  style="height: 100px; width: 100px;"/>
+              </div>
+            </div>
+            <p style="font-size: 9px; text-align: center; margin-top: 2px;">${
+                ticket?.ticketNo
+            }</p>
+            <p style="font-size: 9px; text-align: center;">Place Image against the scanner</p>
+          </div>
+        </div>
            </div>
            </div>
            <div class="last__section" style="height: 300px; width: 100%;">
@@ -193,8 +204,8 @@ const createMultipleTicketPdf = async (ticketData) => {
     };
 
     try {
-        console.log(file, "combinedHtmlDoc");
-        let pdfBuffer = await html_to_pdf.generatePdf(file, options);
+        const pdfBuffer = await generatePdfAsBuffer(combinedHtmlDoc, options);
+        // let pdfBuffer = await html_to_pdf.generatePdf(file, options);
         return pdfBuffer;
     } catch (err) {
         throw err;

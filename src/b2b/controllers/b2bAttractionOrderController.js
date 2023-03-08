@@ -1689,7 +1689,7 @@ module.exports = {
                             bookingConfirmationNumber: 1,
                             note: 1,
                             adultTickets: 1,
-                            childrenTickets: 1,
+                            childTickets: 1,
                             infantTickets: 1,
                             status: 1,
                             amount: 1,
@@ -1817,7 +1817,7 @@ module.exports = {
                             bookingConfirmationNumber: 1,
                             note: 1,
                             adultTickets: 1,
-                            childrenTickets: 1,
+                            childTickets: 1,
                             infantTickets: 1,
                             status: 1,
                             amount: 1,
@@ -1832,7 +1832,6 @@ module.exports = {
                     },
                 },
             ]);
-
 
             if (
                 orderDetails.length < 1 ||
@@ -1875,9 +1874,9 @@ module.exports = {
 
     getAttractionOrderSingleTickets: async (req, res) => {
         try {
-            const { orderId, activityId } = req.params;
+            const { orderId, activityId, ticketNo } = req.params;
 
-            const { ticketNo } = req.body;
+            // const {  } = req.body;
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "invalid order id");
@@ -1949,7 +1948,7 @@ module.exports = {
                             bookingConfirmationNumber: 1,
                             note: 1,
                             adultTickets: 1,
-                            childrenTickets: 1,
+                            childTickets: 1,
                             infantTickets: 1,
                             status: 1,
                             amount: 1,

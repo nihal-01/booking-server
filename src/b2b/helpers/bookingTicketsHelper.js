@@ -1,6 +1,7 @@
-const html_to_pdf = require("html-pdf-node");
+// const html_to_pdf = require("html-pdf-node");
 const bwipjs = require("bwip-js");
 const qrcode = require("qrcode");
+const puppeteer = require("puppeteer");
 
 const createBookingTicketPdf = async (activity) => {
     let combinedHtmlDoc = "";
@@ -8,6 +9,24 @@ const createBookingTicketPdf = async (activity) => {
         format: "A4",
         type: "buffer",
     };
+
+    async function generatePdfAsBuffer(htmlContent, options) {
+        // const browser = await puppeteer.launch();
+        let browser = await puppeteer.launch({
+            executablePath: "/usr/bin/chromium-browser",
+            args: [
+                "--disable-gpu",
+                "--disable-setuid-sandbox",
+                "--no-sandbox",
+                "--no-zygote",
+            ],
+        });
+        const page = await browser.newPage();
+        await page.setContent(htmlContent);
+        const pdfBuffer = await page.pdf(options);
+        await browser.close();
+        return pdfBuffer;
+    }
 
     const generateBarcodeImage = (content) => {
         return new Promise((resolve, reject) => {
@@ -28,7 +47,7 @@ const createBookingTicketPdf = async (activity) => {
             );
         });
     };
-   
+
     const generateQRCodeImage = async (content) => {
         try {
             const qrCodeDataUrl = await qrcode.toDataURL(content);
@@ -150,12 +169,10 @@ const createBookingTicketPdf = async (activity) => {
         `;
     combinedHtmlDoc += ticketHtmlDoc;
 
-    let file = {
-        content: combinedHtmlDoc,
-    };
-
     try {
-        let pdfBuffer = await html_to_pdf.generatePdf(file, options);
+        const pdfBuffer = await generatePdfAsBuffer(combinedHtmlDoc, options);
+
+        // let pdfBuffer = await html_to_pdf.generatePdf(file, options);
         return pdfBuffer;
     } catch (err) {
         throw err;
