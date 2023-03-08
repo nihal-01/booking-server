@@ -392,6 +392,24 @@ module.exports = {
 
             console.log(agentTicket, "agentTicket");
 
+            const objects = agentTicket.AgentServiceResourceEvents.map(
+                (event) => {
+                    return {
+                        EventID: event.EventID[0],
+                        EventName: event.EventName[0],
+                        StartDateTime: event.StartDateTime[0],
+                        EndDateTime: event.EndDateTime[0],
+                        EndDateTime: event.EndDateTime[0],
+                        ResourceID: event.ResourceID[0],
+                        Available: event.Available[0],
+                        Status: event.Status[0],
+                        AdultPrice: event.AdultPrice[0],
+                        ChildPrice: event.ChildPrice[0],
+                    };
+                }
+            );
+
+            console.log(objects, "objects");
             const leastAdultPrice = Math.min(
                 ...json["soap:Envelope"]["soap:Body"][0][
                     "GetTimeSlotWithRatesResponse"
