@@ -7,7 +7,7 @@ module.exports = {
         try {
             const api = await ApiMaster.findOne({ apiCode: "ATBRJ01" });
 
-            const url = api.demoUrl;
+            const url = api.liveUrl;
 
             const username = process.env.BURJ_KHALIFA_USERNAME;
             const password = process.env.BURJ_KHALIFA_PASSWORD;
@@ -119,7 +119,7 @@ module.exports = {
             const api = await ApiMaster.findOne({ apiCode: "ATBRJ01" });
 
             console.log(api, "api");
-            const url = api.demoUrl;
+            const url = api.liveUrl;
 
             const username = process.env.BURJ_KHALIFA_USERNAME;
             const password = process.env.BURJ_KHALIFA_PASSWORD;
@@ -357,7 +357,7 @@ module.exports = {
             const authHeader =
                 "Basic " + Buffer.from(credentials).toString("base64");
 
-            const url = api.demoUrl;
+            const url = api.liveUrl;
 
             const xmlData = `<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
