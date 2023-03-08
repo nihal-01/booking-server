@@ -25,8 +25,8 @@ module.exports = {
             <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
                 <Authentication xmlns="http://stagingatthetop.emaar.ae/NewAgentServices/AgentBooking.asmx">
-                    <userName>Admin@mytravellerschoice.com</userName>
-                    <password>07eadf46</password>
+                <userName>${api.liveUsername}</userName>
+                <password>${api.livePassword}</password>
                 </Authentication>
             </Body>
         </Envelope>
@@ -51,9 +51,9 @@ module.exports = {
                 xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
               <soap:Body>
                 <CancelBooking xmlns="http://tickets.atthetop.ae/AgentWebApi">
-                  <agentId>${api.demoAgentId}</agentId>
-                  <userName>${api.demoUsername}</userName>
-                  <password>${api.demoPassword}</password>
+                  <agentId>${api.liveAgentId}</agentId>
+                  <userName>${api.liveUsername}</userName>
+                  <password>${api.livePassword}</password>
                   <Orderid>1234</Orderid>
                 </CancelBooking>
               </soap:Body>
@@ -134,9 +134,9 @@ module.exports = {
             <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
            <GetAgentTickets xmlns="http://tickets.atthetop.ae/AgentWebApi">
-            <agentId>${agentId}</agentId>
-            <username>${api.demoUsername}</username>
-            <password>${api.demoPassword}</password>
+            <agentId>${parseInt(api.liveAgentId)}</agentId>
+            <username>${api.liveUsername}</username>
+            <password>${api.livePassword}</password>
             </GetAgentTickets>
             </Body>
             </Envelope>`;
@@ -362,9 +362,9 @@ module.exports = {
             const xmlData = `<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
                 <GetPublishedRates xmlns="http://tickets.atthetop.ae/AgentWebApi">
-                <agentId>${parseInt(api.demoAgentId)}</agentId>
-                <username>${api.demoUsername}</username>
-                <password>${api.demoPassword}</password>
+                <agentId>${parseInt(api.liveAgentId)}</agentId>
+                <username>${api.liveUsername}</username>
+                <password>${api.livePassword}</password>
                 <eventTypeId>${parseInt(apiData.EventtypeId)}</eventTypeId>
                 <resourceId>${parseInt(apiData.ResourceID)}</resourceId>
                <timeSlotDate>${new Date().toISOString()}</timeSlotDate>
@@ -407,7 +407,6 @@ module.exports = {
 
             console.log(objects, "objects");
 
-            
             const leastAdultPrice = Math.min(
                 ...objects.map((event) => parseFloat(event.AdultPrice))
             );
