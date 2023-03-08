@@ -154,10 +154,16 @@ module.exports = {
             const agentTickets =
                 json["soap:Envelope"]["soap:Body"][0][
                     "GetAgentTicketsResponse"
-                ][0]["ResourceEventCollection"][0];
+                ]["ResourceEventCollection"][0];
 
             console.log(agentTickets, "agentTickets");
 
+            const agentTicket =
+                json["soap:Envelope"]["soap:Body"][0][
+                    "GetAgentTicketsResponse"
+                ]["ResourceEventCollection"][0]["ResourceEventCollection"][0];
+
+            console.log(agentTicket, "agentTicket");
             return agentTickets;
         } catch (err) {
             console.log(err, "eror");
