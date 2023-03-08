@@ -133,7 +133,7 @@ module.exports = {
             const xmlData = `            
             <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
-           <GetAgentTickets xmlns="http://tickets.atthetop.ae/AgentWebApi">
+           <GetAgentTickets xmlns="http://stagingatthetop.emaar.ae/NewAgentServices/AgentBooking.asmx">
             <agentId>${agentId}</agentId>
             <username>${api.demoUsername}</username>
             <password>${api.demoPassword}</password>
@@ -158,22 +158,24 @@ module.exports = {
 
             console.log(agentTicket, "agentTicket");
 
-            const objects = agentTicket.AgentServiceResourceEvents.map((event) => {
-                return {
-                    AttractionName: event.AttractionName[0],
-                    TicketName: event.TicketName[0],
-                    EventtypeId: event.EventtypeId[0],
-                    ResourceID: event.ResourceID[0],
-                    Description: event.Description[0],
-                    IsCapacityEnabled: event.IsCapacityEnabled[0],
-                };
-            });
+            const objects = agentTicket.AgentServiceResourceEvents.map(
+                (event) => {
+                    return {
+                        AttractionName: event.AttractionName[0],
+                        TicketName: event.TicketName[0],
+                        EventtypeId: event.EventtypeId[0],
+                        ResourceID: event.ResourceID[0],
+                        Description: event.Description[0],
+                        IsCapacityEnabled: event.IsCapacityEnabled[0],
+                    };
+                }
+            );
 
             console.log(objects, "objects");
 
             console.log(JSON.stringify(objects, null, 2));
 
-            return agentTickets;
+            return objects;
         } catch (err) {
             console.log(err, "eror");
         }
@@ -274,10 +276,10 @@ module.exports = {
             xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
               <soap:Body>
-                <GetPublishedRates xmlns="http://tickets.atthetop.ae/AgentWebApi">
-                  <agentId>int</agentId>
-                  <username>string</username>
-                  <password>string</password>
+                <GetPublishedRates xmlns=""http://stagingatthetop.emaar.ae/NewAgentServices/AgentBooking.asmx"">
+                <agentId>${agentId}</agentId>
+                <username>${api.demoUsername}</username>
+                <password>${api.demoPassword}</password>
                   <eventTypeId>int</eventTypeId>
                   <resourceId>int</resourceId>
                   <timeSlotDate>dateTime</timeSlotDate>
@@ -348,29 +350,48 @@ module.exports = {
         try {
             const api = await ApiMaster.findOne({ apiCode: "ATBRJ01" });
 
+            const username = process.env.BURJ_KHALIFA_USERNAME;
+            const password = process.env.BURJ_KHALIFA_PASSWORD;
+
+            const credentials = username + ":" + password;
+            const authHeader =
+                "Basic " + Buffer.from(credentials).toString("base64");
+
+            const agentId = parseInt(api.demoAgentId);
+
             const url = api.demoUrl;
-            const xmlData = `<?xml version="1.0" encoding="utf-8"?>
-      <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-        <soap:Body>
-          <GetTimeSlotWithRates xmlns="http://tickets.atthetop.ae/AgentWebApi">
-            <agentId>int</agentId>
-            <username>string</username>
-            <password>string</password>
-            <eventTypeId>${apiData.EventtypeId}</eventTypeId>
-            <resourceId>${apiData.ResourceID}</resourceId>
-            <timeSlotDate>${new Date()}</timeSlotDate>
-          </GetTimeSlotWithRates>
-        </soap:Body>
-      </soap:Envelope>`;
+            const xmlData = `<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+            <Body>
+                <GetPublishedRates xmlns="http://tickets.atthetop.ae/AgentWebApi">
+                <agentId>${agentId}</agentId>
+                <username>${api.demoUsername}</username>
+                <password>${api.demoPassword}</password>
+                    <eventTypeId>${apiData.eventTypeId}</eventTypeId>
+                    <resourceId>${apiData.resourceId}</resourceId>
+                    <timeSlotDate>${new Date()}</timeSlotDate>
+                </GetPublishedRates>
+            </Body>
+        </Envelope>`;
 
             const headers = {
                 "Content-Type": "text/xml; charset=utf-8",
-                "Content-Length": xmlData.length.toString(),
-                SOAPAction:
-                    "http://tickets.atthetop.ae/AgentWebApi/GetTimeSlotWithRates",
+                Authorization: authHeader,
             };
 
             const response = await axios.post(url, xmlData, { headers });
+
+            const json = await parseStringPromise(response.data);
+
+            console.log(response.data);
+
+            const agentTicket =
+                json["soap:Envelope"]["soap:Body"][0][
+                    "GetTimeSlotWithRatesResponse"
+                ][0]["GetTimeSlotWithRatesResult"][0][
+                    "dataAgentServiceEventsCollection"
+                ][0];
+
+            console.log(agentTicket, "agentTicket");
 
             const leastAdultPrice = Math.min(
                 ...json["soap:Envelope"]["soap:Body"][0][

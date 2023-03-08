@@ -445,7 +445,6 @@ module.exports = {
                     apiData = await getAgentTickets(res);
                 }
 
-                console.log(apiData, "reached");
 
                 for (i = 0; i < apiData.length; i++) {
                     activity = await AttractionActivity.findOne({
