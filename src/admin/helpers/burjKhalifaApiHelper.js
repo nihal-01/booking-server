@@ -151,13 +151,6 @@ module.exports = {
 
             const json = await parseStringPromise(response.data);
 
-            const agentTickets =
-                json["soap:Envelope"]["soap:Body"][0][
-                    "GetAgentTicketsResponse"
-                ][0]["GetAgentTicketsResult"][0];
-
-            console.log(agentTickets, "agentTickets");
-
             const agentTicket =
                 json["soap:Envelope"]["soap:Body"][0][
                     "GetAgentTicketsResponse"
@@ -165,12 +158,20 @@ module.exports = {
 
             console.log(agentTicket, "agentTicket");
 
-            const agentTicketed =
-                json["soap:Envelope"]["soap:Body"][0][
-                    "GetAgentTicketsResponse"
-                ][0]["ResourceEventCollection"];
+            const objects = agentTicket.map((event) => {
+                return {
+                    AttractionName: event.AttractionName[0],
+                    TicketName: event.TicketName[0],
+                    EventtypeId: event.EventtypeId[0],
+                    ResourceID: event.ResourceID[0],
+                    Description: event.Description[0],
+                    IsCapacityEnabled: event.IsCapacityEnabled[0],
+                };
+            });
 
-            console.log(agentTicketed, "agentTicketed");
+            console.log(objects, "objects");
+
+            console.log(JSON.stringify(objects, null, 2));
 
             return agentTickets;
         } catch (err) {
