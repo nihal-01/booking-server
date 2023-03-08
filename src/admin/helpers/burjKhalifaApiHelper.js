@@ -357,8 +357,8 @@ module.exports = {
             const authHeader =
                 "Basic " + Buffer.from(credentials).toString("base64");
 
-            
             const url = api.demoUrl;
+
             const xmlData = `<Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
                 <GetPublishedRates xmlns="http://tickets.atthetop.ae/AgentWebApi">
@@ -367,7 +367,7 @@ module.exports = {
                 <password>${api.demoPassword}</password>
                 <eventTypeId>${parseInt(apiData.EventtypeId)}</eventTypeId>
                 <resourceId>${parseInt(apiData.ResourceID)}</resourceId>
-               <timeSlotDate>${new Date()}</timeSlotDate>
+               <timeSlotDate>${new Date().toISOString()}</timeSlotDate>
                 </GetPublishedRates>
             </Body>
         </Envelope>`;
@@ -416,7 +416,7 @@ module.exports = {
 
             // return leastAdultPrice, leastChildPrice;
         } catch (err) {
-            console.log(err, "error");
+            console.log(err.message, "error");
         }
     },
 };
