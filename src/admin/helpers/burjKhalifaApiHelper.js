@@ -156,6 +156,8 @@ module.exports = {
                     "GetAgentTicketsResult"
                 ];
 
+            console.log(agentTickets, "agentTickets");
+
             return agentTickets;
         } catch (err) {
             console.log(err, "eror");
