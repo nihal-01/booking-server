@@ -826,13 +826,13 @@ module.exports = {
                         password,
                     });
                     await user.save();
-                }
 
-                userOrderSignUpEmail(
-                    email,
-                    "New Account",
-                    `username : ${email} password : ${password}`
-                );
+                    userOrderSignUpEmail(
+                        email,
+                        "New Account",
+                        `username : ${email} password : ${password}`
+                    );
+                }
             }
 
             let buyer = req.user || user;

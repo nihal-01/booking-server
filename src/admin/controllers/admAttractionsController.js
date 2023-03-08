@@ -159,7 +159,8 @@ module.exports = {
                 cancelBeforeTime,
                 cancellationFee,
                 isApiConnected,
-                connectedApi,
+                connectedApi:
+                    isApiConnected === "true" ? connectedApi : undefined,
                 isCombo,
                 bookingPriorDays,
                 isActive: true,
@@ -207,8 +208,6 @@ module.exports = {
                 oldImages,
                 bookingPriorDays,
             } = req.body;
-
-            console.log(itineraryDescription, "itineraryDescription");
 
             const { _, error } = attractionSchema.validate({
                 ...req.body,
@@ -277,8 +276,6 @@ module.exports = {
             if (availability) {
                 parsedAvailability = JSON.parse(availability);
             }
-
-          
 
             const attraction = await Attraction.findOneAndUpdate(
                 { _id: id, isDeleted: false },
@@ -498,7 +495,6 @@ module.exports = {
                         activities.push(activity);
                     }
                 }
-
 
                 res.status(200).json({
                     message: "Updated Successfully",
