@@ -117,9 +117,8 @@ module.exports = {
     getAgentTickets: async (res) => {
         try {
             const api = await ApiMaster.findOne({ apiCode: "ATBRJ01" });
-            
 
-            console.log(api , "api")
+            console.log(api, "api");
             const url = api.demoUrl;
 
             const username = process.env.BURJ_KHALIFA_USERNAME;
@@ -135,7 +134,7 @@ module.exports = {
             <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
             <Body>
            <GetAgentTickets xmlns="http://tickets.atthetop.ae/AgentWebApi">
-            <agentId>${agentId}</agentId>
+            <AgentId>${agentId}</AgentId>
             <username>${api.demoUsername}</username>
             <password>${api.demoPassword}</password>
             </GetAgentTickets>
