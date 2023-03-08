@@ -390,8 +390,6 @@ module.exports = {
                     "dataAgentServiceEventsCollection"
                 ][0];
 
-            console.log(agentTicket, "agentTicket");
-
             const objects = agentTicket.AgentServiceEventsPrice.map((event) => {
                 return {
                     EventID: event.EventID[0],
@@ -408,27 +406,17 @@ module.exports = {
             });
 
             console.log(objects, "objects");
-            const leastAdultPrice = Math.min(
-                ...json["soap:Envelope"]["soap:Body"][0][
-                    "GetTimeSlotWithRatesResponse"
-                ][0]["GetTimeSlotWithRatesResult"][0][
-                    "dataAgentServiceEventsCollection"
-                ][0]["AgentServiceEventsPrice"].map((event) =>
-                    parseFloat(event.AdultPrice[0])
-                )
-            );
 
+            
+            const leastAdultPrice = Math.min(
+                ...objects.map((event) => parseFloat(event.AdultPrice))
+            );
             const leastChildPrice = Math.min(
-                ...json["soap:Envelope"]["soap:Body"][0][
-                    "GetTimeSlotWithRatesResponse"
-                ][0]["GetTimeSlotWithRatesResult"][0][
-                    "dataAgentServiceEventsCollection"
-                ][0]["AgentServiceEventsPrice"].map((event) =>
-                    parseFloat(event.ChildPrice[0])
-                )
+                ...objects.map((event) => parseFloat(event.ChildPrice))
             );
 
             console.log("Least Adult Price:", leastAdultPrice);
+            console.log("Least Child Price:", leastChildPrice);
 
             // return leastAdultPrice, leastChildPrice;
         } catch (err) {

@@ -455,46 +455,46 @@ module.exports = {
 
                     let apiPriceData = await getLeastPriceOfDay(apiData[i]);
 
-                    console.log(apiPriceData , "apiPriceData")
+                    // console.log(apiPriceData , "apiPriceData")
 
-                    if (activity == null) {
-                        activity = new AttractionActivity({
-                            name: apiData[i].AttractionName,
-                            attraction: attr._id,
-                            activityType: "normal",
-                            // productId: apiData[i].productId,
-                            // productCode: apiData[i].productCode,
-                            ResourceID: apiData[i].ResourceID,
-                            EventtypeId: apiData[i].EventtypeId,
-                            childCost: apiPriceData.leastChildPrice,
-                            childCost: apiPriceData.leastAdultPrice,
-                            adultAgeLimit: 60,
-                            childAgeLimit: 10,
-                            infantAgeLimit: 3,
-                            isVat: true,
-                            vat: apiData[i].prices[0].vatAmount,
-                            base: "person",
-                            isSharedTransferAvailable: false,
-                            isPrivateTransferAvailable: false,
-                            privateTransfers: [
-                                {
-                                    name: "Burj Khalifa",
-                                    maxCapacity: 1,
-                                    price: apiPriceData.leastChildPrice,
-                                    cost: apiPriceData.leastChildPrice,
-                                },
-                            ],
-                        });
+                    // if (activity == null) {
+                    //     activity = new AttractionActivity({
+                    //         name: apiData[i].AttractionName,
+                    //         attraction: attr._id,
+                    //         activityType: "normal",
+                    //         // productId: apiData[i].productId,
+                    //         // productCode: apiData[i].productCode,
+                    //         ResourceID: apiData[i].ResourceID,
+                    //         EventtypeId: apiData[i].EventtypeId,
+                    //         childCost: apiPriceData.leastChildPrice,
+                    //         childCost: apiPriceData.leastAdultPrice,
+                    //         adultAgeLimit: 60,
+                    //         childAgeLimit: 10,
+                    //         infantAgeLimit: 3,
+                    //         isVat: true,
+                    //         vat: apiData[i].prices[0].vatAmount,
+                    //         base: "person",
+                    //         isSharedTransferAvailable: false,
+                    //         isPrivateTransferAvailable: false,
+                    //         privateTransfers: [
+                    //             {
+                    //                 name: "Burj Khalifa",
+                    //                 maxCapacity: 1,
+                    //                 price: apiPriceData.leastChildPrice,
+                    //                 cost: apiPriceData.leastChildPrice,
+                    //             },
+                    //         ],
+                    //     });
 
-                        await activity.save();
-                        activities.push(activity);
-                    } else {
-                        activity.childPrice = apiPriceData.leastChildPrice;
-                        activity.adultPrice = apiPriceData.leastAdultPrice;
+                    //     await activity.save();
+                    //     activities.push(activity);
+                    // } else {
+                    //     activity.childPrice = apiPriceData.leastChildPrice;
+                    //     activity.adultPrice = apiPriceData.leastAdultPrice;
 
-                        await activity.save();
-                        activities.push(activity);
-                    }
+                    //     await activity.save();
+                    //     activities.push(activity);
+                    // }
                 }
 
                 res.status(200).json({
