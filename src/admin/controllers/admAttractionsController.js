@@ -448,7 +448,7 @@ module.exports = {
                     apiData = await getAgentTickets(res);
                 }
 
-                console.log(apiData , "apiData");
+                console.log(apiData, "apiData");
 
                 for (i = 0; i < apiData.length; i++) {
                     let activity = await AttractionActivity.findOne({
@@ -461,7 +461,7 @@ module.exports = {
 
                     console.log(apiPriceData, activity.name, "apiPriceData");
 
-                    if (activity == null && apiPriceData !== undefined) {
+                    if (apiPriceData !== undefined) {
                         console.log("call reached 1");
                         let newActivity = new AttractionActivity({
                             name: apiData[i].AttractionName,
