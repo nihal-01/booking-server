@@ -395,7 +395,7 @@ module.exports = {
                     EndDateTime: event.EndDateTime[0],
                     ResourceID: event.ResourceID[0],
                     Available: event.Available[0],
-                    Status: event.Status[0],
+                    // Status: event.Status[0],
                     AdultPrice: event.AdultPrice[0],
                     ChildPrice: event.ChildPrice[0],
                 };
@@ -414,7 +414,6 @@ module.exports = {
             console.log("Least Child Price:", leastChildPrice);
 
             return {
-                objects,
                 leastAdultPrice,
                 leastChildPrice,
             };
