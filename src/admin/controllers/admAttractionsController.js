@@ -470,6 +470,8 @@ module.exports = {
                             // EventtypeId: apiData[i].EventtypeId,
                             childCost: apiPriceData.leastChildPrice,
                             childCost: apiPriceData.leastAdultPrice,
+                            childPrice: apiPriceData.leastAdultPrice,
+                            adultPrice: apiPriceData.leastChildPrice,
                             adultAgeLimit: 60,
                             childAgeLimit: 10,
                             infantAgeLimit: 3,
