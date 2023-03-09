@@ -1582,9 +1582,9 @@ module.exports = {
 
     getAttractionOrderSingleTickets: async (req, res) => {
         try {
-            const { orderId, activityId } = req.params;
+            const { orderId, activityId , ticketNo} = req.params;
 
-            const { ticketNo } = req.body;
+            // const { ticketNo } = req.body;
 
             if (!isValidObjectId(orderId)) {
                 return sendErrorResponse(res, 400, "invalid order id");

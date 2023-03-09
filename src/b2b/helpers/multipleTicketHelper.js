@@ -10,6 +10,8 @@ const createMultipleTicketPdf = async (ticketData) => {
         type: "buffer",
     };
 
+    console.log(ticketData, "call reached");
+
     async function generatePdfAsBuffer(htmlContent, options) {
         // const browser = await puppeteer.launch();
         let browser = await puppeteer.launch({

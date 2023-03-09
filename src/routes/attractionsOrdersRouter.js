@@ -22,9 +22,9 @@ router.post("/cancel", userAuth, cancelAttractionOrder);
 router.post("/cancel", userAuth, cancelAttractionOrder);
 router.get("/single/:id", userAuth, getSingleAttractionOrder);
 router.get("/all", userAuth, getSingleUserAllOrders);
-router.post("/:orderId/ticket/:activityId", getAttractionOrderTickets);
-router.post(
-    "/:orderId/ticket/:activityId/single",
+router.get("/:orderId/ticket/:activityId", getAttractionOrderTickets);
+router.get(
+    "/:orderId/ticket/:activityId/single/:ticketNo",
     getAttractionOrderSingleTickets
 );
 router.post("/:orderId/refund/:orderItemId", userAuth, refundRequest);
