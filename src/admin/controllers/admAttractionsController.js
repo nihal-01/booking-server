@@ -448,6 +448,8 @@ module.exports = {
                     apiData = await getAgentTickets(res);
                 }
 
+                console.log(apiData , "apiData");
+
                 for (i = 0; i < apiData.length; i++) {
                     let activity = await AttractionActivity.findOne({
                         attraction: attr._id,
@@ -492,7 +494,7 @@ module.exports = {
                         });
 
                         await newActivity.save();
-                        activities.push(activity);
+                        activities.push(newActivity);
                     } else if (apiPriceData !== undefined) {
                         console.log("call reached 2");
 
