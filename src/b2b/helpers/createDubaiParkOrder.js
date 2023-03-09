@@ -34,7 +34,6 @@ module.exports = {
                 Authorization: "Bearer " + token,
             };
 
-            console.log(activity.activity, "activity ", activity.adultsCount);
             const data = {
                 productList: [
                     {
@@ -63,27 +62,25 @@ module.exports = {
                 },
             };
 
-            console.log("call reached ", attractionOrder);
+            let response = await axios.post(url, data, { headers });
 
-            // let response = await axios.post(url, data, { headers });
+            console.log(response.data, "data recieved");
 
-            // console.log(response.data, "data recieved");
+            return response.data.data;
 
-            // return response.data.data;
-
-            return {
-                PNR: "PXEDVP3J",
-                MediaCodeList: [
-                    {
-                        ProductId: "42E90CEA-55AA-94A3-2029-017E67C0790F",
-                        MediaCode: "1S7DJ8P62X6X3X",
-                    },
-                    {
-                        ProductId: "42E90CEA-55AA-94A3-2029-017E67C0790F",
-                        MediaCode: "1S7DJ8P62ASDFERT",
-                    },
-                ],
-            };
+            // return {
+            //     PNR: "PXEDVP3J",
+            //     MediaCodeList: [
+            //         {
+            //             ProductId: "42E90CEA-55AA-94A3-2029-017E67C0790F",
+            //             MediaCode: "1S7DJ8P62X6X3X",
+            //         },
+            //         {
+            //             ProductId: "42E90CEA-55AA-94A3-2029-017E67C0790F",
+            //             MediaCode: "1S7DJ8P62ASDFERT",
+            //         },
+            //     ],
+            // };
         } catch (err) {
             console.log(err.message, "message");
         }
