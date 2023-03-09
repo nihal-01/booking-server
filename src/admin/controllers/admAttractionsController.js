@@ -380,6 +380,8 @@ module.exports = {
                     apiData = await attractionApi(res, attr.connectedApi);
                 }
 
+                console.log(apiData);
+
                 for (i = 0; i < apiData.length; i++) {
                     activity = await AttractionActivity.findOne({
                         attraction: attr._id,
@@ -391,6 +393,7 @@ module.exports = {
                         activity = new AttractionActivity({
                             name: apiData[i].name,
                             attraction: attr._id,
+                            isApiSync: true,
                             activityType: "normal",
                             productId: apiData[i].productId,
                             productCode: apiData[i].productCode,
@@ -421,7 +424,7 @@ module.exports = {
                     } else {
                         activity.childCost = apiData[i].prices[0].totalPrice;
                         activity.adultCost = apiData[i].prices[0].totalPrice;
-
+                        activity.isApiSync = true;
                         await activity.save();
                         activities.push(activity);
                     }
@@ -445,7 +448,6 @@ module.exports = {
                     apiData = await getAgentTickets(res);
                 }
 
-
                 for (i = 0; i < apiData.length; i++) {
                     activity = await AttractionActivity.findOne({
                         attraction: attr._id,
@@ -455,46 +457,48 @@ module.exports = {
 
                     let apiPriceData = await getLeastPriceOfDay(apiData[i]);
 
-                    // console.log(apiPriceData , "apiPriceData")
+                    console.log(apiPriceData, "apiPriceData");
 
-                    // if (activity == null) {
-                    //     activity = new AttractionActivity({
-                    //         name: apiData[i].AttractionName,
-                    //         attraction: attr._id,
-                    //         activityType: "normal",
-                    //         productId: apiData[i].ResourceID,
-                    //         productCode: apiData[i].EventtypeId,
-                    //         // ResourceID: apiData[i].ResourceID,
-                    //         // EventtypeId: apiData[i].EventtypeId,
-                    //         childCost: apiPriceData.leastChildPrice,
-                    //         childCost: apiPriceData.leastAdultPrice,
-                    //         adultAgeLimit: 60,
-                    //         childAgeLimit: 10,
-                    //         infantAgeLimit: 3,
-                    //         isVat: true,
-                    //         vat: apiData[i].prices[0].vatAmount,
-                    //         base: "person",
-                    //         isSharedTransferAvailable: false,
-                    //         isPrivateTransferAvailable: false,
-                    //         privateTransfers: [
-                    //             {
-                    //                 name: "Burj Khalifa",
-                    //                 maxCapacity: 1,
-                    //                 price: apiPriceData.leastChildPrice,
-                    //                 cost: apiPriceData.leastChildPrice,
-                    //             },
-                    //         ],
-                    //     });
+                    if (activity == null && apiPriceData) {
+                        activity = new AttractionActivity({
+                            name: apiData[i].AttractionName,
+                            attraction: attr._id,
+                            activityType: "normal",
+                            productId: apiData[i].ResourceID,
+                            productCode: apiData[i].EventtypeId,
+                            // ResourceID: apiData[i].ResourceID,
+                            // EventtypeId: apiData[i].EventtypeId,
+                            childCost: apiPriceData.leastChildPrice,
+                            childCost: apiPriceData.leastAdultPrice,
+                            adultAgeLimit: 60,
+                            childAgeLimit: 10,
+                            infantAgeLimit: 3,
+                            isVat: true,
+                            isApiSync: true,
+                            vat: apiData[i].prices[0].vatAmount,
+                            base: "person",
+                            isSharedTransferAvailable: false,
+                            isPrivateTransferAvailable: false,
+                            privateTransfers: [
+                                {
+                                    name: "Burj Khalifa",
+                                    maxCapacity: 1,
+                                    price: apiPriceData.leastChildPrice,
+                                    cost: apiPriceData.leastChildPrice,
+                                },
+                            ],
+                        });
 
-                    //     await activity.save();
-                    //     activities.push(activity);
-                    // } else {
-                    //     activity.childPrice = apiPriceData.leastChildPrice;
-                    //     activity.adultPrice = apiPriceData.leastAdultPrice;
+                        await activity.save();
+                        activities.push(activity);
+                    } else {
+                        activity.childPrice = apiPriceData.leastChildPrice;
+                        activity.adultPrice = apiPriceData.leastAdultPrice;
+                        activity.isApiSync = true;
 
-                    //     await activity.save();
-                    //     activities.push(activity);
-                    // }
+                        await activity.save();
+                        activities.push(activity);
+                    }
                 }
 
                 res.status(200).json({

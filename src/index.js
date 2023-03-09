@@ -3,12 +3,12 @@ const cors = require("cors");
 const path = require("path");
 // "start": "NODE_ENV=production node src/index.js",
 //         "dev": "NODE_ENV=development nodemon src/index.js"
-require("dotenv").config({
-    path: path.join(__dirname, "../" + `.env.${process.env.NODE_ENV}`),
-});
 // require("dotenv").config({
-//     path: path.join(__dirname, "../" + `.env.production`),
+//     path: path.join(__dirname, "../" + `.env.${process.env.NODE_ENV}`),
 // });
+require("dotenv").config({
+    path: path.join(__dirname, "../" + `.env.production`),
+});
 
 require("./config/dbConfig");
 require("./config/cache");

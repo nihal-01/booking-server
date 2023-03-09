@@ -1102,10 +1102,14 @@ module.exports = {
                 //     let ticketTypes = await getTicketType(timeSlotWithDate);
                 // }
 
+                console.log(activity, "activity");
+
                 if (
-                    activity.attraction._id === "63afca1b5896ed6d0f297449" &&
-                    activity.attraction.isApiConnected
+                    activity.attraction._id == "63afca1b5896ed6d0f297449" &&
+                    activity.attraction.isApiConnected &&
+                    activity.isApiSync == true
                 ) {
+                    console.log("callreached1");
                     let data = await createDubaiParkOrder(
                         activity.attraction.connectedApi,
                         attractionOrder,
@@ -1137,7 +1141,8 @@ module.exports = {
                         const ticket = {
                             ticketNo: data.MediaCodeList[j].MediaCode,
                             lotNo: data.PNR,
-                            ticketFor: "common",
+                            ticketFor:
+                                ticketFor === "adult" ? "adult" : "child",
                             activity: activity._id,
                             status: "used",
                             ticketCost:
@@ -1157,6 +1162,8 @@ module.exports = {
                     attractionOrder.activities[i].childTickets = childTicketIds;
                     attractionOrder.activities[i].status = "confirmed";
                 } else {
+                    console.log("callreached2");
+
                     if (
                         attractionOrder.activities[i].bookingType === "ticket"
                     ) {
@@ -1840,6 +1847,8 @@ module.exports = {
                 return sendErrorResponse(res, 400, "order not found");
             }
 
+            console.log(orderDetails[0].activities);
+
             if (orderDetails[0].activities.bookingType === "booking") {
                 const pdfBuffer = await createBookingTicketPdf(
                     orderDetails[0].activities
@@ -1852,7 +1861,7 @@ module.exports = {
                 });
                 res.send(pdfBuffer);
             } else {
-                console.log("call reachde");
+                console.log(orderDetails[0].activities);
                 const pdfBuffer = await createMultipleTicketPdf(
                     orderDetails[0].activities
                 );

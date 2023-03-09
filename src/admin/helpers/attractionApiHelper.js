@@ -18,11 +18,13 @@ module.exports = {
             };
 
             const response = await axios.get(
-                "https://am-uat.dubaiparksandresorts.com/wso2/sec/services/dpr/resellerProducts/1.0.0",
+                "https://am.dubaiparksandresorts.com/wso2/sec/services/dpr/resellerProducts/1.0.0",
                 {
                     headers: headers,
                 }
             );
+
+            console.log(response.data, "data");
 
             return response.data.data.productList;
         } catch (err) {
@@ -45,7 +47,7 @@ module.exports = {
             };
 
             const response = await axios.get(
-                "https://am-uat.dubaiparksandresorts.com/wso2/sec/services/dpr/checkResellerCredit/1.0.0",
+                "https://am.dubaiparksandresorts.com/wso2/sec/services/dpr/checkResellerCredit/1.0.0",
                 {
                     headers: headers,
                 }

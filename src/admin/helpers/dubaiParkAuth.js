@@ -11,32 +11,47 @@ module.exports = {
                 return sendErrorResponse(res, 400, "api not found");
             }
 
-            console.log(api, "api");
+            if (api.runningMode == "demo") {
+                let headers = {
+                    Authorization:
+                        "Basic " +
+                        Buffer.from(
+                            api.demoUsername + ":" + api.demoPassword
+                        ).toString("base64"),
+                    "Content-Type": "application/x-www-form-urlencoded",
+                };
 
-            const headers = {
-                Authorization:
-                    "Basic " +
-                    Buffer.from(
-                        api.demoUsername + ":" + api.demoPassword
-                    ).toString("base64"),
-                "Content-Type": "application/x-www-form-urlencoded",
-            };
+                const data = new URLSearchParams({
+                    grant_type: "client_credentials",
+                });
 
-            const data = new URLSearchParams({
-                grant_type: "client_credentials",
-            });
+                let auth = await axios.post(api.demoUrl, data, {
+                    headers: headers,
+                });
 
-            let auth = await axios.post(api.demoUrl, data, {
-                headers: headers,
-            });
+                return auth.data.access_token;
+            } else {
+                let headers = {
+                    Authorization:
+                        "Basic " +
+                        Buffer.from(
+                            api.liveUsername + ":" + api.livePassword
+                        ).toString("base64"),
+                    "Content-Type": "application/x-www-form-urlencoded",
+                };
 
+                const data = new URLSearchParams({
+                    grant_type: "client_credentials",
+                });
 
-            return auth.data.access_token;
+                let auth = await axios.post(api.liveUrl, data, {
+                    headers: headers,
+                });
+
+                return auth.data.access_token;
+            }
         } catch (err) {
-            console.log(err, "errr");
+            console.log(err.message, "errr");
         }
     },
-
-
-   
 };

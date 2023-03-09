@@ -8,6 +8,7 @@ module.exports = {
         try {
             const token = await dubaiParkAuhthentication(apiId);
 
+            console.log(token, "token");
             const currentDate = new Date();
             const formattedDate = currentDate.toLocaleDateString("en-GB", {
                 day: "2-digit",
