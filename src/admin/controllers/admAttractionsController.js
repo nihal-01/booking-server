@@ -383,7 +383,9 @@ module.exports = {
                 console.log(apiData);
 
                 for (i = 0; i < apiData.length; i++) {
-                    let activity = await AttractionActivity.findOne({
+                    let activity = null;
+
+                    activity = await AttractionActivity.findOne({
                         attraction: attr._id,
                         isDeleted: false,
                         productId: apiData[i].productId,
@@ -451,7 +453,8 @@ module.exports = {
                 console.log(apiData, "apiData");
 
                 for (i = 0; i < apiData.length; i++) {
-                    let activity = await AttractionActivity.findOne({
+                    let activity = null;
+                    activity = await AttractionActivity.findOne({
                         attraction: attr._id,
                         ResourceID: apiData[i].ResourceID,
                         EventtypeId: apiData[i].EventtypeId,
