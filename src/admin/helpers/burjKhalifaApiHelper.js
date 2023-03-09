@@ -379,8 +379,6 @@ module.exports = {
 
             const json = await parseStringPromise(response.data);
 
-            console.log(response.data);
-
             const agentTicket =
                 json["soap:Envelope"]["soap:Body"][0][
                     "GetPublishedRatesResponse"
@@ -403,7 +401,7 @@ module.exports = {
                 };
             });
 
-            console.log(objects, "objects");
+            // console.log(objects, "objects");
 
             const leastAdultPrice = Math.min(
                 ...objects.map((event) => parseFloat(event.AdultPrice))
