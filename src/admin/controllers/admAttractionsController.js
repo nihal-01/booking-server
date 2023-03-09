@@ -492,7 +492,7 @@ module.exports = {
 
                         await activity.save();
                         activities.push(activity);
-                    } else {
+                    } else if (apiPriceData) {
                         activity.childPrice = apiPriceData.leastChildPrice;
                         activity.adultPrice = apiPriceData.leastAdultPrice;
                         activity.isApiSync = true;
