@@ -390,7 +390,7 @@ module.exports = {
                     });
 
                     if (activity == null) {
-                        activity = new AttractionActivity({
+                        let newActivity = new AttractionActivity({
                             name: apiData[i].name,
                             attraction: attr._id,
                             isApiSync: true,
@@ -419,8 +419,8 @@ module.exports = {
                             ],
                         });
 
-                        await activity.save();
-                        activities.push(activity);
+                        await newActivity.save();
+                        activities.push(newActivity);
                     } else {
                         activity.childCost = apiData[i].prices[0].totalPrice;
                         activity.adultCost = apiData[i].prices[0].totalPrice;
@@ -460,7 +460,7 @@ module.exports = {
                     console.log(apiPriceData, "apiPriceData");
 
                     if (activity == null && apiPriceData) {
-                        activity = new AttractionActivity({
+                        let newActivity = new AttractionActivity({
                             name: apiData[i].AttractionName,
                             attraction: attr._id,
                             activityType: "normal",
@@ -490,7 +490,7 @@ module.exports = {
                             ],
                         });
 
-                        await activity.save();
+                        await newActivity.save();
                         activities.push(activity);
                     } else if (apiPriceData) {
                         activity.childPrice = apiPriceData.leastChildPrice;
