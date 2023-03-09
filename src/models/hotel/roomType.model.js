@@ -14,10 +14,9 @@ const roomTypeSchema = new Schema(
         roomOccupancies: {
             type: [
                 {
-                    type: String,
+                    type: Schema.Types.ObjectId,
+                    ref: "RoomOccupancy",
                     required: true,
-                    uppercase: true,
-                    enum: ["DBL", "SGL", "TPL", "CWB", "CNB"],
                 },
             ],
         },
@@ -42,10 +41,6 @@ const roomTypeSchema = new Schema(
                     },
                 },
             ],
-        },
-        isRefundable: {
-            type: Boolean,
-            required: true,
         },
         area: {
             type: Number,
