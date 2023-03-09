@@ -11,16 +11,16 @@ const createBookingTicketPdf = async (activity) => {
     };
 
     async function generatePdfAsBuffer(htmlContent, options) {
-        // const browser = await puppeteer.launch();
-        let browser = await puppeteer.launch({
-            executablePath: "/usr/bin/chromium-browser",
-            args: [
-                "--disable-gpu",
-                "--disable-setuid-sandbox",
-                "--no-sandbox",
-                "--no-zygote",
-            ],
-        });
+        const browser = await puppeteer.launch();
+        // let browser = await puppeteer.launch({
+        //     executablePath: "/usr/bin/chromium-browser",
+        //     args: [
+        //         "--disable-gpu",
+        //         "--disable-setuid-sandbox",
+        //         "--no-sandbox",
+        //         "--no-zygote",
+        //     ],
+        // });
         const page = await browser.newPage();
         await page.setContent(htmlContent);
         const pdfBuffer = await page.pdf(options);
@@ -120,9 +120,13 @@ const createBookingTicketPdf = async (activity) => {
           </div>
           <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap-x: 1px; gap-y: 2px;">
             <div style="">Booking Date:</div>
-            <div style="">${activity?.date}</div>
+            <div style="">${new Date(activity?.date).toLocaleString("default", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+            })}</div>
             <div style="">Booking Number:</div>
-            <div style="">${activity?.bookingConfirmationNumber}}</div>
+            <div style="">${activity?.bookingConfirmationNumber}</div>
           </div>
         </div>
       </div>
@@ -144,7 +148,7 @@ const createBookingTicketPdf = async (activity) => {
         </div>
       </div>
     </div>
-    <div class="last__section" style="height: 300px; width: 100%;">
+    <div class="last__section" style="height: 250px; width: 100%;">
     <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 300px; border-radius: 2xl; overflow: hidden; margin-top: 4px;">
         ${activity?.attraction?.images
             ?.map((link) => {

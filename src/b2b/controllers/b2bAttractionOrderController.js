@@ -1922,7 +1922,18 @@ module.exports = {
                     },
                 },
                 {
+                    $lookup: {
+                        from: "destinations",
+                        localField: "activities.attraction.destination",
+                        foreignField: "_id",
+                        as: "activities.destination",
+                    },
+                },
+                {
                     $set: {
+                        "activities.destination": {
+                            $arrayElemAt: ["$activities.destination", 0],
+                        },
                         "activities.activity": {
                             $arrayElemAt: ["$activities.activity", 0],
                         },
@@ -1943,6 +1954,9 @@ module.exports = {
                                 title: 1,
                                 logo: 1,
                                 images: 1,
+                            },
+                            destination: {
+                                name: 1,
                             },
                             _id: 1,
                             bookingConfirmationNumber: 1,
