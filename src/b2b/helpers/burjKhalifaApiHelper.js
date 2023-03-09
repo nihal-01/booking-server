@@ -54,38 +54,66 @@ module.exports = {
         try {
             const api = await ApiMaster.findOne({ apiCode: "ATBRJ01" });
 
-            const url = api.demoUrl;
-            const xmlData = `<?xml version="1.0" encoding="utf-8"?>
-            <soap:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-              <soap:Body>
-                <GetTimeSlot xmlns="http://tickets.atthetop.ae/AgentWebApi">
-                  <agentId>int</agentId>
-                  <username>string</username>
-                  <password>string</password>
-                  <eventTypeId>int</eventTypeId>
-                  <resourceId>int</resourceId>
-                  <timeSlotDate>dateTime</timeSlotDate>
-                </GetTimeSlot>
-              </soap:Body>`;
+            const username = process.env.BURJ_KHALIFA_USERNAME;
+            const password = process.env.BURJ_KHALIFA_PASSWORD;
+
+            const credentials = username + ":" + password;
+            const authHeader =
+                "Basic " + Buffer.from(credentials).toString("base64");
+
+            const url = api.liveUrl;
+
+            const xmlData = `
+        <Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/">
+        <Body>
+        <GetTimeSlotWithRates xmlns="http://tickets.atthetop.ae/AgentWebApi">
+        <agentId>${parseInt(api.liveAgentId)}</agentId>
+        <username>${api.liveUsername}</username>
+        <password>${api.livePassword}</password>
+        <eventTypeId>${parseInt(apiData.EventtypeId)}</eventTypeId>
+        <resourceId>${parseInt(apiData.ResourceID)}</resourceId>
+       <timeSlotDate>${new Date().toISOString()}</timeSlotDate>
+        </GetTimeSlotWithRates>
+       </Body>
+        </Envelope>`;
 
             const headers = {
                 "Content-Type": "text/xml; charset=utf-8",
-                "Content-Length": xmlData.length.toString(),
-                SOAPAction:
-                    "http://tickets.atthetop.ae/AgentWebApi/GetTimeSlot",
+                Authorization: authHeader,
             };
 
             const response = await axios.post(url, xmlData, { headers });
 
-            // const prices =
-            //     result["soap:Envelope"]["soap:Body"][0][
-            //         "GetTimeSlotWithRatesResponse"
-            //     ][0]["GetTimeSlotWithRatesResult"][0][
-            //         "dataAgentServiceEventsCollection"
-            //     ][0]["AgentServiceEventsPrice"];
+            const json = await parseStringPromise(response.data);
 
-            console.log("Least Adult Price:", leastAdultPrice);
-        } catch (err) {}
+            const agentTicket =
+                json["soap:Envelope"]["soap:Body"][0][
+                    "GetTimeSlotWithRatesResponse"
+                ][0]["GetTimeSlotWithRatesResult"][0][
+                    "dataAgentServiceEventsCollection"
+                ][0];
+
+            const objects = agentTicket.AgentServiceEventsPrice.map((event) => {
+                return {
+                    EventID: event.EventID[0],
+                    EventName: event.EventName[0],
+                    StartDateTime: event.StartDateTime[0],
+                    EndDateTime: event.EndDateTime[0],
+                    EndDateTime: event.EndDateTime[0],
+                    ResourceID: event.ResourceID[0],
+                    Available: event.Available[0],
+                    Status: event.Status[0],
+                    AdultPrice: event.AdultPrice[0],
+                    ChildPrice: event.ChildPrice[0],
+                };
+            });
+
+            return {
+                objects,
+            };
+        } catch (err) {
+            console.log(err.message, "error");
+        }
     },
     getAgentTickets: async (res) => {
         try {

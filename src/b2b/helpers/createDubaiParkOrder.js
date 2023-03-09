@@ -24,7 +24,7 @@ module.exports = {
             const formattedDateTime = `${formattedDate} ${formattedTime}`;
 
             const url =
-                "https://am-uat.dubaiparksandresorts.com/wso2/sec/services/dpr/resellerBooking/1.0.0";
+                "https://am.dubaiparksandresorts.com/wso2/sec/services/dpr/resellerBooking/1.0.0";
 
             const headers = {
                 Source: "TRAVELLERS_CHOICE",
@@ -65,25 +65,25 @@ module.exports = {
 
             console.log("call reached ", attractionOrder);
 
-            // let response = await axios.post(url, data, { headers });
+            let response = await axios.post(url, data, { headers });
 
-            // console.log(response.data, "data recieved");
+            console.log(response.data, "data recieved");
 
-            // return response.data.data;
+            return response.data.data;
 
-            return {
-                PNR: "PXEDVP3J",
-                MediaCodeList: [
-                    {
-                        ProductId: "42E90CEA-55AA-94A3-2029-017E67C0790F",
-                        MediaCode: "1S7DJ8P62X6X3X",
-                    },
-                    {
-                        ProductId: "42E90CEA-55AA-94A3-2029-017E67C0790F",
-                        MediaCode: "1S7DJ8P62ASDFERT",
-                    },
-                ],
-            };
+            // return {
+            //     PNR: "PXEDVP3J",
+            //     MediaCodeList: [
+            //         {
+            //             ProductId: "42E90CEA-55AA-94A3-2029-017E67C0790F",
+            //             MediaCode: "1S7DJ8P62X6X3X",
+            //         },
+            //         {
+            //             ProductId: "42E90CEA-55AA-94A3-2029-017E67C0790F",
+            //             MediaCode: "1S7DJ8P62ASDFERT",
+            //         },
+            //     ],
+            // };
         } catch (err) {
             console.log(err.message, "message");
         }

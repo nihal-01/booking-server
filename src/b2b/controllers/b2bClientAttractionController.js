@@ -3355,13 +3355,59 @@ module.exports = {
 
     getTimeSlot: async (req, res) => {
         try {
-            const { eventTypeId, resourceId, timeSlotDate } = req.body;
+            const { productId, productCode, timeSlotDate } = req.body;
 
             const timeSlots = await getTimeSlot(
-                eventTypeId,
-                resourceId,
+                productId,
+                productCode,
                 timeSlotDate
             );
+
+            let activity = await AttractionActivity.findOne({
+                isDeleted: false,
+                productId,
+                productCode,
+            });
+
+            let resellerToSubAgentMarkup;
+            if (req.reseller.role == "sub-agent") {
+                resellerToSubAgentMarkup =
+                    await B2BSubAgentFlightMarkup.findOne({
+                        resellerId: req.reseller.referredBy,
+                    });
+            }
+
+            let resellerToClientMarkup = await B2BClientFlightMarkup.findOne({
+                resellerId: req.reseller._id,
+            });
+
+            for (i = 0; i < timeSlots.length; i++) {
+                let markup = 0;
+                timeSlots[i].AdultPrice = parseFloat(timeSlots[i].AdultPrice);
+                if (resellerToSubAgentMarkup) {
+                    if (resellerToSubAgentMarkup.markupType === "flat") {
+                        markup += resellerToSubAgentMarkup.markup;
+                    } else {
+                        markup +=
+                            (resellerToSubAgentMarkup.markup *
+                                timeSlots[i].AdultPrice) /
+                            100;
+                    }
+                }
+
+                if (resellerToClientMarkup) {
+                    if (resellerToClientMarkup.markupType === "flat") {
+                        markup += resellerToClientMarkup.markup;
+                    } else {
+                        markup +=
+                            (resellerToClientMarkup.markup *
+                                flightResult[i].AdultPrice) /
+                            100;
+                    }
+                }
+
+                flightResult[i].totalFare += markup;
+            }
 
             res.status(200).json({
                 timeSlots: timeSlots,
