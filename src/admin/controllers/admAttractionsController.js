@@ -454,10 +454,11 @@ module.exports = {
 
                 for (i = 0; i < apiData.length; i++) {
                     let activity = null;
+
                     activity = await AttractionActivity.findOne({
                         attraction: attr._id,
-                        ResourceID: apiData[i].ResourceID,
-                        EventtypeId: apiData[i].EventtypeId,
+                        productId: apiData[i].ResourceID,
+                        productCode: apiData[i].EventtypeId,
                     });
 
                     let apiPriceData = await getLeastPriceOfDay(apiData[i]);
