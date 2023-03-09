@@ -460,6 +460,7 @@ module.exports = {
                     console.log(apiPriceData, "apiPriceData");
 
                     if (activity == null && apiPriceData) {
+                        console.log("call reached 1");
                         let newActivity = new AttractionActivity({
                             name: apiData[i].AttractionName,
                             attraction: attr._id,
@@ -493,6 +494,8 @@ module.exports = {
                         await newActivity.save();
                         activities.push(activity);
                     } else if (apiPriceData) {
+                        console.log("call reached 2");
+
                         activity.childPrice = apiPriceData.leastChildPrice;
                         activity.adultPrice = apiPriceData.leastAdultPrice;
                         activity.isApiSync = true;
@@ -500,6 +503,7 @@ module.exports = {
                         await activity.save();
                         activities.push(activity);
                     }
+                    console.log("call reached 3");
                 }
 
                 res.status(200).json({
