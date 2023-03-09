@@ -383,7 +383,7 @@ module.exports = {
                 console.log(apiData);
 
                 for (i = 0; i < apiData.length; i++) {
-                    activity = await AttractionActivity.findOne({
+                    let activity = await AttractionActivity.findOne({
                         attraction: attr._id,
                         isDeleted: false,
                         productId: apiData[i].productId,
@@ -449,7 +449,7 @@ module.exports = {
                 }
 
                 for (i = 0; i < apiData.length; i++) {
-                    activity = await AttractionActivity.findOne({
+                    let activity = await AttractionActivity.findOne({
                         attraction: attr._id,
                         ResourceID: apiData[i].ResourceID,
                         EventtypeId: apiData[i].EventtypeId,
