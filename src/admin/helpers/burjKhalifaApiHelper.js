@@ -173,8 +173,6 @@ module.exports = {
 
             console.log(objects, "objects");
 
-            console.log(JSON.stringify(objects, null, 2));
-
             return objects;
         } catch (err) {
             console.log(err, "eror");
@@ -417,7 +415,11 @@ module.exports = {
             console.log("Least Adult Price:", leastAdultPrice);
             console.log("Least Child Price:", leastChildPrice);
 
-            // return leastAdultPrice, leastChildPrice;
+            return {
+                objects,
+                leastAdultPrice,
+                leastChildPrice,
+            };
         } catch (err) {
             console.log(err.message, "error");
         }
