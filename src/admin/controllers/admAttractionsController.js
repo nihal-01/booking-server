@@ -459,9 +459,9 @@ module.exports = {
 
                     let apiPriceData = await getLeastPriceOfDay(apiData[i]);
 
-                    console.log(apiPriceData, activity.name, "apiPriceData");
+                    console.log(apiPriceData, activity, "apiPriceData");
 
-                    if (apiPriceData !== undefined) {
+                    if (activity == null && apiPriceData !== undefined) {
                         console.log("call reached 1");
                         let newActivity = new AttractionActivity({
                             name: apiData[i].AttractionName,
@@ -473,8 +473,8 @@ module.exports = {
                             // EventtypeId: apiData[i].EventtypeId,
                             childCost: apiPriceData.leastChildPrice,
                             adultCost: apiPriceData.leastAdultPrice,
-                            childPrice: apiPriceData.leastAdultPrice,
-                            adultPrice: apiPriceData.leastChildPrice,
+                            childPrice: apiPriceData.leastChildPrice,
+                            adultPrice: apiPriceData.leastAdultPrice,
                             adultAgeLimit: 60,
                             childAgeLimit: 10,
                             infantAgeLimit: 3,
