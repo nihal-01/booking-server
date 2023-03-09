@@ -1102,19 +1102,18 @@ module.exports = {
                 //     let ticketTypes = await getTicketType(timeSlotWithDate);
                 // }
 
-                console.log(activity, "activity");
-
                 if (
                     activity.attraction._id == "63afca1b5896ed6d0f297449" &&
                     activity.attraction.isApiConnected &&
                     activity.isApiSync == true
                 ) {
-                    console.log("callreached1");
                     let data = await createDubaiParkOrder(
                         activity.attraction.connectedApi,
                         attractionOrder,
                         attractionOrder.activities[i]
                     );
+
+                    console.log(data, "data");
 
                     let adultTicketIds = [];
                     let childTicketIds = [];
