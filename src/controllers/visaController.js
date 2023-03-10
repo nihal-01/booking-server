@@ -801,7 +801,7 @@ module.exports = {
 
             await Promise.all(promises);
 
-            await sendVisaApplicationEmail(req.user.email, visaApplication);
+            await sendVisaApplicationEmail(visaApplication);
             await sendAdminVisaApplicationEmail(visaApplication);
 
             await visaApplication.save();
