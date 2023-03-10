@@ -374,13 +374,12 @@ module.exports = {
 
             if (id == "63afca1b5896ed6d0f297449") {
                 let activities = [];
+                console.log("call reached apiSync1");
 
                 let apiData;
                 if (attr.isApiConnected) {
                     apiData = await attractionApi(res, attr.connectedApi);
                 }
-
-                console.log(apiData);
 
                 for (i = 0; i < apiData.length; i++) {
                     let activity = null;
@@ -428,6 +427,7 @@ module.exports = {
                         activity.adultCost = apiData[i].prices[0].totalPrice;
                         activity.isApiSync = true;
                         await activity.save();
+
                         activities.push(activity);
                     }
                 }

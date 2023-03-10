@@ -24,7 +24,7 @@ module.exports = {
                 }
             );
 
-            console.log(response.data, "data");
+            console.log(response.data.data, "data");
 
             return response.data.data.productList;
         } catch (err) {

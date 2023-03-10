@@ -11,16 +11,16 @@ const createBookingTicketPdf = async (activity) => {
     };
 
     async function generatePdfAsBuffer(htmlContent, options) {
-        const browser = await puppeteer.launch();
-        // let browser = await puppeteer.launch({
-        //     executablePath: "/usr/bin/chromium-browser",
-        //     args: [
-        //         "--disable-gpu",
-        //         "--disable-setuid-sandbox",
-        //         "--no-sandbox",
-        //         "--no-zygote",
-        //     ],
-        // });
+        // const browser = await puppeteer.launch();
+        let browser = await puppeteer.launch({
+            executablePath: "/usr/bin/chromium-browser",
+            args: [
+                "--disable-gpu",
+                "--disable-setuid-sandbox",
+                "--no-sandbox",
+                "--no-zygote",
+            ],
+        });
         const page = await browser.newPage();
         await page.setContent(htmlContent);
         const pdfBuffer = await page.pdf(options);

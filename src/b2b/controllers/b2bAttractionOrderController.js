@@ -1102,6 +1102,8 @@ module.exports = {
                 //     let ticketTypes = await getTicketType(timeSlotWithDate);
                 // }
 
+                console.log(activity, "activity");
+
                 if (
                     activity.attraction._id == "63afca1b5896ed6d0f297449" &&
                     activity.attraction.isApiConnected &&
