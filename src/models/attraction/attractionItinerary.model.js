@@ -27,21 +27,40 @@ const attractionItinerarySchema = new Schema(
                     items: {
                         type: [
                             {
+                                isCustom: {
+                                    type: Boolean,
+                                    required: true,
+                                    default: false,
+                                },
                                 attraction: {
                                     type: Schema.Types.ObjectId,
                                     ref: "Attraction",
-                                    required: true,
                                 },
                                 activity: {
                                     type: Schema.Types.ObjectId,
                                     ref: "AttractionActivity",
-                                    required: true,
+                                },
+                                attractionTitle: {
+                                    type: String,
+                                },
+                                activityTitle: {
+                                    type: String,
                                 },
                                 itineraryTitle: {
                                     type: String,
                                 },
                                 note: {
                                     type: String,
+                                },
+                                description: {
+                                    type: String,
+                                },
+                                images: {
+                                    type: [
+                                        {
+                                            type: String,
+                                        },
+                                    ],
                                 },
                             },
                         ],
