@@ -98,6 +98,8 @@ const createMultipleTicketPdf = async (ticketData) => {
               width: 100%;
               padding-bottom: 100%;
               overflow: hidden;
+              border-radius: 2xl; 
+              overflow: hidden;
           }
             </style>`;
         let ticketHtmlDoc = `
