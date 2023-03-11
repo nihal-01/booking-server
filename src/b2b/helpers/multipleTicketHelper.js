@@ -98,8 +98,7 @@ const createMultipleTicketPdf = async (ticketData) => {
               width: 100%;
               padding-bottom: 100%;
               overflow: hidden;
-              border-radius: 2xl; 
-              overflow: hidden;
+              
           }
             </style>`;
         let ticketHtmlDoc = `
@@ -176,7 +175,7 @@ const createMultipleTicketPdf = async (ticketData) => {
            </div>
            </div>
            <div class="last__section" style="height: 150px; width: 100%;">
-           <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 150px; border-radius: 2xl; overflow: hidden; margin-top: 4px;">
+           <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 150px; border-radius: 10px; overflow: hidden; margin-top: 4px;">
                ${ticketData?.attraction?.images
                    ?.slice(0, 3)
                    ?.map((link) => {
