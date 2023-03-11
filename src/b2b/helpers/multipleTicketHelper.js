@@ -173,20 +173,27 @@ const createMultipleTicketPdf = async (ticketData) => {
         </div>
            </div>
            </div>
-           <div class="last__section" style="height: 250px; width: 100%;">
-           <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 250px; border-radius: 2xl; overflow: hidden; margin-top: 4px;">
-               ${ticketData?.attraction?.images
-                   ?.slice(0, 3)
-                   ?.map((link) => {
-                       return `
-                       <div class="image-wrapper" >
-                           <img src="${process.env.SERVER_URL}${link}" alt="images" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; height:250px;" />
-                       </div>
-                   `;
-                   })
-                   .join("")}
+           <div class="last__section" style="height: 150px; width: 100%;">
+           <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 150px; border-radius: 2xl; overflow: hidden; margin-top: 4px;">
+             ${activity?.attraction?.images
+                 ?.map((link, index) => {
+                     const firstImage =
+                         index === 0
+                             ? "border-top-left-radius: 2xl; border-bottom-left-radius: 2xl;"
+                             : "";
+                     const lastImage =
+                         index === activity.attraction.images.length - 1
+                             ? "border-top-right-radius: 2xl; border-bottom-right-radius: 2xl;"
+                             : "";
+                     return `
+                   <div class="image-wrapper" style="${firstImage}${lastImage}">
+                     <img src="${process.env.SERVER_URL}${link}" alt="images" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; height:150px;" />
+                   </div>
+                 `;
+                 })
+                 .join("")}
            </div>
-       </div>
+         </div>
          
          <div class="desc__section" style="padding-top: 10px; line-height: 16px; font-size: 12px;">
            <div id="ticket-description">

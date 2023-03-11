@@ -104,7 +104,7 @@ const createSingleTicketPdf = async (activity, ticket) => {
          
             </style>`;
         let ticketHtmlDoc = `${styles}
-    <div style="min-width: 100vw; min-height: 100vh; background-color: white;">
+<div style="min-width: 100vw; min-height: 100vh; background-color: white;">
   <main style="width: 700px; margin: 0 auto;">
     <div style="width: 100%; background-color: primary; padding-top: 7px;" class="primary__section">
       <div style="display: grid; grid-template-columns: repeat(5, 1fr);" class="grid grid-cols-5 pt-7">
@@ -169,19 +169,26 @@ const createSingleTicketPdf = async (activity, ticket) => {
         </div>
       </div>
     </div>
-    <div class="last__section" style="height: 250px; width: 100%;">
-    <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 250px; border-radius: 2xl; overflow: hidden; margin-top: 4px;">
-        ${activity?.attraction?.images
-          ?.slice(0, 3)
-            ?.map((link) => {
-                return `
-                <div class="image-wrapper" >
-                    <img src="${process.env.SERVER_URL}${link}" alt="images" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; height:250px;" />
-                </div>
-            `;
-            })
-            .join("")}
-    </div>
+    <div class="last__section" style="height: 150px; width: 100%;">
+  <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 150px; border-radius: 2xl; overflow: hidden; margin-top: 4px;">
+    ${activity?.attraction?.images
+        ?.map((link, index) => {
+            const firstImage =
+                index === 0
+                    ? "border-top-left-radius: 2xl; border-bottom-left-radius: 2xl;"
+                    : "";
+            const lastImage =
+                index === activity.attraction.images.length - 1
+                    ? "border-top-right-radius: 2xl; border-bottom-right-radius: 2xl;"
+                    : "";
+            return `
+          <div class="image-wrapper" style="${firstImage}${lastImage}">
+            <img src="${process.env.SERVER_URL}${link}" alt="images" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; height:150px;" />
+          </div>
+        `;
+        })
+        .join("")}
+  </div>
 </div>
   
   <div class="desc__section" style="padding-top: 10px; line-height: 16px; font-size: 12px;">
