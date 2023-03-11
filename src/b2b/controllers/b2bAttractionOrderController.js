@@ -1684,6 +1684,7 @@ module.exports = {
                 },
                 {
                     $project: {
+                        _id: 1,
                         referenceNumber: 1,
                         name: 1,
                         email: 1,
@@ -1727,6 +1728,7 @@ module.exports = {
                 {
                     $group: {
                         _id: null,
+                        id: { $first: "$_id" },
                         activites: { $push: "$activities" },
                         totalAmount: { $first: "$totalAmount" },
                         referenceNumber: { $first: "$referenceNumber" },
