@@ -176,14 +176,14 @@ const createMultipleTicketPdf = async (ticketData) => {
            <div class="last__section" style="height: 150px; width: 100%;">
            <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 150px; border-radius: 2xl; overflow: hidden; margin-top: 4px;">
              ${ticketData?.attraction?.images
-                ?.slice(0, 3)
+                 ?.slice(0, 3)
                  ?.map((link, index) => {
                      const firstImage =
                          index === 0
                              ? "border-top-left-radius: 2xl; border-bottom-left-radius: 2xl;"
                              : "";
                      const lastImage =
-                         index === ticketData.attraction.images.length - 1
+                         index === 2
                              ? "border-top-right-radius: 2xl; border-bottom-right-radius: 2xl;"
                              : "";
                      return `
