@@ -80,6 +80,8 @@ const createBookingTicketPdf = async (activity) => {
               width: 100%;
               padding-bottom: 100%;
               overflow: hidden;
+              border-radius: 2rem;
+
           }
             </style>`;
     let ticketHtmlDoc = `${styles}
@@ -163,7 +165,7 @@ const createBookingTicketPdf = async (activity) => {
                     : "";
             return `
           <div class="image-wrapper" style="${firstImage}${lastImage}">
-            <img src="${process.env.SERVER_URL}${link}" alt="images" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; height:150px;" />
+            <img src="${process.env.SERVER_URL}${link}" alt="images" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; height:100%;" />
           </div>
         `;
         })
