@@ -156,11 +156,11 @@ const createBookingTicketPdf = async (activity) => {
         ?.map((link, index) => {
             const firstImage =
                 index === 0
-                    ? "border-top-left-radius: 2xl; border-bottom-left-radius: 2xl;"
+                    ? "border-top-left-radius: 20px; border-bottom-left-radius: 20px;"
                     : "";
             const lastImage =
                 index === 2
-                    ? "border-top-right-radius: 2xl; border-bottom-right-radius: 2xl;"
+                    ? "border-top-right-radius: 20px; border-bottom-right-radius: 20px;"
                     : "";
             return `
           <div class="image-wrapper" style="${firstImage}${lastImage}">
