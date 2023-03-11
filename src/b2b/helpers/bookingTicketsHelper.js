@@ -149,12 +149,13 @@ const createBookingTicketPdf = async (activity) => {
       </div>
     </div>
     <div class="last__section" style="height: 250px; width: 100%;">
-    <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 300px; border-radius: 2xl; overflow: hidden; margin-top: 4px;">
+    <div class="grid" style="grid-template-columns: repeat(3, 1fr); width: 100%; height: 250px; border-radius: 2xl; overflow: hidden; margin-top: 4px;">
         ${activity?.attraction?.images
+          ?.slice(0, 3)
             ?.map((link) => {
                 return `
                 <div class="image-wrapper" >
-                    <img src="${process.env.SERVER_URL}${link}" alt="images" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; height:300px;" />
+                    <img src="${process.env.SERVER_URL}${link}" alt="images" style="position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; height:250px;" />
                 </div>
             `;
             })
