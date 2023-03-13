@@ -1120,7 +1120,7 @@ module.exports = {
     getAllAttractionAndActivitiesNames: async (req, res) => {
         try {
             const attractions = await Attraction.find({ isDeleted: false })
-                .select("title")
+                .select({ title: 1, itineraryDescription: 1, images: 1 })
                 .sort({ title: 1 })
                 .collation({ locale: "en", caseLevel: true });
             const activities = await AttractionActivity.find({
