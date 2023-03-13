@@ -1009,7 +1009,39 @@ module.exports = {
             sendErrorResponse(res, 500, err);
         }
     },
+    
 
+    updateIsActiveActivity: async (req, res) => {
+        try {
+            const { activityId } = req.params;
+            const { isActive } = req.body;
+
+            if (!isValidObjectId(activityId)) {
+                return sendErrorResponse(res, 400, "Invalid activity id");
+            }
+
+            const activity = await AttractionActivity.findOneAndUpdate(
+                { _id: activityId, isDeleted: false },
+                { isActive },
+                { runValidators: true }
+            );
+
+            console.log(activity, "activity");
+
+            if (!activity) {
+                return sendErrorResponse(res, 404, "Activity not found");
+            }
+
+            res.status(200).json({
+                message: "Activity successfully deleted",
+                isActive,
+                _id: activityId,
+            });
+        } catch (err) {
+            sendErrorResponse(res, 500, err);
+        }
+    },
+    
     deleteActivity: async (req, res) => {
         try {
             const { activityId } = req.params;

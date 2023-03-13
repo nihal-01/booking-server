@@ -20,6 +20,7 @@ const {
     updateAttractionIsActiveOrNot,
     getAllAttractionAndActivitiesNames,
     showBalance,
+    updateIsActiveActivity,
 } = require("../controllers/admAttractionsController");
 
 const storage = multer.diskStorage({
@@ -65,6 +66,10 @@ router.patch("/update/:id", upload, updateAttraction);
 router.post("/connect/api/:id", connectApi);
 router.patch("/activities/update/:activityId", updateActivity);
 router.patch("/update/:id/is-active", updateAttractionIsActiveOrNot);
+router.patch(
+    "/update/activities/:activityId/is-active",
+    updateIsActiveActivity
+);
 
 router.get("/all", getAllAttractions);
 router.get("/initial-data", getInitialData);

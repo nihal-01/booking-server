@@ -21,29 +21,31 @@ module.exports = {
 
             for (let i = 0; i < itineraries?.length; i++) {
                 for (let j = 0; j < itineraries[i]?.items?.length; j++) {
-                    const attraction = await Attraction.findOne({
-                        _id: itineraries[i]?.items[j]?.attraction,
-                        isDeleted: false,
-                    });
-                    if (!attraction) {
-                        return sendErrorResponse(
-                            res,
-                            400,
-                            `itineraries[${i}].attraction not found`
-                        );
-                    }
+                    if (!itineraries[i]?.items[j]?.isCustom) {
+                        const attraction = await Attraction.findOne({
+                            _id: itineraries[i]?.items[j]?.attraction,
+                            isDeleted: false,
+                        });
+                        if (!attraction) {
+                            return sendErrorResponse(
+                                res,
+                                400,
+                                `itineraries[${i}].attraction not found`
+                            );
+                        }
 
-                    const activity = await AttractionActivity.findOne({
-                        _id: itineraries[i]?.items[j]?.activity,
-                        attraction: attraction._id,
-                        isDeleted: false,
-                    });
-                    if (!activity) {
-                        return sendErrorResponse(
-                            res,
-                            400,
-                            `itineraries[${i}].activity not found`
-                        );
+                        const activity = await AttractionActivity.findOne({
+                            _id: itineraries[i]?.items[j]?.activity,
+                            attraction: attraction._id,
+                            isDeleted: false,
+                        });
+                        if (!activity) {
+                            return sendErrorResponse(
+                                res,
+                                400,
+                                `itineraries[${i}].activity not found`
+                            );
+                        }
                     }
                 }
             }
