@@ -1674,6 +1674,8 @@ module.exports = {
                 return sendErrorResponse(res, 404, "Attraction not found");
             }
 
+            console.log(attraction[0]);
+
             res.status(200).json({
                 attraction: attraction[0],
             });
