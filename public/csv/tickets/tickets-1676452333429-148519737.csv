@@ -1,0 +1,9 @@
+ticketNo,lotNo,validity,validTill,details,ticketFor,cost
+TESTDEVELOPERI1NTF,A1,y,27-12-2023,some details,adult,84.15
+TESTDEVELOPERI1NHH,A2,y,27-12-2023,some details,adult,84.15
+TESTDEVELOPERI1NTF545,A1,y,27-12-2023,some details,adult,84.15
+TESTDEVELOPERI1NTF745,A1,y,27-12-2023,some details,adult,84.15
+TESTDEVELOPERI1NTF1111,A1,y,27-12-2022,some details,adult,84.15
+TESTDEVELOPERI1NTF7894,A1,n,27-12-2022,some details,adult,84.15
+TESTDEVELOPERI1NTF3625,A1,n,27-12-2022,some details,adult,84.15
+,,,,,,

@@ -1,0 +1,8 @@
+ticketNo,lotNo,validity,validTill,details,ticketFor,cost
+25452,A1,y,2022-12-27T05:39:31.522Z,some details,adult,100
+24561,A2,n,2022-12-27T05:39:31.522Z,some details,adult,100
+32654,A1,n,2022-12-27T05:39:31.522Z,some details,adult,100
+12547,A1,n,2022-12-27T05:39:31.522Z,some details,child,100
+25632,A1,n,2022-12-27T05:39:31.522Z,some details,child,100
+48759,A1,n,2022-12-27T05:39:31.522Z,some details,child,100
+62351,A1,n,2022-12-27T05:39:31.522Z,some details,adult,100
