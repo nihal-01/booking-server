@@ -11,6 +11,8 @@ const {
     getSingleTripDetails,
 } = require("./b2bFlightHelper");
 
+const { flightAvailabiltie } = require("./jazeeraAirwaysHelper");
+
 module.exports = {
     sendWalletDeposit,
     sendSubAgentPassword,
@@ -20,4 +22,5 @@ module.exports = {
     createDubaiParkOrder,
     flightAvailabilitySearch,
     getSingleTripDetails,
+    flightAvailabiltie,
 };

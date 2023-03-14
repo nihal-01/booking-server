@@ -4,6 +4,7 @@ const {
 const {
     flightAvailabilitySearch,
     getSingleTripDetails,
+    flightAvailabiltie,
 } = require("../helpers");
 const { B2BSubAgentFlightMarkup, B2BClientFlightMarkup } = require("../models");
 
@@ -22,12 +23,14 @@ module.exports = {
                 airItineraries,
             } = req.body;
 
-            const { _, error } = availabilitySearchSchema.validate(req.body);
-            if (error) {
-                return sendErrorResponse(res, 400, error.details[0].message);
-            }
+            // const { _, error } = availabilitySearchSchema.validate(req.body);
+            // if (error) {
+            //     return sendErrorResponse(res, 400, error.details[0].message);
+            // }
 
-            const flightResult = await flightAvailabilitySearch(req.body);
+            // const flightResult = await flightAvailabilitySearch(req.body);
+
+            const flightAvailabilties = await flightAvailabiltie();
 
             let resellerToSubAgentMarkup;
             if (req.reseller.role == "sub-agent") {
