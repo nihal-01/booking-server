@@ -19,16 +19,11 @@ module.exports = {
                 },
             };
 
-           await axios
-                .post(url, data, config)
-                .then((response) => {
-                    const token = response.data.data.token;
-                    console.log(`Token: ${token}`);
-                    // Do something with the token
-                })
-                .catch((error) => {
-                    console.error(error);
-                });
-        } catch (err) {}
+            let response = await axios.post(url, data, config);
+
+            console.log(response.data);
+        } catch (err) {
+            console.log(err);
+        }
     },
 };
